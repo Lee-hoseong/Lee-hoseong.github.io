@@ -410,8 +410,8 @@ class ThreeBSP {
 	 
 	// console.log( geometry )
  
-   if ( geometry instanceof  Geometry ) {
-     this.matrix = new  Matrix4;
+   if ( geometry instanceof  new THREE.Geometry ) {
+     this.matrix = new THREE.Matrix4;
    } else if ( geometry instanceof  Mesh ) {
      // #todo: add hierarchy support
      geometry.updateMatrix();
