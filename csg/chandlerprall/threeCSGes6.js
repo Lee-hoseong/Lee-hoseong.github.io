@@ -581,3 +581,5 @@ class Node {
 }
 
 window.ThreeBSP = ThreeBSP;
+
+export  { ThreeBSP }
