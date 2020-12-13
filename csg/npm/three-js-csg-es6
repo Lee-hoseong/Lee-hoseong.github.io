@@ -1,37 +1,21 @@
-import * as THREE from './js/three.module.js';
+import THREE from 'three';
+const ThreeBSP = require('../../index.js')(THREE);
  
-let camera, scene, renderer;
-let geometry, material, mesh;
+export const meshFactory = () => {
+  const box = new THREE.Mesh(new THREE.BoxGeometry(500, 100, 100));
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(100, 50, 50));
  
-init();
-animate();
+  const sBSP = new ThreeBSP(sphere);
+  const bBSP = new ThreeBSP(box);
  
-function init() {
+  const sub = bBSP.subtract(sBSP);
+  const newMesh = sub.toMesh();
  
-    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10 );
-    camera.position.z = 1;
+  newMesh.material = new THREE.MeshPhongMaterial({ color: 0xdddddd, specular: 0x1a1a1a, shininess: 30, shading: THREE.FlatShading  });
  
-    scene = new THREE.Scene();
+  return Object.assign({}, { csg: newMesh  });
  
-    geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
-    material = new THREE.MeshNormalMaterial();
- 
-    mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
- 
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
- 
-}
- 
-function animate() {
- 
-    requestAnimationFrame( animate );
- 
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
- 
-    renderer.render( scene, camera );
- 
-}
+};
+
+three-js-csg is a wrapper for NPM around chandlerprall's Constructive Solid Geometry port to three.js. 
+This package provides support for use with ES2015/AMD/CommonJS style modularity and composability.
