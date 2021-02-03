@@ -93,7 +93,7 @@ CSG.fromPolygons=function(polygons) {
 //     new CSG.Vector([1, 2, 3]);
 //     new CSG.Vector({ x: 1, y: 2, z: 3 });
 
-class Vector extends new THREE.Vector3 {
+class Vector extends Vector3 {
     constructor(x, y, z) {
         if (arguments.length == 3)
             super(x, y, z)
