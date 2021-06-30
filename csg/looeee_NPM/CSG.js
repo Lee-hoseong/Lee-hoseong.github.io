@@ -1,4 +1,3 @@
-(() => {
   // node_modules/three/build/three.module.js
   var REVISION = "126";
   var CullFaceNone = 0;
@@ -23900,6 +23899,3 @@
     }
   };
 export { CSG };
-
-})();
-//# sourceMappingURL=CSG.js.map
