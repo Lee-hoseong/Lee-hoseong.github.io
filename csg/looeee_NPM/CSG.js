@@ -23748,7 +23748,7 @@
       this.material = [];
     }
     setFromGeometry(geometry) {
-      if (!(geometry instanceof BufferGeometry)) {
+      if (!geometry instanceof BufferGeometry) {
         console.error("This library only works with three.js BufferGeometry");
         return;
       }
