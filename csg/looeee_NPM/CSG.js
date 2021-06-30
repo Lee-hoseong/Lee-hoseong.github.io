@@ -23742,7 +23742,7 @@
   };
 
   // src/CSG/CSG.js
-  var CSG = class {
+  class CSG {
     constructor() {
       this.polygons = [];
       this.material = [];
@@ -23897,5 +23897,5 @@
       });
       return this;
     }
-  };
+  }
 export { CSG };
