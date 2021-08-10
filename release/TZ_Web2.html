@@ -1,0 +1,2813 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #debug {
+            position: absolute;
+            top: 40px;
+            padding: 10px;
+            background: rgba( 0, 0, 0, 0 );
+            color: black;
+            font-size: 12px;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }
+
+        #button2 {
+            position: absolute;
+            left: 100px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer; 
+        }
+
+        #button2:hover {
+            background: #444;
+        }     
+
+        /* Add a black background color to the top navigation */
+        .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+
+        #controls {
+            position: absolute;
+            text-align:left;
+            top: 80px;
+            left: 5px;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .control { margin-bottom: 3px; }
+
+        input { width: 65px; text-align:right; }
+
+        .left-80 { 
+            width: 80px;
+            float : left;
+        }
+                
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a class="active" href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a href='TZ_Web4.html'>4. 강지보공</a>
+        <a href='TZ_Web5.html'>5. 라이닝구조도</a>
+        <a href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a href='TZ_Web9.html'>9. 부대시설</a>
+    </div>
+    
+    <canvas id="c"></canvas>
+
+    <div id="debug">
+        <div>[ 편평률 : <span id="x"></span> / 굴착면적 : <span id="y"> </span>m<sup>2</sup> ]</div>
+    </div>
+    
+    <button id="button" type="button" >Export Model</button>
+
+    <button id="button2" type="button" >공동구형상 설정</button>
+
+    <fieldset id="controls">
+        <legend>배수 및 공동구 상세</legend>
+
+        <div class="control">
+           추월차로 공동구 상세
+            <div id="detail1" >               
+                Point 01 : X <input id="lx01" type="number" value="0.000"  step="0.001" min="-5" max="5"/>
+                           Y <input id="ly01" type="number" value="0.000"  step="0.001" min="-5" max="5"/><br>
+
+                Point 02 : X <input id="lx02" type="number" value="-0.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly02" type="number" value="-0.013" step="0.001" min="-5" max="5"/><br>
+
+                Point 03 : X <input id="lx03" type="number" value="-0.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly03" type="number" value="-0.165" step="0.001" min="-5" max="5"/><br>
+
+                Point 04 : X <input id="lx04" type="number" value="-0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly04" type="number" value="-0.165" step="0.001" min="-5" max="5"/><br>
+
+                Point 05 : X <input id="lx05" type="number" value="-0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly05" type="number" value="-0.015" step="0.001" min="-5" max="5"/><br>
+
+                Point 06 : X <input id="lx06" type="number" value="-0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly06" type="number" value="0.110"  step="0.001" min="-5" max="5"/><br>
+
+                Point 07 : X <input id="lx07" type="number" value="-0.870" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly07" type="number" value="0.285"  step="0.001" min="-5" max="5"/><br>
+
+                Point 08 : X <input id="lx08" type="number" value="-0.906" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly08" type="number" value="0.645"  step="0.001" min="-5" max="5"/><br>
+
+                Point 09 : X <input id="lx09" type="number" value="-1.050" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly09" type="number" value="0.645"  step="0.001" min="-5" max="5"/><br>
+
+                Point 10 : X <input id="lx10" type="number" value="-1.050" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly10" type="number" value="0.585"  step="0.001" min="-5" max="5"/><br>
+
+                Point 11 : X <input id="lx11" type="number" value="-1.110" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly11" type="number" value="0.585"  step="0.001" min="-5" max="5"/><br>
+
+                Point 12 : X <input id="lx12" type="number" value="-1.110" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly12" type="number" value="-0.015"  step="0.001" min="-5" max="5"/><br>
+
+                Point 13 : X <input id="lx13" type="number" value="-1.500" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly13" type="number" value="-0.015"  step="0.001" min="-5" max="5"/><br>
+
+                Point 14 : X <input id="lx14" type="number" value="-1.600" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly14" type="number" value="0.585"  step="0.001" min="-5" max="5"/><br>
+
+                Point 15 : X <input id="lx15" type="number" value="-1.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly15" type="number" value="0.585"  step="0.001" min="-5" max="5"/><br>
+
+                Point 16 : X <input id="lx16" type="number" value="-1.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly16" type="number" value="0.645"  step="0.001" min="-5" max="5"/><br>
+                           
+                Point 17 : X <input id="lx17" type="number" value="-1.700" step="0.001" min="-5" max="5"/>
+                           Y <input id="ly17" type="number" value="0.645"  step="0.001" min="-5" max="5"/><br>
+            </div>
+            <br>주행차로 공동구 상세<br>
+            <div id="detail2" >
+                Point 01 : X <input id="rx01" type="number" value="0.000"  step="0.001" min="-5" max="5"/>
+                           Y <input id="ry01" type="number" value="0.000"  step="0.001" min="-5" max="5"/><br>
+
+                Point 02 : X <input id="rx02" type="number" value="0.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry02" type="number" value="-0.013" step="0.001" min="-5" max="5"/><br>
+
+                Point 03 : X <input id="rx03" type="number" value="0.650" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry03" type="number" value="-0.165" step="0.001" min="-5" max="5"/><br>
+
+                Point 04 : X <input id="rx04" type="number" value="0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry04" type="number" value="-0.165" step="0.001" min="-5" max="5"/><br>
+
+                Point 05 : X <input id="rx05" type="number" value="0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry05" type="number" value="-0.015" step="0.001" min="-5" max="5"/><br>
+
+                Point 06 : X <input id="rx06" type="number" value="0.750" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry06" type="number" value="0.110" step="0.001" min="-5" max="5"/><br>
+
+                Point 07 : X <input id="rx07" type="number" value="0.870" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry07" type="number" value="0.285" step="0.001" min="-5" max="5"/><br>
+
+                Point 08 : X <input id="rx08" type="number" value="0.940" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry08" type="number" value="0.985" step="0.001" min="-5" max="5"/><br>
+
+                Point 09 : X <input id="rx09" type="number" value="1.100" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry09" type="number" value="0.985" step="0.001" min="-5" max="5"/><br>
+
+                Point 10 : X <input id="rx10" type="number" value="1.100" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry10" type="number" value="0.925" step="0.001" min="-5" max="5"/><br>
+
+                Point 11 : X <input id="rx11" type="number" value="1.150" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry11" type="number" value="0.925" step="0.001" min="-5" max="5"/><br>
+
+                Point 12 : X <input id="rx12" type="number" value="1.150" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry12" type="number" value="-0.015" step="0.001" min="-5" max="5"/><br>
+
+                Point 13 : X <input id="rx13" type="number" value="1.700" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry13" type="number" value="-0.015" step="0.001" min="-5" max="5"/><br>
+
+                Point 14 : X <input id="rx14" type="number" value="1.800" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry14" type="number" value="0.925" step="0.001" min="-5" max="5"/><br>
+
+                Point 15 : X <input id="rx15" type="number" value="1.850" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry15" type="number" value="0.925" step="0.001" min="-5" max="5"/><br>
+
+                Point 16 : X <input id="rx16" type="number" value="1.850" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry16" type="number" value="0.985" step="0.001" min="-5" max="5"/><br>
+
+                Point 17 : X <input id="rx17" type="number" value="1.900" step="0.001" min="-5" max="5"/>
+                           Y <input id="ry17" type="number" value="0.985" step="0.001" min="-5" max="5"/><br>
+            </div>
+
+        </div>
+
+    </fieldset>
+
+    
+    <script type="module">
+        
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+        
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+        let jetfanWingContainer = [];
+
+
+        // Three js 기본변수
+        let camera, scene, renderer
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+        const clearanceHeight = JSON.parse( sessionStorage.getItem( '시설한계높이' ) );
+        const cornerLeftWidth = JSON.parse( sessionStorage.getItem( '좌측모서리폭' ) );
+        const cornerLeftHeight = JSON.parse( sessionStorage.getItem( '좌측모서리높이') );
+        const cornerRightWidth = JSON.parse( sessionStorage.getItem( '우측모서리폭' ) );
+        const cornerRightHeight = JSON.parse( sessionStorage.getItem( '우측모서리높이' ) );
+        const limitMargin = JSON.parse( sessionStorage.getItem( '여유폭' ) );
+
+        const roadDistance = JSON.parse( sessionStorage.getItem( '이격거리' ) );
+        const marginInitLt = JSON.parse( sessionStorage.getItem( '좌측측대' ) );
+        const marginInitRt = JSON.parse( sessionStorage.getItem( '우측측대' ) );
+
+
+        // 파라메트릭 값
+        const ui = {
+
+            //도로중심과 터널중심간의 이격거리
+            roadCenterDistance : roadDistance,
+
+            //편경사
+            crossSlopeStandard : ( crossSlopeMin + crossSlopeMax )/2,
+
+            // 공동구타입
+            footingType : '기계환기',
+            marginLeft : marginInitLt,
+            marginRight : marginInitRt,            
+            footingHeight : 0.500,
+            
+            // 환기타입
+            ventilation : '제트팬',
+
+            // 제트팬
+            jetfanInnerDiameter : 1.250,
+            jetfanDistance : 1.000,
+            jetfanNum : 2,
+
+            // 덕트면적(m2)
+            ductArea : 15,
+
+            // 시설한계와 덕트슬래브 이격거리
+            ductSlabDistance : 0.800,
+
+            // 덕트슬래브 두께
+            ductSlabThickness : 0.250,
+
+            // 격벽폭
+            pannelWidth : 0.200,
+
+            //터널지보
+            liningT0 : 0.300,
+            liningT1 : 0.450,
+            liningT2 : 0.450,
+            shotcrete : 0.120,
+
+            // 터널변수
+            r1ThetaLt : 50,
+            // r1ThetaRt : 50,
+
+            r1Height : -0.500,
+            
+        };
+
+        // 공동구타입
+
+        function changeFootingShape() {
+
+            typeSelect();
+            designTunnel();
+
+        }
+
+        document.getElementById( "detail1").addEventListener( "change", designTunnel )
+        document.getElementById( "detail2").addEventListener( "change", designTunnel )
+
+        document.getElementById( "button2").addEventListener( "click", toggleShow )
+
+        document.getElementById("controls").style.display = "none";
+        
+        function toggleShow() {
+
+            const x = document.getElementById("controls");
+            
+            if (x.style.display === "none") {
+
+                x.style.display = "block";
+            
+            } else {
+
+                x.style.display = "none";
+
+            }
+        }
+
+        function typeSelect() {
+
+            if ( ui.footingType == '자연환기' ) {
+                // 자연환기, 추월차로
+                document.getElementById( "lx01" ).value =  0.000;   document.getElementById( "ly01" ).value =  0.000 
+                document.getElementById( "lx02" ).value = -0.650;   document.getElementById( "ly02" ).value = -0.013 
+                document.getElementById( "lx03" ).value = -0.650;   document.getElementById( "ly03" ).value = -0.165 
+                document.getElementById( "lx04" ).value = -0.750;   document.getElementById( "ly04" ).value = -0.165 
+                document.getElementById( "lx05" ).value = -0.750;   document.getElementById( "ly05" ).value = -0.015 
+                document.getElementById( "lx06" ).value = -0.750;   document.getElementById( "ly06" ).value =  0.110 
+                document.getElementById( "lx07" ).value = -0.870;   document.getElementById( "ly07" ).value =  0.285 
+                document.getElementById( "lx08" ).value = -0.906;   document.getElementById( "ly08" ).value =  0.645 
+                document.getElementById( "lx09" ).value = -1.050;   document.getElementById( "ly09" ).value =  0.645 
+                document.getElementById( "lx10" ).value = -1.050;   document.getElementById( "ly10" ).value =  0.585 
+                document.getElementById( "lx11" ).value = -1.100;   document.getElementById( "ly11" ).value =  0.585 
+                document.getElementById( "lx12" ).value = -1.100;   document.getElementById( "ly12" ).value =  0.285 
+                document.getElementById( "lx13" ).value = -1.400;   document.getElementById( "ly13" ).value =  0.285 
+                document.getElementById( "lx14" ).value = -1.400;   document.getElementById( "ly14" ).value =  0.585
+                document.getElementById( "lx15" ).value = -1.450;   document.getElementById( "ly15" ).value =  0.585 
+                document.getElementById( "lx16" ).value = -1.450;   document.getElementById( "ly16" ).value =  0.645 
+                document.getElementById( "lx17" ).value = -1.500;   document.getElementById( "ly17" ).value =  0.645 
+
+                // 자연환기, 주행차로
+                document.getElementById( "rx01" ).value =  0.000;   document.getElementById( "ry01" ).value =  0.000 
+                document.getElementById( "rx02" ).value =  0.650;   document.getElementById( "ry02" ).value = -0.013 
+                document.getElementById( "rx03" ).value =  0.650;   document.getElementById( "ry03" ).value = -0.165 
+                document.getElementById( "rx04" ).value =  0.750;   document.getElementById( "ry04" ).value = -0.165 
+                document.getElementById( "rx05" ).value =  0.750;   document.getElementById( "ry05" ).value = -0.015 
+                document.getElementById( "rx06" ).value =  0.750;   document.getElementById( "ry06" ).value =  0.110 
+                document.getElementById( "rx07" ).value =  0.870;   document.getElementById( "ry07" ).value =  0.285 
+                document.getElementById( "rx08" ).value =  0.906;   document.getElementById( "ry08" ).value =  0.645 
+                document.getElementById( "rx09" ).value =  1.050;   document.getElementById( "ry09" ).value =  0.645 
+                document.getElementById( "rx10" ).value =  1.050;   document.getElementById( "ry10" ).value =  0.585 
+                document.getElementById( "rx11" ).value =  1.100;   document.getElementById( "ry11" ).value =  0.585 
+                document.getElementById( "rx12" ).value =  1.100;   document.getElementById( "ry12" ).value =  0.285 
+                document.getElementById( "rx13" ).value =  1.400;   document.getElementById( "ry13" ).value =  0.285 
+                document.getElementById( "rx14" ).value =  1.400;   document.getElementById( "ry14" ).value =  0.585
+                document.getElementById( "rx15" ).value =  1.450;   document.getElementById( "ry15" ).value =  0.585 
+                document.getElementById( "rx16" ).value =  1.450;   document.getElementById( "ry16" ).value =  0.645 
+                document.getElementById( "rx17" ).value =  1.500;   document.getElementById( "ry17" ).value =  0.645
+
+                if ( document.getElementById( "rx18" ) != null ) { removeDiv() }
+
+            } else if ( ui.footingType == '기계환기' ) {
+                // 기계환기, 추월차로
+                document.getElementById( "lx01" ).value =  0.000;   document.getElementById( "ly01" ).value =  0.000 
+                document.getElementById( "lx02" ).value = -0.650;   document.getElementById( "ly02" ).value = -0.013 
+                document.getElementById( "lx03" ).value = -0.650;   document.getElementById( "ly03" ).value = -0.165 
+                document.getElementById( "lx04" ).value = -0.750;   document.getElementById( "ly04" ).value = -0.165 
+                document.getElementById( "lx05" ).value = -0.750;   document.getElementById( "ly05" ).value = -0.015 
+                document.getElementById( "lx06" ).value = -0.750;   document.getElementById( "ly06" ).value =  0.110 
+                document.getElementById( "lx07" ).value = -0.870;   document.getElementById( "ly07" ).value =  0.285 
+                document.getElementById( "lx08" ).value = -0.906;   document.getElementById( "ly08" ).value =  0.645 
+                document.getElementById( "lx09" ).value = -1.050;   document.getElementById( "ly09" ).value =  0.645 
+                document.getElementById( "lx10" ).value = -1.050;   document.getElementById( "ly10" ).value =  0.585 
+                document.getElementById( "lx11" ).value = -1.100;   document.getElementById( "ly11" ).value =  0.585 
+                document.getElementById( "lx12" ).value = -1.100;   document.getElementById( "ly12" ).value = -0.015 
+                document.getElementById( "lx13" ).value = -1.500;   document.getElementById( "ly13" ).value = -0.015 
+                document.getElementById( "lx14" ).value = -1.600;   document.getElementById( "ly14" ).value =  0.585
+                document.getElementById( "lx15" ).value = -1.650;   document.getElementById( "ly15" ).value =  0.585 
+                document.getElementById( "lx16" ).value = -1.650;   document.getElementById( "ly16" ).value =  0.645 
+                document.getElementById( "lx17" ).value = -1.700;   document.getElementById( "ly17" ).value =  0.645
+
+                // 기계환기, 주행차로
+                document.getElementById( "rx01" ).value = 0.000;    document.getElementById( "ry01" ).value =  0.000 
+                document.getElementById( "rx02" ).value = 0.650;    document.getElementById( "ry02" ).value = -0.013 
+                document.getElementById( "rx03" ).value = 0.650;    document.getElementById( "ry03" ).value = -0.165 
+                document.getElementById( "rx04" ).value = 0.750;    document.getElementById( "ry04" ).value = -0.165 
+                document.getElementById( "rx05" ).value = 0.750;    document.getElementById( "ry05" ).value = -0.015 
+                document.getElementById( "rx06" ).value = 0.750;    document.getElementById( "ry06" ).value =  0.110 
+                document.getElementById( "rx07" ).value = 0.870;    document.getElementById( "ry07" ).value =  0.285
+                document.getElementById( "rx08" ).value = 0.940;    document.getElementById( "ry08" ).value =  0.985 
+                document.getElementById( "rx09" ).value = 1.100;    document.getElementById( "ry09" ).value =  0.985 
+                document.getElementById( "rx10" ).value = 1.100;    document.getElementById( "ry10" ).value =  0.925
+                document.getElementById( "rx11" ).value = 1.150;    document.getElementById( "ry11" ).value =  0.925
+                document.getElementById( "rx12" ).value = 1.150;    document.getElementById( "ry12" ).value = -0.015 
+                document.getElementById( "rx13" ).value = 1.700;    document.getElementById( "ry13" ).value = -0.015 
+                document.getElementById( "rx14" ).value = 1.800;    document.getElementById( "ry14" ).value =  0.925
+                document.getElementById( "rx15" ).value = 1.850;    document.getElementById( "ry15" ).value =  0.925
+                document.getElementById( "rx16" ).value = 1.850;    document.getElementById( "ry16" ).value =  0.985
+                document.getElementById( "rx17" ).value = 1.900;    document.getElementById( "ry17" ).value =  0.985
+
+                if ( document.getElementById( "rx18" ) != null ) { removeDiv() }
+ 
+            } else if ( ui.footingType == '기계환기(물분무)' ) {
+                // 기계환기, 추월차로
+                document.getElementById( "lx01" ).value =  0.000;   document.getElementById( "ly01" ).value =  0.000 
+                document.getElementById( "lx02" ).value = -0.650;   document.getElementById( "ly02" ).value = -0.013 
+                document.getElementById( "lx03" ).value = -0.650;   document.getElementById( "ly03" ).value = -0.165 
+                document.getElementById( "lx04" ).value = -0.750;   document.getElementById( "ly04" ).value = -0.165 
+                document.getElementById( "lx05" ).value = -0.750;   document.getElementById( "ly05" ).value = -0.015 
+                document.getElementById( "lx06" ).value = -0.750;   document.getElementById( "ly06" ).value =  0.110 
+                document.getElementById( "lx07" ).value = -0.870;   document.getElementById( "ly07" ).value =  0.285 
+                document.getElementById( "lx08" ).value = -0.906;   document.getElementById( "ly08" ).value =  0.645 
+                document.getElementById( "lx09" ).value = -1.050;   document.getElementById( "ly09" ).value =  0.645 
+                document.getElementById( "lx10" ).value = -1.050;   document.getElementById( "ly10" ).value =  0.585 
+                document.getElementById( "lx11" ).value = -1.100;   document.getElementById( "ly11" ).value =  0.585 
+                document.getElementById( "lx12" ).value = -1.100;   document.getElementById( "ly12" ).value = -0.015 
+                document.getElementById( "lx13" ).value = -1.500;   document.getElementById( "ly13" ).value = -0.015 
+                document.getElementById( "lx14" ).value = -1.600;   document.getElementById( "ly14" ).value =  0.585
+                document.getElementById( "lx15" ).value = -1.650;   document.getElementById( "ly15" ).value =  0.585 
+                document.getElementById( "lx16" ).value = -1.650;   document.getElementById( "ly16" ).value =  0.645 
+                document.getElementById( "lx17" ).value = -1.700;   document.getElementById( "ly17" ).value =  0.645
+
+                // 기계환기(물분무), 주행차로
+                document.getElementById( "rx01" ).value = 0.000;    document.getElementById( "ry01" ).value =  0.000 
+                document.getElementById( "rx02" ).value = 0.650;    document.getElementById( "ry02" ).value = -0.013 
+                document.getElementById( "rx03" ).value = 0.650;    document.getElementById( "ry03" ).value = -0.165 
+                document.getElementById( "rx04" ).value = 0.750;    document.getElementById( "ry04" ).value = -0.165 
+                document.getElementById( "rx05" ).value = 0.750;    document.getElementById( "ry05" ).value = -0.015 
+                document.getElementById( "rx06" ).value = 0.750;    document.getElementById( "ry06" ).value =  0.110 
+                document.getElementById( "rx07" ).value = 0.870;    document.getElementById( "ry07" ).value =  0.285
+                document.getElementById( "rx08" ).value = 0.940;    document.getElementById( "ry08" ).value =  0.985 
+                document.getElementById( "rx09" ).value = 1.100;    document.getElementById( "ry09" ).value =  0.985 
+                document.getElementById( "rx10" ).value = 1.100;    document.getElementById( "ry10" ).value =  0.925
+                document.getElementById( "rx11" ).value = 1.150;    document.getElementById( "ry11" ).value =  0.925
+                document.getElementById( "rx12" ).value = 1.150;    document.getElementById( "ry12" ).value = -0.015 
+                document.getElementById( "rx13" ).value = 1.820;    document.getElementById( "ry13" ).value = -0.015 
+                document.getElementById( "rx14" ).value = 1.920;    document.getElementById( "ry14" ).value =  0.085
+                document.getElementById( "rx15" ).value = 1.920;    document.getElementById( "ry15" ).value =  0.925
+                document.getElementById( "rx16" ).value = 1.970;    document.getElementById( "ry16" ).value =  0.925
+                document.getElementById( "rx17" ).value = 1.970;    document.getElementById( "ry17" ).value =  0.985
+
+                if ( document.getElementById( "rx18" ) == null ) {
+
+                    createDiv()
+
+                }
+
+            }
+
+        }
+
+        function createDiv() {
+            // rx18
+
+            // 1. <div> element 만들기
+            const newDIV1 = document.createElement("div1")
+            newDIV1.setAttribute("id", "xx")
+
+             // 2. <div>에 들어갈 text node 만들기
+            const input1 = document.createTextNode("Point 18 : X ")
+
+            const input2 = document.createElement("input")
+            input2.setAttribute("id", "rx18")
+            input2.setAttribute("type", "number")
+            input2.setAttribute("value", "2.020")
+            input2.setAttribute("step", "0.001")
+            input2.setAttribute("min", "-5")
+            input2.setAttribute("max", "5")
+
+            // 3. <div>에 text node 붙이기
+            newDIV1.appendChild(input1)
+            newDIV1.appendChild(input2)
+
+            // 4. <body>에 1에서 만든 <div> element 붙이기
+            document.getElementById("detail2").appendChild( newDIV1 )
+
+            // ry18
+            const newDIV2 = document.createElement("div2")
+            newDIV2.setAttribute("id", "yy")
+
+            const input3 = document.createTextNode(" Y ")
+
+            const input4 = document.createElement("input")
+            input4.setAttribute("id", "ry18")
+            input4.setAttribute("type", "number")
+            input4.setAttribute("value", "0.985")
+            input4.setAttribute("step", "0.001")
+            input4.setAttribute("min", "-5")
+            input4.setAttribute("max", "5")
+
+            newDIV2.appendChild(input3)
+            newDIV2.appendChild(input4)
+
+            document.getElementById("detail2").appendChild( newDIV2 )
+
+        }
+
+        function removeDiv() {
+
+            document.getElementById( "xx" ).remove()
+            document.getElementById( "yy" ).remove()
+
+        }        
+
+        // // 좌측공동구-국도설계실무요령(2021)
+        // const naturalLt1 = [];
+        // naturalLt1.push( new THREE.Vector2(  0.000,  0.000 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.650, -0.013 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.650, -0.165 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.750, -0.165 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.750, -0.015 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.750,  0.110 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.870,  0.285 ) );
+        // naturalLt1.push( new THREE.Vector2( -0.906,  0.645 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.050,  0.645 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.050,  0.585 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.100,  0.585 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.100,  0.285 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.400,  0.285 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.400,  0.585 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.450,  0.585 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.450,  0.645 ) );
+        // naturalLt1.push( new THREE.Vector2( -1.500,  0.645 ) );
+        
+        // const mechanicalLt1 = [];
+        // mechanicalLt1.push( new THREE.Vector2 (  0.000,  0.000 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.650, -0.013 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.650, -0.165 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.750, -0.165 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.750, -0.015 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.750,  0.110 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.870,  0.285 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -0.906,  0.645 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.050,  0.645 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.050,  0.585 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.100,  0.585 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.100, -0.015 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.500, -0.015 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.600,  0.585 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.650,  0.585 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.650,  0.645 ) );
+        // mechanicalLt1.push( new THREE.Vector2 ( -1.700,  0.645 ) );
+        
+        
+        // // 우측공동구-국도설계실무요령(2021)
+        // const naturalRt1 = [];       
+        // naturalRt1.push( new THREE.Vector2 ( 0.000,  0.000 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.650, -0.013 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.650, -0.165 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.750, -0.165 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.750, -0.015 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.750,  0.110 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.870,  0.285 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 0.906,  0.645 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.050,  0.645 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.050,  0.585 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.100,  0.585 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.100,  0.285 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.400,  0.285 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.400,  0.585 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.450,  0.585 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.450,  0.645 ) );
+        // naturalRt1.push( new THREE.Vector2 ( 1.500,  0.645 ) );
+        
+        // const mechanicalRt1 = [];        
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.000,  0.000 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.650, -0.013 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.650, -0.165 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.750, -0.165 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.750, -0.015 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.750,  0.110 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.870,  0.285 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 0.940,  0.985 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.100,  0.985 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.100,  0.925 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.150,  0.925 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.150, -0.015 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.700, -0.015 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.800,  0.925 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.850,  0.925 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.850,  0.985 ) );
+        // mechanicalRt1.push( new THREE.Vector2 ( 1.900,  0.985 ) );      
+        
+        // const mechanicalRt2 = []; //물분무시설
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.000,  0.000 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.650, -0.013 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.650, -0.165 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.750, -0.165 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.750, -0.015 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.750,  0.110 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.870,  0.285 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 0.940,  0.985 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.100,  0.985 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.100,  0.925 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.150,  0.925 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.150, -0.015 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.820, -0.015 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.920,  0.085 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.920,  0.925 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.970,  0.925 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 1.970,  0.985 ) );
+        // mechanicalRt2.push( new THREE.Vector2 ( 2.020,  0.985 ) );
+
+
+        // Run        
+        initGraphic();
+        designTunnel();
+        createUI();
+        
+
+        function initGraphic() {
+            
+            const canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+            
+            // Perspective
+            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            camera.position.set( -7, 7, 15 );             
+            
+
+            // // Orthographic
+            // camera = new THREE.OrthographicCamera( 
+            //     window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            // ); //left. right, top, bottom, near, far 
+            // camera.position.set( 0, 0, 20 ); 
+            
+
+            // OrbitControl : 뷰 확대 및 회전
+            const controls = new OrbitControls( camera, canvas );
+            controls.target.set( 0, 3, 0 );
+            // controls.target.set( 0, 0, 0 );
+            controls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0xf0f0f0 );
+            
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // 바닥 그리드
+            const size = 30;
+            const divisions = 30;
+            const gridHelper = new THREE.GridHelper( size, divisions );
+            gridHelper.position.y = - 2;
+            gridHelper.material.opacity = 0.4;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper( 1 ); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+            
+            // const light = new THREE.SpotLight( 0xffffff, 1 );
+            // light.position.set( 0, 15, 5 );
+            // light.angle = THREE.Math.degToRad( 30 )
+            // light.castShadow = true;
+            // scene.add(light);
+            
+
+            // light helper
+            // const lightHelper = new THREE.SpotLightHelper( light, 10 );
+            // scene.add( lightHelper );            
+            
+
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.shadowMap.enabled = true;
+            
+        }
+        
+
+
+        function designTunnel() {
+            
+            // 이전 메쉬 삭제
+            showContainer.forEach( obj => scene.remove( obj ) );
+
+
+            for ( let i=0; i < jetfanWingContainer.length; i++) {
+                
+                scene.remove( jetfanWingContainer[i] );    
+                
+            };
+
+
+            // 배열초기화
+            showContainer = [];
+            jetfanWingContainer = [];
+
+
+            // 도로중심선
+            const roadCenterPoints = [];
+            roadCenterPoints.push( new THREE.Vector2 ( -ui.roadCenterDistance, - 2 ) );
+            roadCenterPoints.push( new THREE.Vector2 ( -ui.roadCenterDistance, roadWidth + shoulderRight ) );
+
+            const roadCenterShape = new THREE.Shape( roadCenterPoints );
+            
+            const roadCenterDashLine = addDashLine(  roadCenterShape, 'dimgray' );
+            showContainer.push( roadCenterDashLine );
+
+
+            // 터널중심선
+            const tunnelCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            tunnelCenterDashLine.position.set( ui.roadCenterDistance, 0, 0);
+            showContainer.push( tunnelCenterDashLine );
+
+       
+            const footingLtType = [];
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx01" ).value, +document.getElementById( "ly01" ).value ) ); // + 또는 parseInt
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx02" ).value, +document.getElementById( "ly02" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx03" ).value, +document.getElementById( "ly03" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx04" ).value, +document.getElementById( "ly04" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx05" ).value, +document.getElementById( "ly05" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx06" ).value, +document.getElementById( "ly06" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx07" ).value, +document.getElementById( "ly07" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx08" ).value, +document.getElementById( "ly08" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx09" ).value, +document.getElementById( "ly09" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx10" ).value, +document.getElementById( "ly10" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx11" ).value, +document.getElementById( "ly11" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx12" ).value, +document.getElementById( "ly12" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx13" ).value, +document.getElementById( "ly13" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx14" ).value, +document.getElementById( "ly14" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx15" ).value, +document.getElementById( "ly15" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx16" ).value, +document.getElementById( "ly16" ).value ) );
+            footingLtType.push( new THREE.Vector2( +document.getElementById( "lx17" ).value, +document.getElementById( "ly17" ).value ) );
+
+
+            const footingRtType = [];
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx01" ).value, +document.getElementById( "ry01" ).value ) ); // + 또는 parseInt
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx02" ).value, +document.getElementById( "ry02" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx03" ).value, +document.getElementById( "ry03" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx04" ).value, +document.getElementById( "ry04" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx05" ).value, +document.getElementById( "ry05" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx06" ).value, +document.getElementById( "ry06" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx07" ).value, +document.getElementById( "ry07" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx08" ).value, +document.getElementById( "ry08" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx09" ).value, +document.getElementById( "ry09" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx10" ).value, +document.getElementById( "ry10" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx11" ).value, +document.getElementById( "ry11" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx12" ).value, +document.getElementById( "ry12" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx13" ).value, +document.getElementById( "ry13" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx14" ).value, +document.getElementById( "ry14" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx15" ).value, +document.getElementById( "ry15" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx16" ).value, +document.getElementById( "ry16" ).value ) );
+            footingRtType.push( new THREE.Vector2( +document.getElementById( "rx17" ).value, +document.getElementById( "ry17" ).value ) );
+            
+            if ( ui.footingType == '기계환기(물분무)' ) {
+
+                footingRtType.push( new THREE.Vector2( +document.getElementById( "rx18" ).value, +document.getElementById( "ry18" ).value ) );
+
+            }
+            // let footingLtType
+            // let footingRtType
+
+            // if ( ui.footingType == '자연환기' ) {
+                
+            //     footingLtType = naturalLt1;
+            //     footingRtType = naturalRt1;
+                
+            // } else if( ui.footingType == '기계환기' ) {
+                
+            //     footingLtType = mechanicalLt1;
+            //     footingRtType = mechanicalRt1;
+                
+            // } else if( ui.footingType == '기계환기(물분무)' ) {
+                
+            //     footingLtType = mechanicalLt1;
+            //     footingRtType = mechanicalRt2;
+                
+            // };
+           
+
+            /**************************************************************************************
+             *** 편경사에 따른 시설한계
+             **************************************************************************************/
+
+            // r1중심각 단위변환
+            const r1ThetaLt = THREE.Math.degToRad( ui.r1ThetaLt );
+            const r1ThetaRt = r1ThetaLt
+
+
+            // 횡류식 기준점이 될 시설한계 최대높이 
+            const clearanceMaxHeight = [];
+
+
+            // r1 계산값 기록
+            const r1Nature = [];
+            let r1Transverse
+            let r1Jetfan
+
+
+            // 좌표기록
+            const footingLtEndX = [];
+            const footingLtEndY = [];
+            const footingRtEndX = [];
+            const footingRtEndY = [];
+            
+            const commonDuctLtX = [];
+            const commonDuctLtY = [];
+            const commonDuctRtX = [];
+            const commonDuctRtY = [];
+
+            const concreteLtEndX = [];
+            const concreteLtEndY = [];
+            const concreteRtEndX = [];
+            const concreteRtEndY = [];
+
+
+
+            // 최소편경사, 최대편경사별로 시설한계 그리기
+            drawCrossSlope( crossSlopeMin, 0xfa8072 );
+            drawCrossSlope( crossSlopeMax, 0x2FA1D6 );
+
+
+            function drawCrossSlope ( slopeValue, color ) {
+
+                // 콘크리트포장과 시멘트필터층
+                const concreteLt = new THREE.Vector3( - ui.roadCenterDistance - ui.marginLeft, ( - ui.roadCenterDistance - ui.marginLeft ) * slopeValue / 100 );
+                const concreteRt = new THREE.Vector3( roadWidth - ui.roadCenterDistance + ui.marginRight, ( roadWidth - ui.roadCenterDistance + ui.marginRight ) * slopeValue / 100 );
+
+                concreteLtEndX.push( concreteLt.x );
+                concreteLtEndY.push( concreteLt.y );
+                concreteRtEndX.push( concreteRt.x );
+                concreteRtEndY.push( concreteRt.y );
+
+                const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+                const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+                const concreteShp = new THREE.Shape();
+                concreteShp.moveTo( concreteLt.x, concreteLt.y );
+                concreteShp.lineTo( concreteRt.x, concreteRt.y );
+                concreteShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+                concreteShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+                concreteShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+                const concreteLine = addLine( concreteShp, color );
+                showContainer.push( concreteLine );
+
+                const cementeFilterShp = new THREE.Shape();
+                cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+                
+                const cementeFilterLine = addLine( cementeFilterShp, color );
+                showContainer.push( cementeFilterLine );
+
+
+                // 공동구 기초
+                const footingLtShp = new THREE.Shape( footingLtType );
+                
+                const footingLtLine = addLine( footingLtShp, color );
+                footingLtLine.position.set( concreteLt.x, concreteLt.y, 0 );
+                showContainer.push( footingLtLine );
+                
+                const footingRtShp = new THREE.Shape( footingRtType );
+                
+                const footingRtLine = addLine( footingRtShp, color );
+                footingRtLine.position.set( concreteRt.x, concreteRt.y, 0);
+                showContainer.push( footingRtLine );
+
+
+                // 공동구 끝점기록
+                footingLtEndX.push( footingLtType[footingLtType.length-1].x + concreteLt.x );
+                footingLtEndY.push( footingLtType[footingLtType.length-1].y + concreteLt.y );
+
+                footingRtEndX.push( footingRtType[footingRtType.length-1].x + concreteRt.x );
+                footingRtEndY.push( footingRtType[footingRtType.length-1].y + concreteRt.y );
+
+
+                // 공동구 하단점기록
+                commonDuctLtX.push( footingLtType[12].x + concreteLt.x );
+                commonDuctLtY.push( footingLtType[12].y + concreteLt.y );
+                
+                if( ui.footingType == '기계환기(물분무)' ) {
+                    
+                    commonDuctRtX.push( footingRtType[13].x + concreteRt.x );
+                    commonDuctRtY.push( footingRtType[13].y + concreteRt.y );
+                    
+                } else {
+                    
+                    commonDuctRtX.push( footingRtType[12].x + concreteRt.x );
+                    commonDuctRtY.push( footingRtType[12].y + concreteRt.y );
+                    
+                };
+                
+                
+                // 시설한계
+                const clearancePts = [];
+
+                const a1 = new THREE.Vector3 ( -ui.roadCenterDistance - shoulderLeft                               ,  0 );
+                const a2 = new THREE.Vector3 ( -ui.roadCenterDistance - shoulderLeft                               ,  clearanceHeight - cornerLeftHeight );
+                const a3 = new THREE.Vector3 ( -ui.roadCenterDistance - shoulderLeft + cornerLeftWidth             ,  clearanceHeight );
+                const a4 = new THREE.Vector3 ( roadWidth + shoulderRight - ui.roadCenterDistance - cornerRightWidth,  clearanceHeight );
+                const a5 = new THREE.Vector3 ( roadWidth + shoulderRight - ui.roadCenterDistance                   ,  clearanceHeight - cornerRightHeight );
+                const a6 = new THREE.Vector3 ( roadWidth + shoulderRight - ui.roadCenterDistance                   ,  0 );
+                const a7 = new THREE.Vector3 ( -ui.roadCenterDistance - shoulderLeft                               ,  0 );
+
+                clearancePts.push( a1 );
+                clearancePts.push( a2 );
+                clearancePts.push( a3 );
+                clearancePts.push( a4 );
+                clearancePts.push( a5 );
+                clearancePts.push( a6 );
+                clearancePts.push( a7 );
+
+                const clearanceShape = new THREE.Shape( clearancePts );
+                
+                const clearanceDashLine = addDashLine( clearanceShape, color );
+
+                
+                // 시설한계 여유폭
+                const maginCircleShape = new THREE.Shape();
+                maginCircleShape.absarc( 0, 0, limitMargin, 0, Math.PI * 2, false );
+                
+                const maginCircleDashLine = addDashLine( maginCircleShape, color );
+                
+                const circle1 = maginCircleDashLine.clone();
+                circle1.position.set( clearancePts[1].x, clearancePts[1].y );
+
+                const circle2 = maginCircleDashLine.clone();
+                circle2.position.set( clearancePts[2].x, clearancePts[2].y );            
+
+                const circle3 = maginCircleDashLine.clone();
+                circle3.position.set( clearancePts[3].x, clearancePts[3].y );              
+
+                const circle4 = maginCircleDashLine.clone();
+                circle4.position.set( clearancePts[4].x, clearancePts[4].y );
+
+
+                // 시설한계 그룹 후 회전
+                const clearanceGroup = new THREE.Group();
+                clearanceGroup.add( clearanceDashLine );
+                clearanceGroup.add( circle1 );
+                clearanceGroup.add( circle2 );
+                clearanceGroup.add( circle3 );
+                clearanceGroup.add( circle4 );
+                
+                clearanceGroup.applyMatrix4( matrix.makeTranslation( ui.roadCenterDistance, 0, 0 ) );
+                clearanceGroup.applyMatrix4( matrix.makeRotationZ( Math.atan( slopeValue/100 ) ) );
+                clearanceGroup.applyMatrix4( matrix.makeTranslation( -ui.roadCenterDistance, -ui.roadCenterDistance * slopeValue/100, 0 ) );
+                
+                showContainer.push( clearanceGroup );
+
+
+                // 자연환기 r1 계산
+                const r1Y = new THREE.Vector3( 0, ui.r1Height );
+                const tagetVector = new THREE.Vector3(); //필요없는 값
+                const r1_1 = circle1.getWorldPosition( tagetVector ).distanceTo( r1Y );
+                const r1_2 = circle2.getWorldPosition( tagetVector ).distanceTo( r1Y );
+                const r1_3 = circle3.getWorldPosition( tagetVector ).distanceTo( r1Y );
+                const r1_4 = circle4.getWorldPosition( tagetVector ).distanceTo( r1Y );
+                const r1Max = Math.max( r1_1, r1_2, r1_3, r1_4 ) + limitMargin;
+                r1Nature.push( r1Max );
+
+
+                // 횡류식 기준점이 될 시설한계 최대높이 
+                a3.applyMatrix4( matrix.makeRotationZ( Math.atan( slopeValue / 100 ) ) );
+                clearanceMaxHeight.push( a3.y );
+
+                a4.applyMatrix4( matrix.makeRotationZ( Math.atan( slopeValue / 100 ) ) );
+                clearanceMaxHeight.push( a4.y );
+
+            }
+
+
+            /**************************************************************************************
+             *** 환기방식에 따른 r1 계산
+             **************************************************************************************/   
+
+            let r1Final
+
+            if ( ui.ventilation == '제트팬') {
+                
+                // 제트팬 외측 직경 결정
+                let jetfanOutterDiameter
+                
+                if ( ui.jetfanInnerDiameter == 1.250) {
+                    
+                    jetfanOutterDiameter = 1.450;
+                    
+                } else if( ui.jetfanInnerDiameter == 1.400 ) {
+                    
+                    jetfanOutterDiameter = 1.600;
+                    
+                } else if( ui.jetfanInnerDiameter == 1.530 ) {
+                    
+                    jetfanOutterDiameter = 1.750;
+                    
+                } else if(  ui.jetfanInnerDiameter == 1.030 ) {
+
+                    jetfanOutterDiameter = 1.230;
+
+                };
+                
+
+                // 편경사 최대절대값
+                let absoluteMax
+                
+                if ( crossSlopeMin + crossSlopeMax > 0) {
+                    
+                    absoluteMax = crossSlopeMax;
+                    
+                } else {
+                    
+                    absoluteMax = crossSlopeMin;
+                    
+                };
+                
+                const crossSlopeabsoluteMax = Math.abs( absoluteMax );
+                
+
+                // 제트팬 위치 계산
+                const jetfanMargin = 0.200
+                
+                const jetfanSlope = Math.atan( crossSlopeabsoluteMax/100 );
+                
+                const jetfanX = 0.3 * ui.jetfanInnerDiameter + jetfanOutterDiameter/2;
+
+                let jetfanDistance
+                let jetfanY
+                
+                if ( ui.jetfanNum == 1 ) {
+
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + jetfanMargin + jetfanOutterDiameter/2;
+                    
+                } else if( ui.jetfanNum == 2 ) {
+
+                    jetfanDistance = Math.max( ui.jetfanDistance, jetfanX );
+                    ui.jetfanDistance = Math.max( ui.jetfanDistance, jetfanX ); //ui에 최소값을 적용
+
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + jetfanDistance*crossSlopeabsoluteMax/100 + jetfanMargin + jetfanOutterDiameter/2;
+                    
+                } else if( ui.jetfanNum == 3 ) {
+
+                    jetfanDistance = Math.max( ui.jetfanDistance, jetfanX );
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + 2*jetfanDistance*crossSlopeabsoluteMax/100 + jetfanMargin + jetfanOutterDiameter/2;
+
+                };
+
+
+                // 제트팬 이격거리 라인
+                const jetfanDistanceShp = new THREE.Shape();
+                jetfanDistanceShp.absarc( 0, 0, jetfanX, 0, Math.PI * 2, false );
+                
+                const jetfanDistanceLine = addDashLine( jetfanDistanceShp, 'gray' );
+                
+
+                // 제트팬 외경, 내경
+                const jetfanOutterDiameterShp = new THREE.Shape();
+                jetfanOutterDiameterShp.absarc( 0, 0, jetfanOutterDiameter/2, 0, Math.PI*2, false );
+                
+                const jetfanInnerDiameterShp = new THREE.Path();
+                jetfanInnerDiameterShp.absarc( 0, 0, ui.jetfanInnerDiameter/2, 0, Math.PI * 2, false );
+                
+                jetfanOutterDiameterShp.holes.push( jetfanInnerDiameterShp );
+
+                const jetfanOutterDiameterSurf = addSurf( jetfanOutterDiameterShp, 0x82caaf );
+                
+
+                // 제트팬 여유폭
+                const jetfanMarginShp = new THREE.Shape();
+                jetfanMarginShp.absarc( 0, 0, jetfanMargin/2, 0, Math.PI * 2, false );
+                
+                const jetfanMarginDashLine = addDashLine( jetfanMarginShp, 'gray' );
+                jetfanMarginDashLine.position.set(0, -jetfanOutterDiameter/2 - jetfanMargin/2);
+                
+
+                // 제트팬 그룹
+                const jetfanGroup = new THREE.Group();
+                jetfanGroup.add( jetfanDistanceLine );
+                jetfanGroup.add( jetfanOutterDiameterSurf );
+                jetfanGroup.add( jetfanMarginDashLine );
+
+                if ( ui.jetfanNum == 1 ) {
+
+                    const jetfanCenter = jetfanGroup.clone();
+                    jetfanCenter.position.set( 0, jetfanY );
+                    showContainer.push( jetfanCenter );
+
+                } else if( ui.jetfanNum == 2 ) {
+
+                    const jetfanLeft = jetfanGroup.clone();
+                    jetfanLeft.position.set( -jetfanDistance, jetfanY );
+                    showContainer.push( jetfanLeft );
+
+                    const jetfanRight = jetfanGroup.clone();
+                    jetfanRight.position.set( jetfanDistance, jetfanY );
+                    showContainer.push( jetfanRight );
+
+                } else if( ui.jetfanNum ==3 ) {
+
+                    const jetfanLeft = jetfanGroup.clone();
+                    jetfanLeft.position.set( -2*jetfanDistance, jetfanY );
+                    showContainer.push( jetfanLeft );
+
+                    const jetfanRight = jetfanGroup.clone();
+                    jetfanRight.position.set( 2*jetfanDistance, jetfanY );
+                    showContainer.push( jetfanRight );
+
+                    const jetfanCenter = jetfanGroup.clone();
+                    jetfanCenter.position.set( 0, jetfanY );
+                    showContainer.push( jetfanCenter );
+
+                };
+
+
+                // 제트팬 날개 그리기
+                const jetfanCenterDiameterShp = new THREE.Shape();
+                jetfanCenterDiameterShp.absarc( 0, 0, 0.2, 0, Math.PI * 2, false );
+                
+                // const jetfanCenterDiameterLine = addLine( jetfanCenterDiameterShp, 0x82caaf );
+                const jetfanCenterDiameterSurf = addSurf( jetfanCenterDiameterShp, 0x82caaf );
+
+                const wingStart = new THREE.Vector3( 0, 0.2 );
+                matrix.makeRotationZ( THREE.Math.degToRad( 20 ) );
+                wingStart.applyMatrix4( matrix );
+
+                const wingShp = new THREE.Shape();
+                wingShp.moveTo( wingStart.x, wingStart.y );
+                wingShp.quadraticCurveTo( -0.090, ( ui.jetfanInnerDiameter/2 - 0.030 ) , wingStart.x, wingStart.y +  ui.jetfanInnerDiameter/3 );
+                wingShp.quadraticCurveTo( 0.000, ui.jetfanInnerDiameter/2 , - wingStart.x, wingStart.y +  ui.jetfanInnerDiameter/3 );
+                wingShp.quadraticCurveTo( 0.090, ( ui.jetfanInnerDiameter/2 - 0.030 ) , - wingStart.x, wingStart.y ); 
+                
+                // const wingLine1 = addLine( wingShp, 0x82caaf );
+                const wingLine1 = addSurf( wingShp, 0x82caaf );
+                
+                const wingLine2 = wingLine1.clone();
+                wingLine2.rotation.z = THREE.Math.degToRad( 60 );
+                
+                const wingLine3 = wingLine1.clone();
+                wingLine3.rotation.z = THREE.Math.degToRad( 120 );
+                
+                const wingLine4 = wingLine1.clone();
+                wingLine4.rotation.z = THREE.Math.degToRad( 180 );
+                
+                const wingLine5 = wingLine1.clone();
+                wingLine5.rotation.z = THREE.Math.degToRad( 240 );
+                
+                const wingLine6 = wingLine1.clone();
+                wingLine6.rotation.z = THREE.Math.degToRad( 300 );
+
+                const wingGroup = new THREE.Group();
+                wingGroup.add( jetfanCenterDiameterSurf );
+                wingGroup.add( wingLine1 );
+                wingGroup.add( wingLine2 );
+                wingGroup.add( wingLine3 );
+                wingGroup.add( wingLine4 );
+                wingGroup.add( wingLine5 );
+                wingGroup.add( wingLine6 );
+
+
+                if ( ui.jetfanNum == 1 ) {
+
+                    const wingGroup1 = wingGroup.clone();
+                    wingGroup1.position.set( 0, jetfanY );
+                    jetfanWingContainer.push( wingGroup1 );
+                    
+                } else if( ui.jetfanNum == 2 ) {
+
+                    const wingGroup1 = wingGroup.clone();
+                    wingGroup1.position.set( -jetfanDistance, jetfanY );
+                    jetfanWingContainer.push( wingGroup1 );
+                    
+                    const wingGroup2 = wingGroup.clone();
+                    wingGroup2.position.set( jetfanDistance, jetfanY );
+                    jetfanWingContainer.push( wingGroup2 );
+
+                } else if( ui.jetfanNum ==3 ) {
+
+                    const wingGroup1 = wingGroup.clone();
+                    wingGroup1.position.set( -2*jetfanDistance, jetfanY );
+                    jetfanWingContainer.push( wingGroup1 );
+                    
+                    const wingGroup2 = wingGroup.clone();
+                    wingGroup2.position.set( 2*jetfanDistance, jetfanY );
+                    jetfanWingContainer.push( wingGroup2 );
+
+                    const wingGroup3 = wingGroup.clone();
+                    wingGroup3.position.set( 0, jetfanY );
+                    jetfanWingContainer.push( wingGroup3 );
+
+                };
+
+
+                // 제트팬을 고려한 R1 계산
+                let jetfanPosition
+
+                if ( ui.jetfanNum == 3 ) { 
+
+                    jetfanPosition = new THREE.Vector3( 2*jetfanDistance, jetfanY );
+
+                } else {
+
+                    jetfanPosition = new THREE.Vector3( jetfanDistance, jetfanY );
+
+                };
+                
+                r1Jetfan = Math.max( 
+                    
+                    jetfanPosition.distanceTo( new THREE.Vector3( 0, ui.r1Height ) ) + jetfanX,
+                    Math.ceil( Math.max.apply( null, r1Nature ) * 100 ) / 100
+                
+                );
+                
+
+                // 제트팬 R1결과
+                r1Final = Math.ceil( r1Jetfan * 100 ) / 100; //소수점 셋째자리올림
+
+
+                // 조명위치 기록
+                const lampDistance = ( jetfanPosition.x + jetfanX + 0.65 ); // 램프 폭 : 0.7 - rod 폭 : 0.05
+                const lampHeight = Math.sqrt( r1Final*r1Final - lampDistance*lampDistance );
+                const lampOrigin = new THREE.Vector3( lampDistance, lampHeight + ui.r1Height );
+                sessionStorage.setItem('조명위치', JSON.stringify( lampOrigin ) );
+
+
+                // 제트팬 위치기록
+                const jetfanPositionLog = new THREE.Vector3( jetfanDistance, jetfanY );
+                sessionStorage.setItem('제트팬위치', JSON.stringify( jetfanPositionLog ) );
+
+                // 제트팬 직경
+                const jetfanOutterDiameterLog = jetfanOutterDiameter;
+                sessionStorage.setItem('제트팬직경', JSON.stringify( jetfanOutterDiameterLog ) );
+
+                // 제트팬 이격거리
+                const jetfanXLog = jetfanX;
+                sessionStorage.setItem('제트팬이격거리', JSON.stringify( jetfanXLog ) );
+
+                console.log( 'jetfanX', jetfanX )
+
+
+            } else if ( ui.ventilation == '횡류식') {
+                
+                // 초기 R1값 가정
+                const initialRadius = Math.max.apply(null, r1Nature );
+                
+
+                // 횡류식 시설한계 기준점
+                const transverseBaseY = Math.max.apply( null, clearanceMaxHeight );
+                
+
+                // 판넬높이
+                let pannelHeight
+
+
+                // 브라켓 제원
+                const bracketB1 = 0.200;
+                const bracketB2 = 0.300;
+
+                const bracketH1 = 0.800;
+                const bracketH2 = 0.300;
+                const bracketH3 = 0.400;
+
+
+                // 덕트면적을 고려한 R1 계산
+                const baseLine1 = transverseBaseY - ui.r1Height + ui.ductSlabDistance + bracketH1; // r1중심부터 높이
+                const baseLine2 = transverseBaseY - ui.r1Height + ui.ductSlabDistance - bracketH2 - bracketH3; // r1중심부터 높이
+                
+                let bracketCase
+
+                const bracketLtPts = [];
+                const bracketRtPts = [];
+
+                const bracketLtAngle = [];
+                const bracketRtAngle = [];
+
+                let r2Origin, r2Final, r4Origin, r4Final
+
+                const ductslabPts = [];
+
+                for ( let i=0; i<1000; i++) {
+
+                    r1Transverse = Math.ceil( ( initialRadius + i * 0.01 ) * 100 ) / 100 // 10단위 올림
+
+                    const r1LeftShp = new THREE.Shape();
+                    r1LeftShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+
+                    const r1RightShp = new THREE.Shape();
+                    r1RightShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+
+                    const r1LeftEndHeight = r1LeftShp.getPoint( 1 ).y - ui.r1Height;
+
+                    // console.clear();
+
+                    if ( r1LeftEndHeight <= baseLine2 ) {
+                        
+                        const bowTheta = 2 * Math.acos( baseLine1 / r1Transverse );
+
+                        const width = r1Transverse * Math.sin( bowTheta/2 );
+
+                        const area1 = 0.5 * r1Transverse * r1Transverse * ( bowTheta - Math.sin( bowTheta ) );
+                        const area2 = 2 * width * ( bracketH1 - ui.ductSlabThickness );
+
+                        // break 및 브라켓
+                        if ( ui.ductArea < area1 + area2 ) {
+
+                            bracketCase = 'case1'
+
+                            // 브라켓을 위한 각도 및 좌표 계산
+                            const width1 = Math.sqrt( r1Transverse*r1Transverse - baseLine1*baseLine1 );
+                            const angle1 = Math.acos( baseLine1 / r1Transverse );
+                                                    
+                            const width2 = Math.sqrt( r1Transverse*r1Transverse - baseLine2*baseLine2 );
+                            const angle2 = Math.acos( baseLine2 / r1Transverse );
+
+                            const bracketLtStartPt = new THREE.Vector2( -width1, baseLine1 + ui.r1Height );
+                            const bracketLtEndPt = new THREE.Vector2( -width2, baseLine2 + ui.r1Height );
+
+                            const bracketRtStartPt = new THREE.Vector2( width1, baseLine1 + ui.r1Height );
+                            const bracketRtEndPt = new THREE.Vector2( width2, baseLine2 + ui.r1Height );
+
+                            // 브라켓
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y ) );
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y - bracketH1 ) );
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 ) );
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 - bracketH2 ) );
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtEndPt.x, bracketLtEndPt.y ) );
+
+                            bracketLtAngle.push( angle1 );
+                            bracketLtAngle.push( angle2 );
+
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketRtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketRtStartPt.y - bracketH1 - bracketH2 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtEndPt.x, bracketRtEndPt.y ));
+
+                            bracketRtAngle.push( angle1 );
+                            bracketRtAngle.push( angle2 );
+
+                            // 덕트슬래브 
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            
+                            console.log( 'case1, 면적', area1 + area2 ); 
+
+                            break
+
+                        }
+
+                    } else if ( baseLine2 < r1LeftEndHeight && r1LeftEndHeight <= baseLine1 ) {
+
+                        bracketCase = 'case2'
+
+                        const bowTheta = 2 * Math.acos( baseLine1 / r1Transverse );
+
+                        const width = r1Transverse * Math.sin( bowTheta/2 );
+
+                        const area1 = 0.5 * r1Transverse * r1Transverse * ( bowTheta - Math.sin( bowTheta ) );
+                        const area2 = 2 * width * ( bracketH1 - ui.ductSlabThickness );
+
+                        // break 및 브라켓
+                        if ( ui.ductArea < area1 + area2 ) {
+
+                            // r2 제원 계산
+                            const r2TopPoint = r1LeftShp.getPoint( 1 );
+                            const r2BottomPoint = new THREE.Vector3( footingLtEndX[1], footingLtEndY[1], 0 );
+                            const r2Line = r2TopPoint.distanceTo( r2BottomPoint ) / 2;
+                            const r2Alpha = Math.atan( ( r2BottomPoint.x - r2TopPoint.x )/( r2BottomPoint.y - r2TopPoint.y ) );
+                            const r2Beta = r1ThetaLt + r2Alpha; // 방향반대
+                            r2Final = r2Line / Math.cos( r2Beta );
+
+                            r2Origin = new THREE.Vector3( 0, r1Transverse - r2Final );
+                            r2Origin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) ); // 방향반대
+                            r2Origin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                            const r2Theta = Math.PI - 2 * r2Beta;
+
+                            // r4 제원 계산
+                            const r4TopPoint = r1RightShp.getPoint( 1 );
+                            const r4BottomPoint = new THREE.Vector3( footingRtEndX[0], footingRtEndY[0], 0 );
+
+                            const r4Line = r4TopPoint.distanceTo( r4BottomPoint ) / 2;
+                            const r4Alpha = Math.atan( ( r4BottomPoint.x - r4TopPoint.x )/( r4BottomPoint.y - r4TopPoint.y ) );
+                            const r4Beta = r1ThetaRt - r4Alpha; // 방향반대
+                            r4Final = r4Line / Math.cos( r4Beta );
+
+                            r4Origin = new THREE.Vector3( 0, r1Transverse - r4Final );
+                            r4Origin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) ); // 방향반대
+                            r4Origin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                            const r4Theta = Math.PI - 2 * r4Beta;
+
+                            // 브라켓을 위한 각도 및 좌표 계산
+                            /// R1
+                            const width1 = Math.sqrt( r1Transverse*r1Transverse - baseLine1*baseLine1 );
+                            const angle1 = Math.acos( baseLine1 / r1Transverse );
+
+                            //// 좌측
+                            const heightLt2 = baseLine2 + ui.r1Height - r2Origin.y; // r2중심부터 높이
+
+                            const angleLt1 = Math.asin( heightLt2 / r2Final );
+                            const angleLt2 = Math.PI/2 - r1ThetaLt - angleLt1;
+
+                            const widthLt2 = heightLt2 / Math.tan( angleLt1 );
+                            
+                            //// 우측
+                            const heightRt2 = baseLine2 + ui.r1Height - r4Origin.y; // r2중심부터 높이
+
+                            const angleRt1 = Math.asin( heightRt2 / r4Final );
+                            const angleRt2 = Math.PI/2 - r1ThetaRt - angleRt1;
+
+                            const widthRt2 = heightRt2 / Math.tan( angleRt1 );
+
+                            
+                            const bracketLtStartPt = new THREE.Vector2( -width1, baseLine1 + ui.r1Height );
+                            const bracketLtEndPt = new THREE.Vector2( -widthLt2 + r2Origin.x, baseLine2 + ui.r1Height );
+
+                            const bracketRtStartPt = new THREE.Vector2( width1, baseLine1 + ui.r1Height );
+                            const bracketRtEndPt = new THREE.Vector2( widthRt2 + r4Origin.x, baseLine2 + ui.r1Height );
+
+                            // 브라켓
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y - bracketH1 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 - bracketH2 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtEndPt.x, bracketLtEndPt.y ));
+
+                            bracketLtAngle.push( angle1 );
+                            bracketLtAngle.push( angleLt2 );
+
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketLtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketLtStartPt.y - bracketH1 - bracketH2 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtEndPt.x, bracketRtEndPt.y ));
+
+                            bracketRtAngle.push( angle1 );
+                            bracketRtAngle.push( angleRt2 );
+
+                            // 덕트슬래브
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));                       
+                            
+                            console.log( 'case2, 면적', area1 + area2 );
+                            
+                            break
+
+                        }
+                        
+                    } else if ( baseLine1 < r1LeftEndHeight ) {
+
+                        bracketCase = 'case3'
+
+                        // area 1
+                        const bowTheta = 2 * Math.acos( r1LeftEndHeight / r1Transverse );
+
+                        const area1_1 = r1Transverse * r1Transverse * bowTheta  / 2;
+                        const area1_2 = 0.5 * baseLine1 * baseLine1 * Math.tan( bowTheta / 2 ) * 2;
+                        const area1 = area1_1 - area1_2;
+
+                        // r2 제원 계산
+                        const r2TopPoint = r1LeftShp.getPoint( 1 );
+                        const r2BottomPoint = new THREE.Vector3( footingLtEndX[1], footingLtEndY[1], 0 );
+                        const r2Line = r2TopPoint.distanceTo( r2BottomPoint ) / 2;
+                        const r2Alpha = Math.atan( ( r2BottomPoint.x - r2TopPoint.x )/( r2BottomPoint.y - r2TopPoint.y ) );
+                        const r2Beta = r1ThetaLt + r2Alpha; // 방향반대
+                        r2Final = r2Line / Math.cos( r2Beta );
+
+                        r2Origin = new THREE.Vector3( 0, r1Transverse - r2Final );
+                        r2Origin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) ); // 방향반대
+                        r2Origin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                        const r2Theta = Math.PI - 2 * r2Beta;
+
+                        // area 2
+                        const heightLt1 = baseLine1 + ui.r1Height - r2Origin.y; // r2중심부터 높이
+
+                        const angleLt1 = Math.asin( heightLt1 / r2Final );
+                        const angleLt2 = Math.PI/2 - r1ThetaLt - angleLt1;
+
+                        const widthLt1 = heightLt1 / Math.tan( Math.PI/2 - r1ThetaLt );
+                        const widthLt2 = heightLt1 / Math.tan( angleLt1 );
+
+                        const area2_1 = r2Final * r2Final * angleLt2 / 2;
+                        const area2_2 = 0.5 * ( widthLt2 - widthLt1 ) * heightLt1;
+                        const area2 = area2_1 - area2_2;
+
+                        // r4 제원 계산
+                        const r4TopPoint = r1RightShp.getPoint( 1 );
+                        const r4BottomPoint = new THREE.Vector3( footingRtEndX[0], footingRtEndY[0], 0 );
+
+                        const r4Line = r4TopPoint.distanceTo( r4BottomPoint ) / 2;
+                        const r4Alpha = Math.atan( ( r4BottomPoint.x - r4TopPoint.x )/( r4BottomPoint.y - r4TopPoint.y ) );
+                        const r4Beta = r1ThetaRt - r4Alpha; // 방향반대
+                        r4Final = r4Line / Math.cos( r4Beta );
+
+                        r4Origin = new THREE.Vector3( 0, r1Transverse - r4Final );
+                        r4Origin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) ); // 방향반대
+                        r4Origin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                        const r4Theta = Math.PI - 2 * r4Beta;
+
+                        // area 3
+                        const heightRt1 = baseLine1 + ui.r1Height - r4Origin.y; // r4중심부터 높이
+                        
+                        const angleRt1 = Math.asin( heightRt1 / r4Final );
+                        const angleRt2 = Math.PI/2 - r1ThetaRt - angleRt1;
+
+                        const widthRt1 = heightRt1 / Math.tan( Math.PI/2 - r1ThetaRt );
+                        const widthRt2 = heightRt1 / Math.tan( angleRt1 );
+
+                        const area3_1 = r4Final * r4Final * angleRt2 / 2;
+                        const area3_2 = 0.5 * ( widthRt2 - widthRt1 ) * heightRt1;
+                        const area3 = area3_1 - area3_2;
+
+                        // area 4
+                        const area4 = ( -r2Origin.x + widthLt2 + r4Origin.x + widthRt2 ) * ( bracketH1 - ui.ductSlabThickness );
+                        
+                        // break 및 브라켓
+                        if ( ui.ductArea < area1 + area2 + area3 + area4 ) {
+                            
+                            // 브라켓을 위한 각도 및 좌표 계산
+                            //// 좌측
+                            const heightLt2 = baseLine2 + ui.r1Height - r2Origin.y;
+
+                            const angleLt3 = Math.asin( heightLt2 / r2Final );
+                            const angleLt4 = Math.PI/2 - r1ThetaLt - angleLt3;
+
+                            const widthLt3 = heightLt2 / Math.tan( angleLt3 );
+
+                            const bracketLtStartPt = new THREE.Vector2( -widthLt2 + r2Origin.x, baseLine1 + ui.r1Height );
+                            const bracketLtEndPt = new THREE.Vector2( -widthLt3 + r2Origin.x, baseLine2 + ui.r1Height );
+
+                            //// 우측
+                            const heightRt2 = baseLine2 + ui.r1Height - r4Origin.y;
+                            
+                            const angleRt3 = Math.asin( heightRt2 / r4Final );
+                            const angleRt4 = Math.PI/2 - r1ThetaRt - angleRt3;
+
+                            const widthRt3 = heightRt2 / Math.tan( angleRt3 );
+
+                            const bracketRtStartPt = new THREE.Vector2( widthRt2 + r4Origin.x, baseLine1 + ui.r1Height );
+                            const bracketRtEndPt = new THREE.Vector2( widthRt3 + r4Origin.x, baseLine2 + ui.r1Height );
+
+                            // 브라켓 생성
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x, bracketLtStartPt.y - bracketH1 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1 + bracketB2, bracketLtStartPt.y - bracketH1 - bracketH2 ));
+                            bracketLtPts.push( new THREE.Vector2 ( bracketLtEndPt.x, bracketLtEndPt.y ));
+
+                            bracketLtAngle.push( angleLt2 );
+                            bracketLtAngle.push( angleLt4 );
+
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x, bracketRtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketLtStartPt.y - bracketH1 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1 - bracketB2, bracketLtStartPt.y - bracketH1 - bracketH2 ));
+                            bracketRtPts.push( new THREE.Vector2 ( bracketRtEndPt.x, bracketRtEndPt.y ));
+
+                            bracketRtAngle.push( angleRt2 );
+                            bracketRtAngle.push( angleRt4 );                            
+
+                            // 덕트슬래브 생성
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketRtStartPt.x - bracketB1, bracketRtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 ));
+                            ductslabPts.push( new THREE.Vector2 ( bracketLtStartPt.x + bracketB1, bracketLtStartPt.y - bracketH1 + ui.ductSlabThickness ));
+
+                            console.log( 'case3, 면적', area1 + area2 + area3 + area4 );
+
+                            break
+
+                        }
+
+                    }
+
+                }
+
+
+                // 브라켓 생성
+                if ( bracketCase == 'case1' ) {
+
+                    const bracketLtShp = new THREE.Shape();
+                    bracketLtShp.moveTo( bracketLtPts[0].x, bracketLtPts[0].y );
+                    bracketLtPts.forEach( i => { bracketLtShp.lineTo( i.x, i.y ) } );
+                    bracketLtShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2 + bracketLtAngle[1], Math.PI/2 + bracketLtAngle[0], true );
+
+                    const bracketLtSurf = addSurf( bracketLtShp, 'steelblue' );
+                    showContainer.push( bracketLtSurf );
+
+                    const bracketRtShp = new THREE.Shape();
+                    bracketRtShp.moveTo( bracketRtPts[0].x, bracketRtPts[0].y );
+                    bracketRtPts.forEach( i => { bracketRtShp.lineTo( i.x, i.y ) } );
+                    bracketRtShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2 - bracketRtAngle[1], Math.PI/2 - bracketRtAngle[0], false );
+
+                    const bracketRtSurf = addSurf( bracketRtShp, 'steelblue' );
+                    showContainer.push( bracketRtSurf );
+
+                } else if ( bracketCase == 'case2' ) {
+
+                    const bracketLtShp = new THREE.Shape();
+                    bracketLtShp.moveTo( bracketLtPts[0].x, bracketLtPts[0].y );
+                    bracketLtPts.forEach( i => { bracketLtShp.lineTo( i.x, i.y ) } );
+                    bracketLtShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + bracketLtAngle[1], Math.PI/2 + r1ThetaLt, true );
+                    bracketLtShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2 + r1ThetaLt, Math.PI/2 + bracketLtAngle[0], true );
+
+                    const bracketLtSurf = addSurf( bracketLtShp, 'lightblue' );
+                    showContainer.push( bracketLtSurf );
+
+                    const bracketRtShp = new THREE.Shape();
+                    bracketRtShp.moveTo( bracketRtPts[0].x, bracketRtPts[0].y );
+                    bracketRtPts.forEach( i => { bracketRtShp.lineTo( i.x, i.y ) } );
+                    bracketRtShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - bracketRtAngle[1], Math.PI/2 - r1ThetaRt, false );
+                    bracketRtShp.absarc( 0, ui.r1Height, r1Transverse, Math.PI/2 - r1ThetaRt, Math.PI/2 - bracketRtAngle[0], false );
+
+                    const bracketRtSurf = addSurf( bracketRtShp, 'lightblue' );
+                    showContainer.push( bracketRtSurf );
+
+                } else if ( bracketCase == 'case3' ) {
+
+                    const bracketLtShp = new THREE.Shape();
+                    bracketLtShp.moveTo( bracketLtPts[0].x, bracketLtPts[0].y );
+                    bracketLtPts.forEach( i => { bracketLtShp.lineTo( i.x, i.y ) } );
+                    bracketLtShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + bracketLtAngle[1], Math.PI/2 + r1ThetaLt + bracketLtAngle[0], true );
+
+                    const bracketLtSurf = addSurf( bracketLtShp, 'dodgerblue' );
+                    showContainer.push( bracketLtSurf );
+
+                    const bracketRtShp = new THREE.Shape();
+                    bracketRtShp.moveTo( bracketRtPts[0].x, bracketRtPts[0].y );
+                    bracketRtPts.forEach( i => { bracketRtShp.lineTo( i.x, i.y ) } );
+                    bracketRtShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - bracketRtAngle[1], Math.PI/2 - r1ThetaRt - bracketRtAngle[0], false );
+
+                    const bracketRtSurf = addSurf( bracketRtShp, 'dodgerblue' );
+                    showContainer.push( bracketRtSurf );
+
+                }
+
+                // 덕트슬래브 생성
+                const ductSlabShp = new THREE.Shape();
+                ductSlabShp.moveTo( ductslabPts[0].x, ductslabPts[0].y );
+                ductslabPts.forEach( i => { ductSlabShp.lineTo( i.x, i.y ) } );
+
+                const ductSlabSurf = addSurf( ductSlabShp, 'darkslateblue' );
+                showContainer.push( ductSlabSurf );
+                          
+                
+                // 결과값 저장
+                sessionStorage.setItem( '브라켓케이스', JSON.stringify( bracketCase ) );
+                sessionStorage.setItem( '브라켓좌측점', JSON.stringify( bracketLtPts ) );
+                sessionStorage.setItem( '브라켓우측점', JSON.stringify( bracketRtPts ) );
+                sessionStorage.setItem( '브라켓좌측각도', JSON.stringify( bracketLtAngle ) );
+                sessionStorage.setItem( '브라켓우측각도', JSON.stringify( bracketRtAngle ) );
+                sessionStorage.setItem( '슬래브', JSON.stringify( ductslabPts ) );
+
+
+                // 횡류식 R1결과
+                r1Final = r1Transverse;
+
+
+                /*
+                // 브라켓
+                const bracketB1 = 0.250
+                const bracketB2 = 0.250
+                const bracketH1 = 0.200
+                const bracketH2 = 0.400
+                
+
+                // 덕트면적을 고려한 R1 계산
+                for ( let i=0; i<1000; i++) {
+                    
+                    r1Transverse = initialRadius + i * 0.01;
+                    
+                    pannelHeight = r1Transverse + ui.r1Height - ( transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                    
+                    const bowTheta = 2 * Math.acos( ( transverseBaseY - ui.r1Height + ui.ductSlabDistance + ui.ductSlabThickness ) / r1Transverse );
+                    
+                    // console.log( 'initialRadius : ', initialRadius)
+                    // console.log( 'r1Transverse : ', r1Transverse)
+                    
+                    // console.log( '좌 : ', ui.ductArea + ui.pannelWidth * pannelHeight )
+                    // console.log( '우 : ', Math.pow( r1Transverse, 2 )/2 * ( bowTheta - Math.sin( bowTheta) ))
+                    
+
+                    // 활꼴넓이 구하는 공식 + 격벽면적
+                    if ( ui.ductArea + ui.pannelWidth * pannelHeight < Math.pow( r1Transverse, 2 )/2 * ( bowTheta - Math.sin( bowTheta ))) break
+                    
+                };
+                
+
+                // 횡류식 R1결과
+                r1Final = Math.ceil( r1Transverse * 100 ) / 100; //소수점 셋째자리올림
+                
+
+                // 덕트슬래브 그리기
+                const ductSlabUpperHalfWidth = Math.sqrt( Math.pow( r1Final, 2 ) - Math.pow( transverseBaseY - ui.r1Height + ui.ductSlabDistance + ui.ductSlabThickness, 2 )  );
+                
+                const ductSlabUpperShp = new THREE.Shape();
+                ductSlabUpperShp.moveTo( - ductSlabUpperHalfWidth + bracketB1, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                ductSlabUpperShp.lineTo( ductSlabUpperHalfWidth - bracketB1, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                ductSlabUpperShp.lineTo( ductSlabUpperHalfWidth - bracketB1, transverseBaseY + ui.ductSlabDistance );
+                ductSlabUpperShp.lineTo( - ductSlabUpperHalfWidth + bracketB1, transverseBaseY + ui.ductSlabDistance );
+                ductSlabUpperShp.lineTo( - ductSlabUpperHalfWidth + bracketB1, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                
+                const ductSlabUpperLine = addLine( ductSlabUpperShp, 'rebeccapurple' );
+                showContainer.push( ductSlabUpperLine );
+
+                const ductSlabUpperSurf = addSurf(ductSlabUpperShp, 'darkslateblue' );
+                showContainer.push( ductSlabUpperSurf );
+                
+
+                // 브라켓 그리기
+                const bracketEndX = Math.sqrt( Math.pow( r1Final, 2 ) - Math.pow( transverseBaseY - ui.r1Height + ui.ductSlabDistance - bracketH1 - bracketH2, 2 ) );
+
+                const bracketStartTheta = Math.acos( ( transverseBaseY - ui.r1Height + ui.ductSlabDistance + ui.ductSlabThickness ) / r1Transverse );
+                const bracketEndTheta = Math.acos( ( transverseBaseY - ui.r1Height + ui.ductSlabDistance - bracketH1 - bracketH2 ) / r1Transverse );
+                
+                const bracketLtShp = new THREE.Shape();
+                bracketLtShp.moveTo( - ductSlabUpperHalfWidth, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                bracketLtShp.lineTo( - ductSlabUpperHalfWidth, transverseBaseY + ui.ductSlabDistance );
+                bracketLtShp.lineTo( - ductSlabUpperHalfWidth + bracketB1, transverseBaseY + ui.ductSlabDistance );
+                bracketLtShp.lineTo( - ductSlabUpperHalfWidth + bracketB1 + bracketB2 , transverseBaseY + ui.ductSlabDistance );
+                bracketLtShp.lineTo( - ductSlabUpperHalfWidth + bracketB1 + bracketB2 , transverseBaseY + ui.ductSlabDistance - bracketH1 );
+                bracketLtShp.lineTo( - bracketEndX , transverseBaseY + ui.ductSlabDistance - bracketH1 - bracketH2 );
+                bracketLtShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2 + bracketEndTheta,  Math.PI/2 + bracketStartTheta, true );
+                
+                // const bracketLeftLine = addLine( bracketLtShp, 'mediumpurple' );
+                // showContainer.push( bracketLeftLine );
+
+                const bracketLtSurf = addSurf( bracketLtShp, 'steelblue' );
+                showContainer.push( bracketLtSurf );
+
+                // const bracketLtExtr = addExtr( bracketLtShp, 'darkslateblue', 1 );
+                // showContainer.push( bracketLtExtr );
+                
+                const bracketRtShp = new THREE.Shape();
+                bracketRtShp.moveTo( ductSlabUpperHalfWidth, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                bracketRtShp.lineTo( ductSlabUpperHalfWidth, transverseBaseY + ui.ductSlabDistance );
+                bracketRtShp.lineTo( ductSlabUpperHalfWidth - bracketB1, transverseBaseY + ui.ductSlabDistance );
+                bracketRtShp.lineTo( ductSlabUpperHalfWidth - bracketB1 - bracketB2 , transverseBaseY + ui.ductSlabDistance );
+                bracketRtShp.lineTo( ductSlabUpperHalfWidth - bracketB1 - bracketB2 , transverseBaseY + ui.ductSlabDistance - bracketH1 );
+                bracketRtShp.lineTo( bracketEndX , transverseBaseY + ui.ductSlabDistance - bracketH1 - bracketH2 );
+                bracketRtShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2 - bracketEndTheta,  Math.PI/2 - bracketStartTheta, false );
+                
+                // const bracketRtLine = addLine( bracketRtShp, 'mediumpurple' );
+                // showContainer.push( bracketRtLine );
+
+                const bracektRtSurf = addSurf( bracketRtShp, 'steelblue' );
+                showContainer.push( bracektRtSurf );
+
+                // 격벽 그리기
+                const pannelTheta = Math.asin( ui.pannelWidth/2 / r1Final );
+
+                const pannelShp = new THREE.Shape();
+                pannelShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2 - pannelTheta, Math.PI/2 + pannelTheta, false );
+                pannelShp.lineTo( -ui.pannelWidth/2, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+                pannelShp.lineTo( ui.pannelWidth/2, transverseBaseY + ui.ductSlabDistance + ui.ductSlabThickness );
+
+
+                const pannelLine = addLine( pannelShp, 'mediumpurple' );
+                showContainer.push( pannelLine );
+
+                const pannelSurf = addSurf( pannelShp, 'mediumpurple' );
+                showContainer.push( pannelSurf );
+            */
+
+
+            } else if ( ui.ventilation == '자연환기') {
+                    
+                    // 자연환기 R1결과
+                    r1Final = Math.ceil( Math.max.apply( null, r1Nature ) * 100 ) / 100; //소수점 셋째자리올림
+
+            }
+
+
+
+
+            /**************************************************************************************
+             ** 터널단면제원 계산
+             *************************************************************************************/
+
+            // r1형상 = r2상단점을 찾기 위해
+            const r1LtShp = new THREE.Shape();
+            r1LtShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+
+            const r1RtShp = new THREE.Shape();
+            r1RtShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+
+            // r2상단점
+            const r2TopPoint = r1LtShp.getPoint( 1 );
+            const r4TopPoint = r1RtShp.getPoint( 1 );
+
+            // 공동구 끝점
+            const footingLtEndPoint = new THREE.Vector3( footingLtEndX[1], footingLtEndY[1], 0 );
+            const footingRtEndPoint = new THREE.Vector3( footingRtEndX[0], footingRtEndY[0], 0 );
+            
+            // 공동구 하단점
+            const commonDuctLtBottomPoint = new THREE.Vector3( commonDuctLtX[1], commonDuctLtY[1], 0 );
+            const commonDuctRtBottomPoint = new THREE.Vector3( commonDuctRtX[0], commonDuctRtY[0], 0 );            
+            
+
+            // r2계산
+            const r2Value = r2Calculation ( r2TopPoint, footingLtEndPoint );
+
+            function r2Calculation ( topPoint, bottomPoint, ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint ) / 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaLt + rAlpha;// 방향반대
+                const rFinal = rLine / Math.cos( rBeta );
+
+                const rOrigin = new THREE.Vector3( 0, r1Final - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );//방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                const rTheta = Math.PI - 2 * rBeta;
+
+                const result = {
+
+                    final : rFinal,
+                    origin : rOrigin,
+                    theta : rTheta
+
+                }
+
+                return result
+                
+            }
+
+            const r2Final = r2Value.final;
+            const r2Origin = r2Value.origin;
+            const r2Theta = r2Value.theta;
+
+
+            // r3계산
+            const r3TopPoint1 = new THREE.Vector3( 0, r1Final + ui.liningT0 - ui.liningT1 );
+            r3TopPoint1.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            r3TopPoint1.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+
+            const r3TopPoint2 = new THREE.Vector3( 0, r1Final + ui.liningT0 - ui.liningT2 );
+            r3TopPoint2.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            r3TopPoint2.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );            
+
+            const r3Value_1 = r3Calculation( r3TopPoint1, footingLtEndPoint, ui.liningT1 );
+            const r3Value_2 = r3Calculation( r3TopPoint2, commonDuctLtBottomPoint, ui.liningT2 );
+
+            function r3Calculation ( topPoint, bottomPoint, liningThickness ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint )/ 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaLt + rAlpha;
+                const rSubline = rLine / Math.cos( rBeta ) ;
+                const rFinal = rSubline + liningThickness;
+
+                const rOrigin = new THREE.Vector3( 0, r1Final + ui.liningT0 - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+                
+                const rBottomLength = Math.sqrt( Math.pow( rFinal, 2 ) - Math.pow( rOrigin.y -( concreteLtEndY[1] - ui.footingHeight ), 2 ) );
+                const rTheta = Math.PI - r1ThetaLt - Math.atan( rBottomLength /( rOrigin.y -( concreteLtEndY[1] - ui.footingHeight ) ) ); 
+
+                return [ rFinal, rOrigin, rTheta ]
+                
+            }
+
+
+            // r3결정
+            let r3Final
+            let r3Origin
+            let r3Theta
+
+            if ( r3Value_1[0] >= r3Value_2[0] ) {
+
+                r3Final = r3Value_1[0];
+                r3Origin = r3Value_1[1];
+                r3Theta = r3Value_1[2];
+
+            } else {
+
+                r3Final = r3Value_2[0];
+                r3Origin = r3Value_2[1];
+                r3Theta = r3Value_2[2];
+
+            };
+
+
+            // r4계산
+            const r4Value = r4Calculation ( r4TopPoint, footingRtEndPoint );
+
+
+            function r4Calculation ( topPoint, bottomPoint, ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint ) / 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaRt - rAlpha;// 방향반대
+                const rFinal = rLine / Math.cos( rBeta );
+
+                const rOrigin = new THREE.Vector3( 0, r1Final - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );//방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0) );
+
+                const rTheta = Math.PI - 2 * rBeta;
+
+                return [ rFinal, rOrigin, rTheta ]
+
+            }
+
+            const r4Final = r4Value[0];
+            const r4Origin = r4Value[1];
+            const r4Theta = r4Value[2];
+            
+
+
+            // r5계산
+            const r5TopPoint1 = new THREE.Vector3( 0, r1Final + ui.liningT0 - ui.liningT1 );
+            r5TopPoint1.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );
+            r5TopPoint1.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+
+            const r5TopPoint2 = new THREE.Vector3( 0, r1Final + ui.liningT0 - ui.liningT2 );
+            r5TopPoint2.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );
+            r5TopPoint2.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );            
+
+            const r5Value_1 = r5Calculation( r5TopPoint1, footingRtEndPoint, ui.liningT1 );
+            const r5Value_2 = r5Calculation( r5TopPoint2, commonDuctRtBottomPoint, ui.liningT2 );
+
+            function r5Calculation ( topPoint, bottomPoint, liningThickness ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint )/ 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaRt - rAlpha;//방향반대
+                const rSubline = rLine / Math.cos( rBeta ) ;
+                const rFinal = rSubline + liningThickness;
+
+                const rOrigin = new THREE.Vector3( 0, r1Final + ui.liningT0 - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );//방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+
+                const rBottomLength = Math.sqrt( Math.pow( rFinal, 2 ) - Math.pow( rOrigin.y -( concreteRtEndY[1] - ui.footingHeight ), 2 ) );
+                const rTheta = Math.PI - r1ThetaRt - Math.atan( rBottomLength /( rOrigin.y -( concreteRtEndY[1] - ui.footingHeight ) ) ); 
+
+                return [ rFinal, rOrigin, rTheta ]
+
+            }
+
+
+            // r5결정
+            let r5Final
+            let r5Origin
+            let r5Theta
+
+            if ( r5Value_1[0] >= r5Value_2[0] ) {
+
+                r5Final = r5Value_1[0];
+                r5Origin = r5Value_1[1];
+                r5Theta = r5Value_1[2];
+
+            } else {
+
+                r5Final = r5Value_2[0];
+                r5Origin = r5Value_2[1];
+                r5Theta = r5Value_2[2];
+
+            };
+
+
+            /**************************************************************************************
+             *** 터널형상 그리기
+             **************************************************************************************/            
+
+            // 편경사변화에 따른 공동구 위치 계산 
+            const concreteLt = new THREE.Vector3( - ui.roadCenterDistance - ui.marginLeft, ( - ui.roadCenterDistance - ui.marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - ui.roadCenterDistance + ui.marginRight, ( roadWidth - ui.roadCenterDistance + ui.marginRight ) * ui.crossSlopeStandard / 100 );
+
+
+            // 포장 그리기
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+            const concreteShp = new THREE.Shape();
+            concreteShp.moveTo( concreteLt.x, concreteLt.y );
+            concreteShp.lineTo( concreteRt.x, concreteRt.y );
+            concreteShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            concreteShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+            concreteShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+            const concreteSurf = addSurf( concreteShp, 'darkslategray' );
+            showContainer.push( concreteSurf );
+
+            const cementeFilterShp = new THREE.Shape();
+            cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+            
+            const cementeFilterSurf = addSurf( cementeFilterShp, 'silver' );
+            showContainer.push( cementeFilterSurf );
+
+
+            // 맹암거 그리기
+            const moleDrainageHeight = 0.400;
+
+            const moleDrainageLtShp = new THREE.Shape();
+            moleDrainageLtShp.moveTo( concreteLt.x, concreteLt.y - ui.footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x + 0.175, ( concreteLt.x + 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.125, concreteLt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.425, concreteLt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.550, concreteLt.y - ui.footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - ui.footingHeight );
+            
+            // const moleDrainageLtLine = addLine( moleDrainageLtShp, 'red' );
+            // showContainer.push( moleDrainageLtLine );
+
+            const moleDrainageLtSurf = addSurf( moleDrainageLtShp, 'slategray' );
+            showContainer.push( moleDrainageLtSurf );
+
+
+            const moleDrainageRtShp = new THREE.Shape();
+            moleDrainageRtShp.moveTo( concreteRt.x, concreteRt.y - ui.footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x - 0.175, ( concreteRt.x - 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.125, concreteRt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.425, concreteRt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.550, concreteRt.y - ui.footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - ui.footingHeight );
+
+            const moleDrainageRtSurf = addSurf( moleDrainageRtShp, 'slategray' );
+            showContainer.push( moleDrainageRtSurf );
+
+
+
+            // 터널형상 그리기
+            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtType[footingLtType.length-1].y - concreteLt.y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
+
+            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtType[footingRtType.length-1].y - concreteRt.y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+
+            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - ui.footingHeight ) ) / r3Final );
+            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
+
+            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - ui.footingHeight ) ) / r5Final );
+            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;     
+
+
+            const footingRtReverse = [...footingRtType].reverse(); // 원본 배열유지
+
+
+            const liningShp = new THREE.Shape();
+            liningShp.moveTo( footingLtType[0].x + concreteLt.x, footingLtType[0].y + concreteLt.y );
+            for ( let i=1; i < footingLtType.length; i++) {
+
+                liningShp.lineTo( footingLtType[i].x + concreteLt.x, footingLtType[i].y + concreteLt.y ) ;
+
+            };
+            liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+            liningShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2, true );
+            liningShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            liningShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+            for ( let i=0; i < footingRtReverse.length; i++) {
+
+                liningShp.lineTo( footingRtReverse[i].x + concreteRt.x, footingRtReverse[i].y + concreteRt.y );
+
+            };
+            liningShp.lineTo( footingRtReverse[footingRtReverse.length-1].x + concreteRt.x, footingRtReverse[footingRtReverse.length-1].y + concreteRt.y - ui.footingHeight );
+            liningShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            liningShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            liningShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            liningShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            liningShp.lineTo( footingLtType[0].x + concreteLt.x, footingLtType[0].y + concreteLt.y - ui.footingHeight );
+            liningShp.lineTo( footingLtType[0].x + concreteLt.x, footingLtType[0].y + concreteLt.y );
+
+            // const sectionLine = addLine( liningShp, 'black' );
+            // showContainer.push( sectionLine );
+
+            const liningSurf = addSurf( liningShp, 'steelblue' );
+            showContainer.push( liningSurf );
+
+
+            // 공동구 뚜껑 그리기
+            const coverSlabLtShp = new THREE.Shape();
+            coverSlabLtShp.moveTo( footingLtType[8].x + concreteLt.x, footingLtType[8].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[9].x + concreteLt.x, footingLtType[9].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[10].x + concreteLt.x, footingLtType[10].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[13].x + concreteLt.x, footingLtType[13].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[14].x + concreteLt.x, footingLtType[14].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[15].x + concreteLt.x, footingLtType[15].y + concreteLt.y );
+            coverSlabLtShp.lineTo( footingLtType[8].x + concreteLt.x, footingLtType[8].y + concreteLt.y );
+
+            const coverSlabLtSurf = addSurf( coverSlabLtShp, 'powderblue' );
+            showContainer.push( coverSlabLtSurf );
+
+            
+            const coverSlabRtShp = new THREE.Shape();
+
+            if( ui.footingType == '기계환기(물분무)' ) {
+
+                coverSlabRtShp.moveTo( footingRtType[8].x + concreteRt.x, footingRtType[8].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[9].x + concreteRt.x, footingRtType[9].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[10].x + concreteRt.x, footingRtType[10].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[14].x + concreteRt.x, footingRtType[14].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[15].x + concreteRt.x, footingRtType[15].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[16].x + concreteRt.x, footingRtType[16].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[8].x + concreteRt.x, footingRtType[8].y + concreteRt.y );
+
+            } else {
+
+                coverSlabRtShp.moveTo( footingRtType[8].x + concreteRt.x, footingRtType[8].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[9].x + concreteRt.x, footingRtType[9].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[10].x + concreteRt.x, footingRtType[10].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[13].x + concreteRt.x, footingRtType[13].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[14].x + concreteRt.x, footingRtType[14].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[15].x + concreteRt.x, footingRtType[15].y + concreteRt.y );
+                coverSlabRtShp.lineTo( footingRtType[8].x + concreteRt.x, footingRtType[8].y + concreteRt.y );
+
+            };
+            
+            const coverSlabRtSurf = addSurf( coverSlabRtShp, 'powderblue' );
+            showContainer.push( coverSlabRtSurf );
+
+
+            // 터널내공 
+            const innerSectionShp = new THREE.Shape();
+            innerSectionShp.moveTo( footingLtType[0].x + concreteLt.x, footingLtType[0].y + concreteLt.y );
+            for ( let i=1; i < footingLtType.length; i++) {
+
+                innerSectionShp.lineTo( footingLtType[i].x + concreteLt.x, footingLtType[i].y + concreteLt.y ) ;
+
+            };
+            innerSectionShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+            innerSectionShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2, true );
+            innerSectionShp.absarc( 0, ui.r1Height, r1Final, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            innerSectionShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+            for ( let i=0; i < footingRtReverse.length; i++) {
+
+                innerSectionShp.lineTo( footingRtReverse[i].x + concreteRt.x, footingRtReverse[i].y + concreteRt.y );
+
+            };
+            innerSectionShp.moveTo( footingLtType[0].x + concreteLt.x, footingLtType[0].y + concreteLt.y );
+
+            const innerSectionSurf = addSurf( innerSectionShp, 'beige' )
+            // showContainer.push( innerSectionSurf );
+
+
+
+            // 숏크리트 그리기
+            const r3Gamma2 = Math.asin( ( r3Origin.y - ( concreteLt.y - ui.footingHeight ) ) / ( r3Final + ui.shotcrete ) );
+            const r3Theta2 = Math.PI/2 - r1ThetaLt + r3Gamma2;
+            
+            const r5Gamma2 = Math.asin( ( r5Origin.y - ( concreteRt.y - ui.footingHeight ) ) / ( r5Final + ui.shotcrete ) );
+            const r5Theta2 = Math.PI/2 - r1ThetaRt + r5Gamma2;
+
+            const scShp = new THREE.Shape();    
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            scShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            scShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete, Math.PI/2 + r1ThetaLt + r3Theta2, Math.PI/2 + r1ThetaLt, true );
+            scShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0 + ui.shotcrete, Math.PI/2 + r1ThetaLt,  Math.PI/2, true );
+            scShp.absarc( 0, ui.r1Height, r1Final + ui.liningT0 + ui.shotcrete, Math.PI/2,  Math.PI/2 - r1ThetaRt, true );
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
+
+            const scSurf = addSurf( scShp, 'skyblue' );
+            showContainer.push( scSurf );
+
+        
+
+            // 공동구 라이닝두께T1 그리기
+            const liningT1Shp = new THREE.Shape();
+            liningT1Shp.absarc( 0, 0, ui.liningT1, 0, Math.PI * 2, true );
+            
+            const liningT1DashLine = addDashLine( liningT1Shp, 'gray' );
+
+            const liningT1LtLine = liningT1DashLine.clone();
+            liningT1LtLine.position.set( footingLtEndPoint.x, footingLtEndPoint.y, 0 );
+            showContainer.push( liningT1LtLine );
+
+            const liningT1RtLine = liningT1DashLine.clone();
+            liningT1RtLine.position.set( footingRtEndPoint.x, footingRtEndPoint.y, 0 );
+            showContainer.push( liningT1RtLine );
+
+            
+            // 공동구 라이닝두께T2 그리기
+            const liningT2Shp = new THREE.Shape();
+            liningT2Shp.absarc( 0, 0, ui.liningT2, 0, Math.PI * 2, true );
+
+            const liningT2DashLine = addDashLine( liningT2Shp, 'gray' );
+
+            const liningT2LtLine = liningT2DashLine.clone();
+            liningT2LtLine.position.set( commonDuctLtBottomPoint.x, commonDuctLtBottomPoint.y, 0 );
+            showContainer.push( liningT2LtLine );            
+
+            const liningT2RtLine = liningT2DashLine.clone();
+            liningT2RtLine.position.set( commonDuctRtBottomPoint.x, commonDuctRtBottomPoint.y, 0 );
+            showContainer.push( liningT2RtLine );
+            
+
+
+            // 가이드 라인
+            {
+
+                const r1Shp = new THREE.Shape();
+                r1Shp.moveTo( r2TopPoint.x, r2TopPoint.y );
+                r1Shp.lineTo( 0, ui.r1Height );
+                r1Shp.lineTo( r4TopPoint.x, r4TopPoint.y );
+
+                const r1GuideLine = addLine( r1Shp, 'black' );
+                showContainer.push( r1GuideLine );
+
+
+                const r2EndPoint = new THREE.Shape();
+                r2EndPoint.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+
+                const r2Shp = new THREE.Shape();
+                r2Shp.moveTo( r2EndPoint.getPoint( 0 ).x, r2EndPoint.getPoint( 0 ).y );
+                r2Shp.lineTo( r2Origin.x, r2Origin.y );
+
+                const r2GuideLine = addLine( r2Shp, 'black' );
+                showContainer.push( r2GuideLine );
+
+
+                const r4EndPoint = new THREE.Shape();
+                r4EndPoint.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+
+                const r4Shape = new THREE.Shape();
+                r4Shape.moveTo( r4EndPoint.getPoint( 1 ).x, r4EndPoint.getPoint( 1 ).y );
+                r4Shape.lineTo( r4Origin.x, r4Origin.y );
+
+                const r4GuideLine = addLine( r4Shape, 'black' );            
+                showContainer.push( r4GuideLine );
+
+
+                const r3EndPoint = new THREE.Shape();
+                r3EndPoint.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+
+                const r3Shp = new THREE.Shape();
+                r3Shp.moveTo( r3EndPoint.getPoint( 1 ).x, r3EndPoint.getPoint( 1 ).y );
+                r3Shp.lineTo( r3Origin.x, r3Origin.y );
+
+                const r3GuideLine = addLine( r3Shp, 'black' );
+                showContainer.push( r3GuideLine );
+
+
+                const r5EndPoint = new THREE.Shape();
+                r5EndPoint.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta1, true );
+
+                const r5Shp = new THREE.Shape();
+                r5Shp.moveTo( r5EndPoint.getPoint( 1 ).x, r5EndPoint.getPoint( 1 ).y );
+                r5Shp.lineTo( r5Origin.x, r5Origin.y );
+
+                const r5GuideLine = addLine( r5Shp, 'black' );
+                showContainer.push( r5GuideLine );
+
+            }
+
+
+            /**************************************************************************************
+             *** 치수넣기
+             **************************************************************************************/            
+
+            // 치수문자
+
+            const labelGeometry = new THREE.PlaneGeometry(1, 1);
+
+            function makeLabelCanvas( size, name ) {
+
+                const borderSize = 2;
+                const ctx = document.createElement('canvas').getContext('2d');
+                const font =  `${ size }px bold sans-serif`;
+                ctx.font = font;
+
+                // 이름의 길이를 예측합니다.
+                const doubleBorderSize = borderSize * 2;
+                const width = ctx.measureText(name).width + doubleBorderSize;
+                const height = size + doubleBorderSize;
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+                
+                // 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
+                ctx.font = font;
+                ctx.textBaseline = 'top';
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = 'black';
+                ctx.fillText(name, borderSize, borderSize);
+                
+                return ctx.canvas;
+
+            }
+
+            function addLabel( name ) {
+
+                const textCanvas = makeLabelCanvas( 50, name );
+                const texture = new THREE.CanvasTexture( textCanvas );
+
+                // 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
+                texture.minFilter = THREE.LinearFilter;
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+
+                const labelMaterial = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                });
+
+                // 라벨의 크기를 조정 : 해상도를 높임
+                const label = new THREE.Mesh( labelGeometry, labelMaterial );
+                const labelBaseScale = 0.005;
+                label.scale.x = textCanvas.width  * labelBaseScale;
+                label.scale.y = textCanvas.height * labelBaseScale;
+
+                return label
+
+            }
+
+            // const labelLiningT0 = addLabel( ui.liningT0.toFixed(3) );
+            // labelLiningT0.applyMatrix4( matrix.makeRotationZ( -Math.PI/2 ) );
+            // labelLiningT0.applyMatrix4( matrix.makeTranslation( 0, r1Final + ui.liningT0/2, 0.1 ) );
+            // labelLiningT0.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            // labelLiningT0.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+            // showContainer.push( labelLiningT0 );
+
+            // const labelShotcrete = addLabel( ui.shotcrete.toFixed(3) );
+            // labelShotcrete.applyMatrix4( matrix.makeRotationZ( -Math.PI/2 ) );
+            // labelShotcrete.applyMatrix4( matrix.makeTranslation( 0, r1Final + ui.liningT0 + ui.shotcrete/2, 0.1 ) );
+            // labelShotcrete.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            // labelShotcrete.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );            
+            // showContainer.push( labelShotcrete );
+
+            const labelR1_1 = addLabel( r1Final.toFixed(3) );
+            labelR1_1.applyMatrix4( matrix.makeRotationZ( -Math.PI/2 ) );
+            labelR1_1.applyMatrix4( matrix.makeTranslation( 0.15, r1Final/2, -0.1 ) );
+            labelR1_1.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            labelR1_1.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+            showContainer.push( labelR1_1 );
+
+            const labelR1_2 = addLabel( r1Final.toFixed(3) );
+            labelR1_2.applyMatrix4( matrix.makeRotationZ( Math.PI/2 ) );
+            labelR1_2.applyMatrix4( matrix.makeTranslation( -0.15, r1Final/2, -0.1 ) );
+            labelR1_2.applyMatrix4( matrix.makeRotationZ( -r1ThetaLt ) );
+            labelR1_2.applyMatrix4( matrix.makeTranslation( 0, ui.r1Height, 0 ) );
+            showContainer.push( labelR1_2 );
+
+            const labelR2 = addLabel( r2Final.toFixed(3) );
+            labelR2.applyMatrix4( matrix.makeRotationZ( -Math.PI/2 ) );
+            labelR2.applyMatrix4( matrix.makeTranslation( 0.15, r2Final/2, -0.1 ) );
+            labelR2.applyMatrix4( matrix.makeRotationZ( r1ThetaLt + r2Theta1 ) );
+            labelR2.applyMatrix4( matrix.makeTranslation( r2Origin.x, r2Origin.y, 0 ) );
+            showContainer.push( labelR2 );
+
+            const labelR3 = addLabel( r3Final.toFixed(3) );
+            labelR3.applyMatrix4( matrix.makeRotationZ( -Math.PI/2 ) );
+            labelR3.applyMatrix4( matrix.makeTranslation( 0.15, r3Final/2, -0.1 ) );
+            labelR3.applyMatrix4( matrix.makeRotationZ( r1ThetaLt + r3Theta1 ) );
+            labelR3.applyMatrix4( matrix.makeTranslation( r3Origin.x, r3Origin.y, 0 ) );
+            showContainer.push( labelR3 );
+
+            const labelR4 = addLabel( r4Final.toFixed(3) );
+            labelR4.applyMatrix4( matrix.makeRotationZ( Math.PI/2 ) );
+            labelR4.applyMatrix4( matrix.makeTranslation( -0.15, r4Final/2, -0.1 ) );
+            labelR4.applyMatrix4( matrix.makeRotationZ( - r1ThetaRt - r4Theta1 ) );
+            labelR4.applyMatrix4( matrix.makeTranslation( r4Origin.x, r4Origin.y, 0 ) );
+            showContainer.push( labelR4 );
+
+            const labelR5 = addLabel( r5Final.toFixed(3) );
+            labelR5.applyMatrix4( matrix.makeRotationZ( Math.PI/2 ) );
+            labelR5.applyMatrix4( matrix.makeTranslation( -0.15, r5Final/2, -0.1 ) );
+            labelR5.applyMatrix4( matrix.makeRotationZ( - r1ThetaRt - r5Theta1 ) );
+            labelR5.applyMatrix4( matrix.makeTranslation( r5Origin.x, r5Origin.y, 0 ) );
+            showContainer.push( labelR5 );
+
+            const labelCrossSlope = addLabel(  `S = ${ ui.crossSlopeStandard.toFixed(2) }%` );
+            labelCrossSlope.position.set(  0, 0.15, 0.1 );
+            showContainer.push( labelCrossSlope );
+
+
+
+
+            /**************************************************************************************
+             *** 편평률 / 굴착면적 계산
+             **************************************************************************************/  
+
+            // 편평률
+            scSurf.geometry.computeBoundingBox(); // geometry에 boundingBox속성을 넣어줌
+
+            const boxMax = scSurf.geometry.boundingBox.max;
+            const boxMin = scSurf.geometry.boundingBox.min;
+
+            const tunnelWidth = boxMax.x - boxMin.x;
+            const tunnelHeight = boxMax.y - boxMin.y;
+            
+            const flattening = tunnelHeight / tunnelWidth
+
+
+            // 굴착단면적
+            const liningArea = getArea( liningShp );
+            const innerSectionArea = getArea( innerSectionShp );
+            const scArea = getArea( scShp );
+            const concreteArea = getArea( concreteShp );
+            const cementeFilterArea = getArea( cementeFilterShp );
+            const moleDrainageLtArea = getArea( moleDrainageLtShp );
+            const moleDrainageRtArea = getArea( moleDrainageRtShp );
+
+            const totalArea = liningArea + innerSectionArea + scArea + concreteArea + cementeFilterArea + moleDrainageLtArea + moleDrainageRtArea;
+
+            function getArea( surfShp ) {
+
+                const surfGeo = new THREE.ShapeGeometry( surfShp, 200 );
+
+                //Triangle area calculation
+                function AreaOfTriangle( p1, p2, p3 ){
+
+                    let v1 = new THREE.Vector3();
+                    let v2 = new THREE.Vector3();
+
+                    // Calculate the vector of two edges by two vertex coordinates
+                    v1 = p1.clone().sub(p2);
+                    v2 = p1.clone().sub(p3);
+
+                    let v3 = new THREE.Vector3();
+                        
+                    // Triangle area calculation
+                    v3.crossVectors(v1,v2);
+                    const s = v3.length()/2;
+
+                    return s
+
+                }
+
+                let area = 0;
+
+                // // Traverse all triangle geometry.faces of a geometry, all triangle area accumulation is the surface area of ​​the geometry
+                // // For irregular surfaces, the higher the degree of subdivision, the higher the area calculation accuracy
+                // for ( let i = 0; i < surfGeo.faces.length; i++) {
+
+                //     //The corresponding vertex index of the triangle
+                //     const a = surfGeo.faces[i].a;
+                //     const b = surfGeo.faces[i].b;
+                //     const c = surfGeo.faces[i].c;
+
+                //     // Get the coordinates of the triangle to the three vertices
+                //     const p1 = surfGeo.vertices[a];
+                //     const p2 = surfGeo.vertices[b];
+                //     const p3 = surfGeo.vertices[c];
+
+                //     // Call the triangle area calculation function AreaOfTriangle
+                //     area += AreaOfTriangle(p1, p2, p3); //Triangular Face3 area cumulative calculation
+
+                // };
+
+                let p1 = new THREE.Vector3();
+                let p2 = new THREE.Vector3();
+                let p3 = new THREE.Vector3();
+
+                for (let i = 0; i < surfGeo.index.count/3; i++){
+
+                    const position = surfGeo.attributes.position;
+                    const index = surfGeo.index.array
+
+                    p1.fromBufferAttribute( position, index[i * 3 + 0] );
+                    p2.fromBufferAttribute( position, index[i * 3 + 1] );
+                    p3.fromBufferAttribute( position, index[i * 3 + 2] );
+
+                    area += AreaOfTriangle(p1, p2, p3); 
+                }
+
+                return area
+
+            }
+
+
+            // put data
+            const xElem = document.querySelector('#x');
+            const yElem = document.querySelector('#y');
+
+            xElem.textContent = flattening.toFixed(3);
+            yElem.textContent = totalArea.toFixed(3);
+
+
+            // scene 생성
+            showContainer.forEach( mesh => { scene.add( mesh ) } );
+
+            jetfanWingContainer.forEach( mesh => { scene.add( mesh ) } );
+
+
+            // 결과값 저장
+            sessionStorage.setItem('라이닝두께', JSON.stringify( ui.liningT0 ) );
+            
+            sessionStorage.setItem('이격거리(최종)', JSON.stringify( ui.roadCenterDistance ) );
+            sessionStorage.setItem('중심각좌측', JSON.stringify( r1ThetaLt ) );
+            sessionStorage.setItem('중심각우측', JSON.stringify( r1ThetaRt ) );
+
+            sessionStorage.setItem('r1중심고', JSON.stringify( ui.r1Height ) );
+            sessionStorage.setItem('r1반지름', JSON.stringify( r1Final ) );
+            
+            sessionStorage.setItem('r2원점', JSON.stringify( r2Origin ) );
+            sessionStorage.setItem('r2반지름', JSON.stringify( r2Final ) );
+            
+            sessionStorage.setItem('r3원점', JSON.stringify( r3Origin ) );
+            sessionStorage.setItem('r3반지름', JSON.stringify( r3Final ) );
+            
+            sessionStorage.setItem('r4원점', JSON.stringify( r4Origin ) );
+            sessionStorage.setItem('r4반지름', JSON.stringify( r4Final ) );
+            
+            sessionStorage.setItem('r5원점', JSON.stringify( r5Origin ) );
+            sessionStorage.setItem('r5반지름', JSON.stringify( r5Final ) );
+
+            sessionStorage.setItem('공동구타입', JSON.stringify( ui.footingType ) );
+            sessionStorage.setItem('공동구높이', JSON.stringify( ui.footingHeight ) );
+            sessionStorage.setItem('좌측공동구', JSON.stringify( footingLtType ) );
+            sessionStorage.setItem('우측공동구', JSON.stringify( footingRtType ) );
+
+            sessionStorage.setItem('좌측측대(최종)', JSON.stringify( ui.marginLeft ) );
+            sessionStorage.setItem('우측측대(최종)', JSON.stringify( ui.marginRight ) );
+
+            sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
+
+            sessionStorage.setItem('환기타입', JSON.stringify( ui.ventilation ) );
+
+        }
+
+        
+
+        function createUI() {
+            
+            //onFinishChange : 최종적인 값의 변경, onChange : 값 변경 중의 매 순간 발생
+            const gui = new GUI();
+
+            const crossSlopeStandardFolder = gui.addFolder( '편경사' )
+            crossSlopeStandardFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.10 ).name( '적용 편경사(%)' ).onChange( designTunnel );
+            crossSlopeStandardFolder.open();
+
+            const footingTypeFolder = gui.addFolder( '공동구타입' )
+            footingTypeFolder.add( ui, 'footingType', ['자연환기', '기계환기', '기계환기(물분무)' ] ).name( '공동구타입' ).onChange( changeFootingShape );
+            footingTypeFolder.open();
+
+            const footingDetailFolder = gui.addFolder( '공동구상세' )
+            footingDetailFolder.add( ui, 'marginLeft', marginInitLt - 0.25, marginInitLt + 0.50, 0.05 ).name( '좌측이격거리' ).onChange( designTunnel );
+            footingDetailFolder.add( ui, 'marginRight', marginInitRt - 0.25, marginInitRt + 0.50, 0.05 ).name( '우측이격거리' ).onChange( designTunnel );
+            footingDetailFolder.add( ui, 'footingHeight', 0.20, 1.00, 0.01 ).name( '공동구높이' ).onChange( designTunnel );
+            
+            
+            const ventilationFolder = gui.addFolder( '환기타입' )
+            ventilationFolder.add( ui, 'ventilation', ['자연환기', '제트팬', '횡류식'] ).name( '환기타입' ).onChange( ventilationDetail );
+            ventilationFolder.open();
+
+            const jetfanFolder = gui.addFolder( '제트팬상세' )
+            jetfanFolder.add( ui, 'jetfanNum', { 1 : 1, 2 : 2, 3 : 3 } ).name( '제트팬개수' ).onChange( designTunnel);
+            jetfanFolder.add( ui, 'jetfanInnerDiameter', { Type1030 : 1.030, Type1250 : 1.250, Type1400 : 1.400, Type1530 : 1.530 } ).name( '제트팬제원' ).onChange( designTunnel );
+            jetfanFolder.add( ui, 'jetfanDistance', 1.00, 3.00, 0.01 ).name( '제트팬이격거리' ).onChange( designTunnel );
+
+            const r1TransverseFoler = gui.addFolder( '횡류식상세' )
+            r1TransverseFoler.add( ui, 'ductArea', 10, 50, 1 ).name( '덕트면적(m2)' ).onChange( designTunnel );
+            r1TransverseFoler.add( ui, 'ductSlabDistance', 0.05, 2.00, 0.01 ).name( '슬래브이격거리' ).onChange( designTunnel );
+            r1TransverseFoler.add( ui, 'ductSlabThickness', 0.10, 0.50, 0.01 ).name( '슬래브두께' ).onChange( designTunnel );
+            r1TransverseFoler.add( ui, 'pannelWidth', 0.10, 0.50, 0.01 ).name( '격벽폭' ).onChange( designTunnel );
+            // gui.removeFolder(r1TransverseFoler)
+
+            const tunnelSupportFolder = gui.addFolder( '터널지보' )
+            tunnelSupportFolder.add( ui, 'shotcrete', 0.05, 0.30, 0.01 ).name( '숏크리트두께' ).onChange( designTunnel );
+            tunnelSupportFolder.add( ui, 'liningT0', 0.20, 0.60, 0.05 ).name( '라이닝두께' ).onChange( designTunnel );
+            tunnelSupportFolder.add( ui, 'liningT1', 0.01, 0.70, 0.01 ).name( '공동구측벽두께1' ).onChange( designTunnel );
+            tunnelSupportFolder.add( ui, 'liningT2', 0.01, 0.70, 0.01 ).name( '공동구측벽두께2' ).onChange( designTunnel );
+
+            const tunnelVariableFolder = gui.addFolder( '터널변수' )
+            tunnelVariableFolder.add( ui, 'roadCenterDistance', roadDistance-0.5, roadDistance+0.5, 0.010 ).name( '이격거리' ).onChange( designTunnel );
+            tunnelVariableFolder.add( ui, 'r1ThetaLt', 50, 60, 1.000 ).name( '중심각' ).onChange( designTunnel );
+            // tunnelVariableFolder.add( ui, 'r1ThetaRt', 50, 60, 1.000 ).name( '중심각우측' ).onChange( designTunnel );
+            tunnelVariableFolder.add( ui, 'r1Height', -5.000, 2.000, 0.05 ).name( '중심고' ).onChange( designTunnel );
+            tunnelVariableFolder.open();
+
+
+            r1TransverseFoler.hide();
+            
+            function ventilationDetail() {
+
+                if( ui.ventilation == '자연환기') {
+
+                    jetfanFolder.hide();
+                    r1TransverseFoler.hide();
+                    designTunnel();
+
+                } else if ( ui.ventilation == '제트팬') {
+
+                    jetfanFolder.show();
+                    r1TransverseFoler.hide();
+                    designTunnel();
+
+                } else if ( ui.ventilation == '횡류식') {
+
+                    jetfanFolder.hide();
+                    r1TransverseFoler.show();
+                    designTunnel();
+
+                }
+
+            }
+        
+        }
+
+
+
+        function addLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+       
+
+        function addDashLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineDashedMaterial( { color , dashSize: 0.2, gapSize: 0.05 } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            line.computeLineDistances(); //점선으로 만들어주기 위해 필요
+            return line;
+        }
+
+
+        function addSurf( shape, color ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.7, transparent: true, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, length ) {
+            
+            const extrudeSettings = {
+                steps : 1,
+                depth : length,
+                bevelEnabled : false,
+            }
+            
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity: 0.9, transparent: true } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+            
+        }
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        function render() {
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+
+                if ( ui.ventilation == '제트팬' && ui.jetfanNum == 1 ) {
+
+                    jetfanWingContainer[0].rotation.z -= 0.15;
+
+                } else if ( ui.ventilation == '제트팬' && ui.jetfanNum == 2 ) {
+
+                    jetfanWingContainer[0].rotation.z -= 0.15;
+                    jetfanWingContainer[1].rotation.z -= 0.15;
+
+                } else if ( ui.ventilation == '제트팬' && ui.jetfanNum == 3 ) {
+
+                    jetfanWingContainer[0].rotation.z -= 0.15;
+                    jetfanWingContainer[1].rotation.z -= 0.15;
+                    jetfanWingContainer[2].rotation.z -= 0.15;
+
+                };
+
+            
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+
+
+        // export GLTF
+        const exporter = new GLTFExporter();
+
+        document.getElementById("button").addEventListener("click", exportFile);        
+        
+        
+        function exportFile() {
+
+            const result = exporter.parse( scene, function ( result ) {
+
+					if ( result instanceof ArrayBuffer ) {
+
+						saveArrayBuffer( result, '단면.glb' );
+
+					} else {
+
+						const output = JSON.stringify( result, null, 2 );
+						saveString( output, '단면.gltf' );
+
+					}
+
+            } ) }
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+        
+    </script>
+    
+</body>
+
+</html>
