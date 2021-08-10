@@ -1,0 +1,1357 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }        
+
+        /* Add a black background color to the top navigation */
+            .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+                
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a class="active" href='TZ_Web4.html'>4. 강지보공</a>
+        <a href='TZ_Web5.html'>5. 라이닝구조도</a>
+        <a href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a href='TZ_Web9.html'>9. 부대시설</a>
+    </div>
+    
+    <canvas id="c"></canvas>
+    
+    <button id="button" type="button" >Export Model</button>    
+
+    <!-- <button id="test" type="button" > 잠시만 기다려주세요.. </button>  -->
+
+    <script type="module">
+        
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+
+        import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // GLTF Loader 선언
+        let loader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+
+
+        // Three js 기본변수
+        let camera, scene, renderer
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
+        const liningT0 = JSON.parse( sessionStorage.getItem( '라이닝두께') );
+
+        const roadCenterDistance = JSON.parse( sessionStorage.getItem( '이격거리(최종)' ) );
+
+        const r1ThetaLt= JSON.parse( sessionStorage.getItem( '중심각좌측' ) );
+        const r1ThetaRt = JSON.parse( sessionStorage.getItem( '중심각우측' ) );
+        const r1Height = JSON.parse( sessionStorage.getItem( 'r1중심고' ) );
+        const r1Final = JSON.parse( sessionStorage.getItem( 'r1반지름' ) );
+
+        const r2Origin = JSON.parse( sessionStorage.getItem( 'r2원점' ) );
+        const r2Final = JSON.parse( sessionStorage.getItem( 'r2반지름' ) );
+
+        const r3Origin = JSON.parse( sessionStorage.getItem( 'r3원점' ) );
+        const r3Final = JSON.parse( sessionStorage.getItem( 'r3반지름' ) );
+
+        const r4Origin = JSON.parse( sessionStorage.getItem( 'r4원점' ) );
+        const r4Final = JSON.parse( sessionStorage.getItem( 'r4반지름' ) );
+
+        const r5Origin = JSON.parse( sessionStorage.getItem( 'r5원점' ) );
+        const r5Final = JSON.parse( sessionStorage.getItem( 'r5반지름' ) );
+
+
+        const footingType = JSON.parse( sessionStorage.getItem( '공동구타입' ) );
+        const footingHeight = JSON.parse( sessionStorage.getItem( '공동구높이' ) );
+        const footingLtType = JSON.parse( sessionStorage.getItem( '좌측공동구' ) );
+        const footingRtType = JSON.parse( sessionStorage.getItem( '우측공동구' ) );
+
+        const marginLeft = JSON.parse( sessionStorage.getItem( '좌측측대(최종)' ) );
+        const marginRight = JSON.parse( sessionStorage.getItem( '우측측대(최종)' ) );
+
+        const springLineEL =  JSON.parse( sessionStorage.getItem( '스프링라인EL' ) );
+
+        const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
+
+
+
+        // 파라메트릭 값
+        const ui = {
+
+            // 적용 편경사
+            crossSlopeStandard : crossSlopeStandard,
+
+            // 적용 연장
+            totalLength : 10,
+
+            // 굴진장/지보장
+            longSpacing : 2.000, // (longitudinalSpacing)
+            
+            // 숏크리트 두께
+            shotcrete : 0.120,
+            
+            // 강지보타입
+            steelribType : 'LG-50',
+
+
+        };
+
+
+        // Run        
+        initGraphic();
+        designTunnel();
+        createUI();
+        
+
+        function initGraphic() {
+            
+            const canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+
+            // Perspective
+            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            camera.position.set( -7, 7, 15 );             
+            
+
+            // Orthographic
+            // camera = new THREE.OrthographicCamera( 
+            //     window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            // ); // left. right, top, bottom, near, far 
+            // camera.position.set( 0, 0, 20 ); 
+            
+
+            // OrbitControl : 뷰 확대 및 회전
+            const controls = new OrbitControls( camera, canvas );
+            controls.target.set( 0, 3, 0 );
+            // controls.target.set( 0, 0, 0 );
+            controls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();               
+            scene.background = new THREE.Color( 0xf0f0f0 );
+            
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // // 바닥 그리드
+            // const size = 30;
+            // const divisions = 30;
+            // const gridHelper = new THREE.GridHelper( size, divisions );
+            // gridHelper.position.y = - 2;
+            // gridHelper.material.opacity = 0.4;
+            // gridHelper.material.transparent = true;
+            // scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper(1); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+
+            // const light = new THREE.SpotLight( 0xffffff, 0.5 );
+            // light.position.set( 0, 15, 5 );
+            // light.angle = THREE.Math.degToRad( 30 )
+            // light.castShadow = true;
+            // scene.add(light);
+            
+            const light = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            // light.castShadow = true;
+            scene.add(light);
+            
+
+            // light helper
+            // const lightHelper = new THREE.SpotLightHelper( light, 10 );
+            // scene.add( lightHelper );            
+            
+
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.shadowMap.enabled = true;
+            
+        }
+        
+
+
+        function designTunnel() {
+
+
+            // 이전 메쉬 삭제
+            for ( let i=0; i < showContainer.length; i++) {
+
+                scene.remove( showContainer[i] );    
+                
+            };
+
+
+            // 배열초기화
+            showContainer = [];
+            
+
+            // 도로중심선
+            const roadCenterPoints = [];
+            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, - 2 ) );
+            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, roadWidth + shoulderRight ) );
+
+            const roadCenterShape = new THREE.Shape( roadCenterPoints );
+            
+            const roadCenterDashLine = addDashLine(  roadCenterShape, 'dimgray' );
+            // showContainer.push( roadCenterDashLine );
+
+
+            // 터널중심선
+            const tunnelCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            tunnelCenterDashLine.position.set( roadCenterDistance, 0, 0);
+            showContainer.push( tunnelCenterDashLine );
+
+
+            // 콘크리트포장과 시멘트필터층
+            const concreteLt = new THREE.Vector3( - roadCenterDistance - marginLeft, ( - roadCenterDistance - marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - roadCenterDistance + marginRight, ( roadWidth - roadCenterDistance + marginRight ) * ui.crossSlopeStandard / 100 );
+
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+            const concretePavementShp = new THREE.Shape();
+            concretePavementShp.moveTo( concreteLt.x, concreteLt.y );
+            concretePavementShp.lineTo( concreteRt.x, concreteRt.y );
+            concretePavementShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+            concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+            // const concretePavementLine = addLine( concretePavementShp, 'darkslategray' );
+            // showContainer.push( concretePavementLine );
+
+           
+            const cementeFilterShp = new THREE.Shape();
+            cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+            
+            // const cementeFilterLine = addLine( cementeFilterShp, 'silver' );
+            // showContainer.push( cementeFilterLine );
+
+
+            // 맹암거 그리기
+            const moleDrainageHeight = 0.400;
+
+            const moleDrainageLtShp = new THREE.Shape();
+            moleDrainageLtShp.moveTo( concreteLt.x, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x + 0.175, ( concreteLt.x + 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.125, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.425, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.550, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - footingHeight );
+
+      
+
+            const moleDrainageRtShp = new THREE.Shape();
+            moleDrainageRtShp.moveTo( concreteRt.x, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x - 0.175, ( concreteRt.x - 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.125, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.425, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.550, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - footingHeight );
+
+
+            // 편경사변화에 따른 공동구 위치 계산 
+            const footingLtSlope = footingLtType.map( i => new THREE.Vector2 ( i.x + concreteLt.x, i.y + concreteLt.y ) );
+            const footingRtSlope = footingRtType.map( i => new THREE.Vector2 ( i.x + concreteRt.x, i.y + concreteRt.y ) );
+
+
+            // 터널형상 그리기
+            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
+
+            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+
+            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / r3Final );
+            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
+
+            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / r5Final );
+            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;
+
+            const footingRtReverse = [...footingRtSlope].reverse();//원본 배열유지
+
+            const liningShp = new THREE.Shape();
+            liningShp.moveTo( footingLtSlope[0].x, footingLtSlope[0].y );
+            footingLtSlope.forEach( i => liningShp.lineTo( i.x, i.y ) );
+            liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2, true );
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            liningShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+            footingRtReverse.forEach( i => liningShp.lineTo( i.x, i.y ) );
+            liningShp.lineTo( footingRtReverse[footingRtReverse.length-1].x, footingRtReverse[footingRtReverse.length-1].y - footingHeight );
+            liningShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            liningShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            liningShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y - footingHeight );
+            liningShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y );
+
+            const liningLine = addLine( liningShp, 'steelblue' );
+            showContainer.push( liningLine );
+                
+                
+            // 숏크리트 그리기
+            const r3Gamma2 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final + ui.shotcrete ) );
+            const r3Theta2 = Math.PI/2 - r1ThetaLt + r3Gamma2;
+            
+            const r5Gamma2 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / ( r5Final + ui.shotcrete ) );
+            const r5Theta2 = Math.PI/2 - r1ThetaRt + r5Gamma2;
+
+            const scShp = new THREE.Shape();    
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            scShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            scShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete, Math.PI/2 + r1ThetaLt + r3Theta2, Math.PI/2 + r1ThetaLt, true );
+            scShp.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2 + r1ThetaLt,  Math.PI/2, true );
+            scShp.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2,  Math.PI/2 - r1ThetaRt, true );
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
+
+            const scLine = addLine( scShp, 'skyblue' );
+            showContainer.push( scLine );
+
+
+
+
+
+            /**************************************************************************************
+             * 강지보(Steel Rib)
+             * 
+             * 1. 환봉형상(환봉1, 환봉2)
+             * 2. 환봉 옵셋거리
+             * 3. 영역계산(환봉1, 환봉2)
+             * 4. 환봉모델링
+             * 5. 부등변 앵글 좌우측배치
+             * 6. 스파이더 좌우측배치
+             * 7. 연결고리 좌우측배치
+             * 8. 바닥부 모델링
+             **************************************************************************************/           
+
+            // 시간측정
+            const start_time = (new Date()).getTime();             
+            //
+
+
+            
+            let rBar1Shp, rBar2Shp
+            
+            let rBar1Dist, rBar2Dist
+            
+            if( ui.steelribType == 'LG-50' ) {
+                
+                // 1. 환봉형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.absarc( 0, 0, 0.030/2, 0, Math.PI * 2, false );
+                
+                rBar2Shp = new THREE.Shape();
+                rBar2Shp.absarc( 0, 0, 0.020/2, 0, Math.PI * 2, false );
+                
+                // 2. 환봉옵셋
+                rBar1Dist = 0.030/2;
+                rBar2Dist = 0.030 + 0.050 + 0.020/2;
+                
+            } else if ( ui.steelribType == 'LG-70' ) {
+                
+                // 1. 환봉형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.absarc( 0, 0, 0.030/2, 0, Math.PI * 2, false );
+                
+                rBar2Shp = new THREE.Shape();
+                rBar2Shp.absarc( 0, 0, 0.020/2, 0, Math.PI * 2, false );
+                
+                // 2. 환봉옵셋
+                rBar1Dist = 0.030/2;
+                rBar2Dist = 0.030 + 0.070 + 0.020/2;
+                
+            } else if ( ui.steelribType == 'LG-95' ) {
+                
+                // 1. 환봉형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.absarc( 0, 0, 0.032/2, 0, Math.PI * 2, false );
+                
+                rBar2Shp = new THREE.Shape();
+                rBar2Shp.absarc( 0, 0, 0.022/2, 0, Math.PI * 2, false );
+                
+                // 2. 환봉옵셋
+                rBar1Dist = 0.032/2;
+                rBar2Dist = 0.032 + 0.095 + 0.022/2;
+                
+            } else if ( ui.steelribType == 'H-100' ) {
+            
+                // 1. H형강 형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.moveTo( -0.050,  0.050 );
+                rBar1Shp.lineTo( -0.050,  0.042 );
+                rBar1Shp.lineTo( -0.003 , 0.042 );
+                rBar1Shp.lineTo( -0.003, -0.042 );
+                rBar1Shp.lineTo( -0.050, -0.042 );
+                rBar1Shp.lineTo( -0.050, -0.050 );
+                rBar1Shp.lineTo(  0.050, -0.050 );
+                rBar1Shp.lineTo(  0.050, -0.042 );
+                rBar1Shp.lineTo(  0.003, -0.042 );
+                rBar1Shp.lineTo(  0.003,  0.042 );
+                rBar1Shp.lineTo(  0.050,  0.042 );
+                rBar1Shp.lineTo(  0.050,  0.050 );
+                rBar1Shp.lineTo( -0.050,  0.050 );
+                
+                // 2. H형강 옵셋
+                rBar1Dist = 0.100/2;
+                
+            } else if ( ui.steelribType == 'H-125' ) {
+                
+                // 1. H형강 형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.moveTo ( -0.0625,  0.0625 );
+                rBar1Shp.lineTo ( -0.0625,  0.0535 );
+                rBar1Shp.lineTo ( -0.0033,  0.0535 );
+                rBar1Shp.lineTo ( -0.0033, -0.0535 );
+                rBar1Shp.lineTo ( -0.0625, -0.0535 );
+                rBar1Shp.lineTo ( -0.0625, -0.0625 );
+                rBar1Shp.lineTo (  0.0625, -0.0625 );
+                rBar1Shp.lineTo (  0.0625, -0.0535 );
+                rBar1Shp.lineTo (  0.0033, -0.0535 );
+                rBar1Shp.lineTo (  0.0033,  0.0535 );
+                rBar1Shp.lineTo (  0.0625,  0.0535 );
+                rBar1Shp.lineTo (  0.0625,  0.0625 );
+                rBar1Shp.lineTo ( -0.0625,  0.0625 );
+                
+                //2. H형강 옵셋
+                rBar1Dist = 0.125/2;  
+                
+            } else if ( ui.steelribType == 'H-150' ) {
+                            
+                //1. H형강 형상
+                rBar1Shp = new THREE.Shape();
+                rBar1Shp.moveTo ( -0.0750,  0.0750 );
+                rBar1Shp.lineTo ( -0.0750,  0.0650 );
+                rBar1Shp.lineTo ( -0.0035,  0.0650 );
+                rBar1Shp.lineTo ( -0.0035, -0.0650 );
+                rBar1Shp.lineTo ( -0.0750, -0.0650 );
+                rBar1Shp.lineTo ( -0.0750, -0.0750 );
+                rBar1Shp.lineTo (  0.0750, -0.0750 );
+                rBar1Shp.lineTo (  0.0750, -0.0650 );
+                rBar1Shp.lineTo (  0.0035, -0.0650 );
+                rBar1Shp.lineTo (  0.0035,  0.0650 );
+                rBar1Shp.lineTo (  0.0750,  0.0650 );
+                rBar1Shp.lineTo (  0.0750,  0.0750 );
+                rBar1Shp.lineTo ( -0.0750,  0.0750 );
+                
+                // 2. H형강 옵셋
+                rBar1Dist = 0.150/2;  
+                
+            };
+            
+                
+            // 3. 영역별 경로 계산
+            
+            // 상반부 각도계산
+            const upperHalfLeftTheta = Math.asin( ( r3Origin.y - springLineEL ) / ( r3Final + ui.shotcrete ) );
+            
+            const upperHalfLeft = new THREE.Shape();
+            upperHalfLeft.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            upperHalfLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete, Math.PI/2 + r1ThetaLt, Math.PI + upperHalfLeftTheta, false );
+            
+            const upperHalfRightTheta = Math.asin( ( r5Origin.y - springLineEL ) / ( r5Final + ui.shotcrete ) );
+            
+            const upperHalfRight = new THREE.Shape();
+            upperHalfRight.absarc(  0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            upperHalfRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, 0 - upperHalfRightTheta, true );
+            
+            // 스프링 라인
+            const springLineShp = new THREE.Shape();
+            springLineShp.moveTo( upperHalfLeft.getPoint( 1 ).x , upperHalfLeft.getPoint( 1 ).y );
+            springLineShp.lineTo( 0 , springLineEL );
+            springLineShp.lineTo( upperHalfRight.getPoint( 1 ).x , upperHalfRight.getPoint( 1 ).y );
+
+            
+            // 환봉1 R3 중심각 계산
+            const r3Gamma3 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final + ui.shotcrete - rBar1Dist ) );
+            const r3Theta3 = Math.PI/2 - r1ThetaLt + r3Gamma3;
+            
+            // 환봉1 R5 중심각 계산
+            const r5Gamma3 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / ( r5Final + ui.shotcrete - rBar1Dist ) );
+            const r5Theta3 = Math.PI/2 - r1ThetaRt + r5Gamma3;
+            
+            // 환봉2 R3 중심각 계산
+            const r3Gamma4 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final + ui.shotcrete - rBar2Dist ) );
+            const r3Theta4 = Math.PI/2 - r1ThetaLt + r3Gamma4;
+            
+            // 환봉2 R5 중심각 계산
+            const r5Gamma4 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / ( r5Final + ui.shotcrete - rBar2Dist ) );
+            const r5Theta4 = Math.PI/2 - r1ThetaRt + r5Gamma4;
+            
+            
+            // 환봉1 영역 구분
+            
+            // 아치부
+            const rBar1ArchLeft = new THREE.Shape();
+            rBar1ArchLeft.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar1Dist, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            
+            const rBar1ArchRight = new THREE.Shape();
+            rBar1ArchRight.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar1Dist, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            
+            // 어깨부
+            const rBar1ShoulderLeft = new THREE.Shape();
+            rBar1ShoulderLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar1Dist, Math.PI/2 + r1ThetaLt, Math.PI + upperHalfLeftTheta, false );
+            
+            const rBar1ShoulderRight = new THREE.Shape();
+            rBar1ShoulderRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar1Dist, Math.PI/2 - r1ThetaRt, 0 - upperHalfRightTheta, true );
+            
+            // 하반부
+            const rBar1BottomHalfLeft = new THREE.Shape();
+            rBar1BottomHalfLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar1Dist, Math.PI + upperHalfLeftTheta, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            
+            const rBar1BottomHalfRight = new THREE.Shape();
+            rBar1BottomHalfRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar1Dist, 0 - upperHalfRightTheta, Math.PI/2 - r1ThetaRt - r5Theta3, true );
+            
+            // 전단면
+            const rBar1FullFaceLeft = new THREE.Shape();
+            rBar1FullFaceLeft.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar1Dist, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            rBar1FullFaceLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar1Dist, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            
+            const rBar1FullFaceRight = new THREE.Shape();
+            rBar1FullFaceRight.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar1Dist, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            rBar1FullFaceRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar1Dist, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta3, true );
+            
+            
+            // 환봉2 영역 구분
+            
+            // 아치부
+            const rBar2ArchLeft = new THREE.Shape();
+            rBar2ArchLeft.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar2Dist, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            
+            const rBar2ArchRight = new THREE.Shape();
+            rBar2ArchRight.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar2Dist, Math.PI/2, Math.PI/2 - r1ThetaLt, true );
+            
+            // 어깨부
+            const rBar2ShoulderLeft = new THREE.Shape();
+            rBar2ShoulderLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar2Dist, Math.PI/2 + r1ThetaLt, Math.PI + upperHalfLeftTheta, false );
+            
+            const rBar2ShoulderRight = new THREE.Shape();
+            rBar2ShoulderRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar2Dist, Math.PI/2 - r1ThetaRt, 0 - upperHalfRightTheta, true );
+            
+            // 하반부
+            const rBar2BottomHalfLeft = new THREE.Shape();
+            rBar2BottomHalfLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar2Dist, Math.PI + upperHalfLeftTheta, Math.PI/2 + r1ThetaLt + r3Theta4, false );
+            
+            const rBar2BottomHalfRight = new THREE.Shape();
+            rBar2BottomHalfRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar2Dist, 0 - upperHalfLeftTheta, Math.PI/2 - r1ThetaRt - r5Theta4, true );
+            
+            // 전단면
+            const rBar2FullFaceLeft = new THREE.Shape();
+            rBar2FullFaceLeft.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar2Dist, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            rBar2FullFaceLeft.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete - rBar2Dist, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta4, false );
+
+            const rBar2FullFaceRight = new THREE.Shape();
+            rBar2FullFaceRight.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete - rBar2Dist, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            rBar2FullFaceRight.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete - rBar2Dist, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta4, true );
+            
+
+            
+            // 4. 환봉모델링
+            // addExtru : 직선방향으로 돌출
+            // addSweep : curve에 따라 돌출
+            // 경로를 점으로 바꾸고 점을 Curve로 바꿈
+            // addArr => addPath => addSweep
+
+            const steelRibGroup = new THREE.Group();
+
+
+            const rBar1LfArr = addArr( rBar1FullFaceLeft );
+            const rBar1LfPath = addPath( rBar1LfArr );
+            const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath, 0.9 );
+
+            steelRibGroup.add( rBar1LfSweep );
+
+
+            const rBar1RhArr = addArr( rBar1FullFaceRight );
+            const rBar1RhPath = addPath( rBar1RhArr );
+            const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath, 0.9 );
+            
+            steelRibGroup.add( rBar1RhSweep );
+
+
+            // H형강은 하나만 모델링, 격자지보는 환봉1, 환봉2 x2 총 3개를 모델링함 
+            if( ui.steelribType == 'LG-50' ||  ui.steelribType == 'LG-70' || ui.steelribType == 'LG-95') {  
+            
+                const rBar2Lf1Arr = addArr( rBar2FullFaceLeft );
+                const rBar2Lf1Path = addPath( rBar2Lf1Arr );
+                const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path, 0.9 );
+
+                const rBar2Rh1Arr = addArr( rBar2FullFaceRight );
+                const rBar2Rh1Path = addPath( rBar2Rh1Arr );
+                const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path, 0.9 );
+
+                const rBar2Lf2Clone = rBar2Lf1Sweep.clone();
+                const rBar2Rh2Clone = rBar2Rh1Sweep.clone();
+
+                
+                //         o        환봉1
+                //        / \
+                //       /   \  
+                //      /_____\
+                //     o       o    환봉2 x2 .position으로 환봉의 위치
+
+                if( ui.steelribType == 'LG-50' ) {            
+
+                    rBar2Lf1Sweep.position.z = 0.04;
+                    rBar2Rh1Sweep.position.z = 0.04;
+
+                    rBar2Lf2Clone.position.z = -0.04;
+                    rBar2Rh2Clone.position.z = -0.04;
+
+                } else if ( ui.steelribType == 'LG-70' ) {
+
+                    rBar2Lf1Sweep.position.z = 0.06;
+                    rBar2Rh1Sweep.position.z = 0.06;
+
+                    rBar2Lf2Clone.position.z = -0.06;
+                    rBar2Rh2Clone.position.z = -0.06;
+
+                } else if ( ui.steelribType == 'LG-95' ) {
+
+                    rBar2Lf1Sweep.position.z = 0.079;
+                    rBar2Rh1Sweep.position.z = 0.079;
+
+                    rBar2Lf2Clone.position.z = -0.079;
+                    rBar2Rh2Clone.position.z = -0.079;
+
+                }
+
+                steelRibGroup.add( rBar2Lf1Sweep );
+                steelRibGroup.add( rBar2Rh1Sweep );
+                steelRibGroup.add( rBar2Lf2Clone );
+                steelRibGroup.add( rBar2Rh2Clone );
+
+            }
+
+            for ( let i=0; i<= ui.totalLength / ui.longSpacing; i++ ) {
+                
+                const steelRibGroupClone = steelRibGroup.clone();
+                steelRibGroupClone.position.set( 0, 0, i * ui.longSpacing );
+                showContainer.push( steelRibGroupClone );
+
+            }
+
+
+            // 5. 부등변 앵글 좌우측배치, 6. 스파이더 좌우측배치, 7. 연결고리 좌우측배치, 8. 바닥부 모델링
+            if( ui.steelribType == 'LG-50' ) {
+                
+                // 5. 부등변 앵글 배치
+                const angleArchLeft = installAngle( '50a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( '50a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( '50a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( '50a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( '50a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+
+
+                // 6. 스파이더 배치
+                const spiderArchLeft = installSpider( '50s.glb', rBar1ArchLeft, -1 );
+                showContainer.push( spiderArchLeft );
+
+                const spiderShoulderLeft = installSpider( '50s.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( spiderShoulderLeft );
+
+                const spiderBottomLeft = installSpider( '50s.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( spiderBottomLeft );    
+                
+                const spiderArchRight = installSpider( '50s.glb', rBar1ArchRight, 1 );
+                showContainer.push( spiderArchRight );
+
+                const spiderShoulderRight = installSpider( '50s.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( spiderShoulderRight );                   
+
+                const spiderBottomRight = installSpider( '50s.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( spiderBottomRight );
+
+                // 7. 연결고리 배치
+                const couplerLeft = installCoupler ( '50c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( '50c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+                
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.150, 0.050, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.150, -0.050, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+                
+            } else if ( ui.steelribType == 'LG-70' ) {
+                
+                // 5. 부등변 앵글 배치
+                const angleArchLeft = installAngle( '70a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( '70a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( '70a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( '70a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( '70a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+
+                // 6. 스파이더 배치
+                const spiderArchLeft = installSpider( '70s.glb', rBar1ArchLeft, -1 );
+                showContainer.push( spiderArchLeft );
+
+                const spiderShoulderLeft = installSpider( '70s.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( spiderShoulderLeft );
+
+                const spiderBottomLeft = installSpider( '70s.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( spiderBottomLeft );    
+                
+                const spiderArchRight = installSpider( '70s.glb', rBar1ArchRight, 1 );
+                showContainer.push( spiderArchRight );
+
+                const spiderShoulderRight = installSpider( '70s.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( spiderShoulderRight );                   
+
+                const spiderBottomRight = installSpider( '70s.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( spiderBottomRight );   
+
+                // 7. 연결고리 배치
+                const couplerLeft = installCoupler ( '70c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( '70c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+                
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.170, 0.050, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.170, -0.050, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+                
+                // 환봉1 색상변경
+                rBar1LfSweep.material.color.set('chocolate')
+                rBar1RhSweep.material.color.set('chocolate')                
+                
+            } else if ( ui.steelribType == 'LG-95' ) {
+                
+                // 5. 부등변 앵글 배치
+                const angleArchLeft = installAngle( '95a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( '95a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( '95a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( '95a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( '95a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+
+                // 6. 스파이더 배치
+                const spiderArchLeft = installSpider( '95s.glb', rBar1ArchLeft, -1 );
+                showContainer.push( spiderArchLeft );
+
+                const spiderShoulderLeft = installSpider( '95s.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( spiderShoulderLeft );
+
+                const spiderBottomLeft = installSpider( '95s.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( spiderBottomLeft );    
+                
+                const spiderArchRight = installSpider( '95s.glb', rBar1ArchRight, 1 );
+                showContainer.push( spiderArchRight );
+
+                const spiderShoulderRight = installSpider( '95s.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( spiderShoulderRight );                   
+
+                const spiderBottomRight = installSpider( '95s.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( spiderBottomRight );   
+
+                // 7. 연결고리 배치
+                const couplerLeft = installCoupler ( '95c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( '95c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.210, 0.050, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.210, -0.050, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+
+                // 환봉1 색상변경
+                rBar1LfSweep.material.color.set('darkslateblue')
+                rBar1RhSweep.material.color.set('darkslateblue')   
+                
+            } else if ( ui.steelribType == 'H-100' ) {
+                
+                // 5. 부등변 앵글 좌우측배치
+                const angleArchLeft = installAngle( 'H100a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( 'H100a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( 'H100a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( 'H100a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( 'H100a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+                
+                // 6. 스파이더 좌우측배치
+                // 없음
+
+                // 7. 연결고리 좌우측배치
+                const couplerLeft = installCoupler ( 'H100c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( 'H100c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.150, 0.000, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.150, 0.000, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+                
+                // 환봉1 색상변경
+                rBar1LfSweep.material.color.set('darkcyan')
+                rBar1RhSweep.material.color.set('darkcyan')                
+                
+            } else if ( ui.steelribType == 'H-125' ) {
+                
+                // 5. 부등변 앵글 좌우측배치
+                const angleArchLeft = installAngle( 'H125a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( 'H125a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( 'H125a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( 'H125a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( 'H125a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+
+                // 6. 스파이더 좌우측배치
+                // 없음
+
+                // 7. 연결고리 좌우측배치
+                const couplerLeft = installCoupler ( 'H125c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( 'H125c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+                
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.175, 0.000, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.175, 0.000, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+                
+                // 환봉1 색상변경
+                rBar1LfSweep.material.color.set(0x82caaf)
+                rBar1RhSweep.material.color.set(0x82caaf)                  
+                
+            } else if ( ui.steelribType == 'H-150' ) {
+            
+                // 5. 부등변 앵글 좌우측배치
+                const angleArchLeft = installAngle( 'H150a.glb', rBar1ArchLeft, -1 );
+                showContainer.push( angleArchLeft );
+
+                const angleShoulderLeft = installAngle( 'H150a.glb', rBar1ShoulderLeft, -1 );
+                showContainer.push( angleShoulderLeft );
+
+                const angleBottomLeft = installAngle( 'H150a.glb', rBar1BottomHalfLeft, -1 );
+                showContainer.push( angleBottomLeft );
+
+                const angleShoulderRight = installAngle( 'H150a.glb', rBar1ShoulderRight, 1 );
+                showContainer.push( angleShoulderRight );
+
+                const angleBottomRight = installAngle( 'H150a.glb', rBar1BottomHalfRight, 1 );
+                showContainer.push( angleBottomRight );
+
+                // 6. 스파이더 좌우측배치
+                // 없음
+
+                // 7. 연결고리 좌우측배치
+                const couplerLeft = installCoupler ( 'H150c.glb', rBar1FullFaceLeft, -1 );
+                showContainer.push( couplerLeft );
+
+                const couplerRight = installCoupler ( 'H150c.glb', rBar1FullFaceRight, 1 );
+                showContainer.push( couplerRight );
+                
+                // 8. 바닥부 모델링
+                const plateLeft = installPlate( 0.175, 0.000, rBar1FullFaceLeft );
+                showContainer.push( plateLeft );
+
+                const plateRight = installPlate( 0.175, 0.000, rBar1FullFaceRight );
+                showContainer.push( plateRight );
+                
+                
+            }
+
+            // scene 생성
+            showContainer.forEach( mesh => { scene.add( mesh ) } );
+
+            // 시간측정
+            console.log( '연산시간: ' + ((new Date()).getTime() - start_time) + 'ms' );
+            //
+
+
+            // 결과값 저장
+            sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
+
+        }
+
+
+        function createUI() {
+            
+            const gui = new GUI();
+            
+            const commonFolder = gui.addFolder( '공통' )
+            commonFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onChange( designTunnel );
+            commonFolder.add( ui, 'totalLength', 1, 20, 0.1 ).name( '적용 연장' ).onChange( designTunnel );
+            commonFolder.open();
+            
+            const supportSystemFolder = gui.addFolder( '지보패턴' )
+            supportSystemFolder.add( ui, 'longSpacing',0.8, 4.0, 0.1 ).name( '굴진장/지보장' ).onChange( designTunnel );
+            supportSystemFolder.add( ui, 'shotcrete', 0.050, 0.300, 0.010 ).name( '숏크리트 두께' ).onChange( designTunnel );
+            supportSystemFolder.add( ui, 'steelribType', [ 'LG-50', 'LG-70', 'LG-95', 'H-100', 'H-125', 'H-150' ] ).name( '강지보공' ).onChange( designTunnel );
+            supportSystemFolder.open();
+
+        }
+        
+        function addLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+
+        function addDashLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineDashedMaterial( { color , dashSize: 0.2, gapSize: 0.05 } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            line.computeLineDistances(); //점선으로 만들어주기 위해 필요
+            return line;
+        }
+
+        function addSurf( shape, color, opacity ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.7, transparent: true, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, length, opacity ) {            
+            const extrudeSettings = {
+                steps : 1,
+                depth : length,
+                bevelEnabled : false,
+            }           
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite : false } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+        function addArr ( path ) {
+            const arr = [];
+            for ( let i=0; i*0.01 <= path.getLength(); i++) {
+                const segment = path.getPointAt( i*0.01 / path.getLength() );
+                arr.push( new THREE.Vector3( segment.x, segment.y, 0 ) );
+            }
+            return arr
+        }
+
+        function addPath ( arr ) {
+            const curvePath = new THREE.CurvePath();
+            for ( let i=0; i < arr.length-1; i++ ) {
+                const point1 = new THREE.Vector3( arr[i].x, arr[i].y );
+                const point2 = new THREE.Vector3( arr[i+1].x, arr[i+1].y );
+                const line = new THREE.LineCurve3( point1, point2 );
+                curvePath.add( line )
+            }
+            return curvePath
+        }
+
+        function addSweep( shape, color, path, opacity ) {
+            const extrudeSettings = {
+                steps : 100, 
+                extrudePath : path
+            }
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite  : false } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+
+        function installAngle ( url, path, direction ) { 
+                    
+            const group = new THREE.Group();
+
+            loader.load( url, function ( gLeft ) {
+
+                gLeft.scene.traverse( function( node ) {
+                    if ( node instanceof THREE.Mesh ) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                } );
+            
+                const mesh = gLeft.scene;
+                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, color : 'crimson', opacity : 0.9, transparent: true } );
+
+                mesh.traverse( (o) => { if ( o.isMesh ) o.material = newMaterial } );
+
+                for ( let i=0;  i <= ui.totalLength / ui.longSpacing; i++ ) {
+
+                    if ( path != undefined ) {
+
+                        const segment = path.getPointAt( 0 ); 
+
+                        const tangent = path.getTangentAt( 0 );
+                        const angle = Math.atan2( direction * tangent.y, direction * tangent.x) 
+                        
+                        const meshClone = mesh.clone();
+
+                        meshClone.position.set ( segment.x, segment.y, i*ui.longSpacing );
+                        meshClone.rotation.z = angle;
+                        
+                        group.add( meshClone );
+
+                    }
+
+                }
+                
+            } );
+
+            return group
+
+        }
+
+        function installSpider ( url, path, direction ) { 
+
+            const group = new THREE.Group()
+
+            const blockSpacing = 0.3
+            
+            loader.load( url, function ( gLeft ) {
+
+                gLeft.scene.traverse( function( node ) {
+                    if ( node instanceof THREE.Mesh ) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                } )
+                
+                const mesh = gLeft.scene;
+                
+                for ( let i=0;  i <= ui.totalLength / ui.longSpacing; i++ ) {
+
+                    if ( path != undefined ) {
+
+                        for ( let k=1; k*blockSpacing <= (path.getLength() - 0.120 ); k++ ) {
+                            // 마지막에 걸리는 스파이더를 빼주기 위해 0.12m 정도 길에서 빼줌
+                            const segment = path.getPointAt( k*blockSpacing / path.getLength() ); 
+
+                            const tangent = path.getTangentAt( k*blockSpacing / path.getLength() );
+                            const angle = Math.atan2( direction * tangent.y, direction * tangent.x );
+                            
+                            const meshClone = mesh.clone()
+
+                            meshClone.position.set ( segment.x, segment.y, i*ui.longSpacing );
+                            meshClone.rotation.z = angle;
+                            
+                            group.add( meshClone );
+
+                        } 
+
+                    }
+
+
+                }
+
+
+            } );
+
+            return group
+
+        }
+
+        function installCoupler ( url, path, direction ) { 
+            
+            const group = new THREE.Group();
+
+            const blockSpacing = 0.750;
+            
+            loader.load( url, function ( gLeft ) {
+
+                gLeft.scene.traverse( function( node ) {
+                    if ( node instanceof THREE.Mesh ) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                } );
+                
+                const mesh = gLeft.scene;
+                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide,  color : 'deeppink', opacity : 0.9, transparent: false } );
+
+                mesh.traverse((o) => { if ( o.isMesh ) o.material = newMaterial });
+                
+                for ( let i=0;  i <= ui.totalLength / ui.longSpacing; i++ ) {
+
+                    for ( let k=1; (2 * k - 1)*blockSpacing <= path.getLength(); k++) {
+                        const segment = path.getPointAt( (2 * k - 1)*blockSpacing / path.getLength() ); 
+
+                        const tangent = path.getTangentAt( (2 * k - 1)*blockSpacing / path.getLength() );
+                        const angle = Math.atan2( direction * tangent.y, direction * tangent.x );
+
+                        const meshClone = mesh.clone();
+                                            
+                        meshClone.position.set ( segment.x, segment.y, i*ui.longSpacing );
+                        meshClone.rotation.z = angle;
+                        
+                        group.add( meshClone );
+
+                    }
+
+                }
+                        
+            } );
+            
+            return group
+
+        }        
+
+        function installPlate ( size, move, path ) {    
+
+            const group = new THREE.Group();
+
+            for ( let i=0;  i <= ui.totalLength / ui.longSpacing; i++ ) {
+
+                const plateGeo = new THREE.BoxGeometry( size, 0.010, size );
+                const plateMat = new THREE.MeshStandardMaterial( {color: 'cadetblue'} );
+                const plateMesh = new THREE.Mesh( plateGeo, plateMat );
+                plateMesh.position.set( path.getPointAt(1).x , path.getPointAt(1).y, i*ui.longSpacing );
+                plateMesh.applyMatrix4( matrix.makeTranslation( move, 0.005, 0 ) );
+                group.add( plateMesh );
+
+            }
+
+            return group
+            
+        }
+
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        function render() {
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+
+            // 
+
+            
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+
+
+        //export GLTF
+        const exporter = new GLTFExporter();
+
+        document.getElementById("button").addEventListener("click", exportFile);        
+        
+        
+        function exportFile() {
+
+            const result = exporter.parse( scene, function ( result ) {
+
+					if ( result instanceof ArrayBuffer ) {
+
+						saveArrayBuffer( result, '강지보공.glb' );
+
+					} else {
+
+						const output = JSON.stringify( result, null, 2 );
+						saveString( output, '강지보공.gltf' );
+
+					}
+
+            } ) }
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+           
+    </script>
+    
+</body>
+
+</html>

@@ -1,0 +1,1631 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #debug {
+            position: absolute;
+            top: 50px;
+            padding: 10px;
+            background: rgba( 0, 0, 0, 0.0 );
+            color: black;
+            font-size: 12px;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }        
+
+        /* Add a black background color to the top navigation */
+        .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a href='TZ_Web4.html'>4. 강지보공</a>
+        <a href='TZ_Web5.html'>5. 라이닝구조도</a>
+        <a class="active" href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a href='TZ_Web9.html'>9. 부대시설</a>
+    </div>
+    
+    <canvas id="c"></canvas>
+
+    <button id="button" type="button" >Export Model</button>
+
+    <script type="module">
+
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+
+        // import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee/csg.module.js';//looeee
+        import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee_NPM/CSG.js';//looeee
+        
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+
+
+        // Three js 기본변수
+        let camera, scene, renderer, raycaster
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
+        const liningT0 = JSON.parse( sessionStorage.getItem('라이닝두께') );
+
+        const roadCenterDistance = JSON.parse( sessionStorage.getItem('이격거리(최종)' ) );
+
+        const r1ThetaLt= JSON.parse( sessionStorage.getItem('중심각좌측' ) );
+        const r1ThetaRt = JSON.parse( sessionStorage.getItem('중심각우측' ) );
+        const r1Height = JSON.parse( sessionStorage.getItem('r1중심고' ) );
+        const r1Final = JSON.parse( sessionStorage.getItem('r1반지름' ) );
+
+        const r2Origin = JSON.parse( sessionStorage.getItem('r2원점' ) );
+        const r2Final = JSON.parse( sessionStorage.getItem('r2반지름' ) );
+
+        const r3Origin = JSON.parse( sessionStorage.getItem('r3원점' ) );
+        const r3Final = JSON.parse( sessionStorage.getItem('r3반지름' ) );
+
+        const r4Origin = JSON.parse( sessionStorage.getItem('r4원점' ) );
+        const r4Final = JSON.parse( sessionStorage.getItem('r4반지름' ) );
+
+        const r5Origin = JSON.parse( sessionStorage.getItem('r5원점' ) );
+        const r5Final = JSON.parse( sessionStorage.getItem('r5반지름' ) );
+
+
+        const footingType = JSON.parse( sessionStorage.getItem('공동구타입' ) );
+        const footingHeight = JSON.parse( sessionStorage.getItem('공동구높이' ) );
+        const footingLtType = JSON.parse( sessionStorage.getItem('좌측공동구' ) );
+        const footingRtType = JSON.parse( sessionStorage.getItem('우측공동구' ) );
+
+        const marginLeft = JSON.parse( sessionStorage.getItem('좌측측대(최종)' ) );
+        const marginRight = JSON.parse( sessionStorage.getItem('우측측대(최종)' ) );
+
+        const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
+
+
+
+
+
+
+
+
+        /// raycast 어떻게 정리 할 것인지
+        let INTERSECTED;
+        const pointer = new THREE.Vector2();
+
+
+
+        // 파라메트릭 값
+        const ui = {
+
+            //편경사
+            crossSlopeStandard :  crossSlopeStandard,
+
+            // 적용 연장
+            totalLength : 6,
+
+            shotcrete : 0.120,
+
+            opacity : 0.8,
+
+        };
+        
+
+        // Run        
+        initGraphic();
+        designTunnel();
+        createUI();
+        
+
+        function initGraphic() {
+            
+            const canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+            
+            // // Perspective
+            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            // camera.position.set( -7, 7, 15 );             
+            
+
+            // Orthographic
+            camera = new THREE.OrthographicCamera( 
+                window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            ); //left. right, top, bottom, near, far 
+            camera.position.set( 0, 0, 20 ); 
+            
+
+            // OrbitControl : 뷰 확대 및 회전
+            const controls = new OrbitControls( camera, canvas );
+            // controls.target.set( 0, 3, 0 );
+            controls.target.set( 0, 0, 0 );
+            controls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0xf0f0f0 );
+            
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // 바닥 그리드
+            const size = 30;
+            const divisions = 30;
+            const gridHelper = new THREE.GridHelper( size, divisions );
+            gridHelper.position.y = - 2;
+            gridHelper.material.opacity = 0.4;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper(1); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+
+            const light = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            // light.castShadow = true;
+            scene.add(light);
+
+            // light helper
+            // const lightHelper = new THREE.SpotLightHelper( light, 10 );
+            // scene.add( lightHelper );            
+            
+
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.shadowMap.enabled = true;
+            
+        }
+        
+
+
+        function designTunnel() {
+            
+            // 이전 메쉬 삭제
+            showContainer.forEach( i => scene.remove( i ) )
+
+
+            // 배열초기화
+            showContainer = [];
+
+
+            // 콘크리트포장과 시멘트필터층
+            const concreteLt = new THREE.Vector3( - roadCenterDistance - marginLeft, ( - roadCenterDistance - marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - roadCenterDistance + marginRight, ( roadWidth - roadCenterDistance + marginRight ) * ui.crossSlopeStandard / 100 );
+
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+            const concretePavementShp = new THREE.Shape();
+            concretePavementShp.moveTo( concreteLt.x, concreteLt.y );
+            concretePavementShp.lineTo( concreteRt.x, concreteRt.y );
+            concretePavementShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+            concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+            const concretePavementLine1 = addLine( concretePavementShp, 'darkslategray' );
+            showContainer.push( concretePavementLine1 );
+
+            const concretePavementLine2 = addLine( concretePavementShp, 'darkslategray' );
+            concretePavementLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( concretePavementLine2 );
+
+            const concretePavementExtr = addExtr( concretePavementShp, 'darkslategray', ui.totalLength, 0.5 );
+            showContainer.push( concretePavementExtr ); 
+
+           
+            const cementeFilterShp = new THREE.Shape();
+            cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+            
+            const cementeFilterLine1 = addLine( cementeFilterShp, 'silver' );
+            showContainer.push( cementeFilterLine1 );
+
+            const cementeFilterLine2 = addLine( cementeFilterShp, 'silver' );
+            cementeFilterLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( cementeFilterLine2 );
+
+            const cementeFilterExtr = addExtr( cementeFilterShp, 'silver', ui.totalLength, 0.5 );
+            showContainer.push( cementeFilterExtr );
+
+
+            // 편경사변화에 따른 공동구 위치 계산 
+            const footingLtSlope = footingLtType.map( i => new THREE.Vector2 ( i.x + concreteLt.x, i.y + concreteLt.y ) );
+            const footingRtSlope = footingRtType.map( i => new THREE.Vector2 ( i.x + concreteRt.x, i.y + concreteRt.y ) );
+
+
+
+            // 시공이음
+            const jointH1 = 0.150; // 공동구 끝단에서 높이
+            const jointH2 = 0.100; // 조인트 높이
+            const jointL = 0.200; // 조인트 폭
+            
+            const r2Theta3 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y - jointH1) / r2Final ) + Math.PI/2 - r1ThetaLt;
+            
+            const r3Gamma3 = Math.asin( ( r3Origin.y - footingLtSlope[footingLtSlope.length-1].y - jointH1 + jointH2 ) / r3Final );
+            const r3Theta3 = Math.PI/2 - r1ThetaLt + r3Gamma3;
+            
+            const jointLtPt = new THREE.Shape( );
+            jointLtPt.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta3, Math.PI/2 + r1ThetaLt, true );
+            jointLtPt.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            
+            const jointLtShp = new THREE.Shape( );
+            jointLtShp.moveTo( jointLtPt.getPoint( 0 ).x         , jointLtPt.getPoint( 0 ).y );
+            jointLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL, jointLtPt.getPoint( 0 ).y );
+            jointLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL, jointLtPt.getPoint( 0 ).y - jointH2 );
+            jointLtShp.lineTo( jointLtPt.getPoint( 1 ).x         , jointLtPt.getPoint( 1 ).y );
+            
+            const jointLtLine = addLine( jointLtShp, 'skyblue' );
+            showContainer.push( jointLtLine );
+            
+
+            const r4Theta3 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y - jointH1 ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+            
+            const r5Gamma3 = Math.asin( ( r5Origin.y - footingRtSlope[footingRtSlope.length-1].y - jointH1 + jointH2) / r5Final );
+            const r5Theta3 = Math.PI/2 - r1ThetaRt + r5Gamma3;
+            
+            const jointRtPt = new THREE.Shape( );
+            jointRtPt.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - r4Theta3, Math.PI/2 - r1ThetaRt, false );
+            jointRtPt.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta3, true );
+            
+            const jointRtShp = new THREE.Shape( );
+            jointRtShp.moveTo( jointRtPt.getPoint( 0 ).x         , jointRtPt.getPoint( 0 ).y );
+            jointRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL, jointRtPt.getPoint( 0 ).y );
+            jointRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL, jointRtPt.getPoint( 0 ).y - jointH2 );
+            jointRtShp.lineTo( jointRtPt.getPoint( 1 ).x         , jointRtPt.getPoint( 1 ).y );            
+            
+            const jointRtLine = addLine( jointRtShp, 'skyblue' );
+            showContainer.push( jointRtLine );
+            
+            
+
+            // 터널형상 그리기
+            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
+
+            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+
+            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / r3Final );
+            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
+
+            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / r5Final );
+            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;
+
+            
+            const footingRtReverse = [...footingRtSlope].reverse();//원본 배열유지
+
+
+            const liningShp = new THREE.Shape();
+            liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta3, Math.PI/2 + r1ThetaLt, true ) ;
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2 - r1ThetaRt, true );
+            liningShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta3, true );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x          , jointRtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y - jointH2 );
+            liningShp.lineTo( jointRtPt.getPoint( 1 ).x          , jointRtPt.getPoint( 1 ).y );
+            liningShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta3, Math.PI/2 - r1ThetaRt, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt, Math.PI/2 + r1ThetaLt, false );
+            liningShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            liningShp.lineTo( jointLtPt.getPoint( 1 ).x          , jointLtPt.getPoint( 1 ).y );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y - jointH2 );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x          , jointLtPt.getPoint( 0 ).y );
+
+            const liningLine = addLine( liningShp, 'black' );
+            // showContainer.push( liningLine );
+
+            const liningLineClone = liningLine.clone();
+            liningLineClone.position.set( 0, 0, ui.totalLength );
+            // showContainer.push( liningLineClone );
+
+
+            // 숏크리트 그리기
+            const r3Gamma2 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final + ui.shotcrete ) );
+            const r3Theta2 = Math.PI/2 - r1ThetaLt + r3Gamma2;
+            
+            const r5Gamma2 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / ( r5Final + ui.shotcrete ) );
+            const r5Theta2 = Math.PI/2 - r1ThetaRt + r5Gamma2;
+
+            const r3Gamma4 = Math.asin( ( r3Origin.y - footingLtSlope[footingLtSlope.length-1].y - jointH1 + jointH2 ) / ( r3Final + ui.shotcrete ) );
+            const r3Theta4 = Math.PI/2 - r1ThetaLt + r3Gamma4;
+
+            const r5Gamma4 = Math.asin( ( r5Origin.y - footingRtSlope[footingRtSlope.length-1].y - jointH1 + jointH2) / ( r5Final + ui.shotcrete ) );
+            const r5Theta4 = Math.PI/2 - r1ThetaRt + r5Gamma4;
+
+            const scLtShp = new THREE.Shape();
+            scLtShp.moveTo( jointLtPt.getPoint( 1 ).x          , jointLtPt.getPoint( 1 ).y );
+            scLtShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt + r3Theta3, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            scLtShp.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete, Math.PI/2 + r1ThetaLt + r3Theta2, Math.PI/2 + r1ThetaLt + r3Theta4, true );
+
+            const scLtExtr = addExtr( scLtShp, 'skyblue', ui.totalLength, 0.6 );
+            showContainer.push( scLtExtr );
+
+            const scRtShp = new THREE.Shape();
+            scRtShp.moveTo( jointRtPt.getPoint( 1 ).x          , jointRtPt.getPoint( 1 ).y );
+            scRtShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta3, Math.PI/2 - r1ThetaRt - r5Theta1, true );
+            scRtShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt - r5Theta2, Math.PI/2 - r1ThetaRt - r5Theta4, false );
+
+            const scRtExtr = addExtr( scRtShp, 'skyblue', ui.totalLength, 0.6 );
+            showContainer.push( scRtExtr );
+
+
+
+
+            /*
+                공동구 형상 생성
+                공동구 뚜껑 생성
+                집수정 하부 생성
+                집수정 하부 CSG( 집수정 : 집수정외측 - 내측 )
+                하부 유공관 생성
+                맹암거 생성
+                측벽 유공관 생성
+                횡배수관(하부유공관)
+                횡배수관(집수정)
+                횡배수관(디치)
+                
+            */
+
+            // 공동구 형상
+            const footingLtShp = new THREE.Shape( footingLtSlope );
+            footingLtShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt + r2Theta3, true );
+            footingLtShp.lineTo( jointLtPt.getPoint( 0 ).x          , jointLtPt.getPoint( 0 ).y );
+            footingLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y );
+            footingLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y - jointH2 );
+            footingLtShp.lineTo( jointLtPt.getPoint( 1 ).x          , jointLtPt.getPoint( 1 ).y );
+            footingLtShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt + r3Theta3, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            footingLtShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y - footingHeight );
+
+            const footingLtExtr = addExtr( footingLtShp, 'steelblue', ui.totalLength, ui.opacity );
+            // showContainer.push( footingLtExtr );
+
+            const footingLtLine1 = addLine( footingLtShp, 'steelblue' )
+            showContainer.push( footingLtLine1 );
+
+            const footingLtLine2 = addLine( footingLtShp, 'steelblue' )
+            footingLtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( footingLtLine2 );
+
+
+            const footingRtShp = new THREE.Shape( footingRtSlope );
+            footingRtShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - r4Theta1, Math.PI/2 - r1ThetaRt - r4Theta3, false );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x          , jointRtPt.getPoint( 0 ).y );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y - jointH2 );
+            footingRtShp.lineTo( jointRtPt.getPoint( 1 ).x          , jointRtPt.getPoint( 1 ).y );
+            footingRtShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta3, Math.PI/2 - r1ThetaRt - r5Theta1, true );
+            footingRtShp.lineTo( footingRtSlope[0].x, footingRtSlope[0].y - footingHeight );
+
+            const footingRtExtr = addExtr( footingRtShp, 'steelblue', ui.totalLength, ui.opacity );
+            // showContainer.push( footingRtExtr );
+
+            const footingRtLine1 = addLine( footingRtShp, 'steelblue' )
+            showContainer.push( footingRtLine1 );
+
+            const footingRLtLine2 = addLine( footingRtShp, 'steelblue' )
+            footingRLtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( footingRLtLine2 );
+
+
+            // 공동구 뚜껑 생성
+            let coverLeftB0, coverRightB0, coverL, coverS;
+            const coverT = 0.060;
+
+            switch ( footingType ) {
+
+                case '자연환기' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[15].x - footingRtType[8].x );
+
+                    coverL = 0.480;
+                    coverS = 0.500; // spacing
+
+                    break;
+
+                case '기계환기' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[15].x - footingRtType[8].x );
+              
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+                case '기계환기(물분무)' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[16].x - footingRtType[8].x );
+
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+            }
+
+            const coverLeftB1 = ( ( coverLeftB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabLtShp = new THREE.Shape();
+            coverSlabLtShp.moveTo( 0, 0 );
+            coverSlabLtShp.lineTo( 0, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1, 0 );
+            coverSlabLtShp.lineTo( 0, 0 );
+
+            const coverSlabLtExtr = addExtr( coverSlabLtShp, 'powderblue', coverT, 0.8 );
+            coverSlabLtExtr.rotateX( Math.PI/2 )
+
+
+            const coverRightB1 = ( ( coverRightB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabRtShp = new THREE.Shape();
+            coverSlabRtShp.moveTo( 0, 0 );
+            coverSlabRtShp.lineTo( 0, coverL );
+            coverSlabRtShp.lineTo( coverRightB1, coverL );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1, 0 );
+            coverSlabRtShp.lineTo( 0, 0 );
+
+            const coverSlabRtExtr = addExtr( coverSlabRtShp, 'powderblue', coverT, 0.8 );
+            coverSlabRtExtr.rotateX( Math.PI/2 )            
+
+
+            for ( let i=0; i*coverS < ui.totalLength; i++ ) {
+
+                const covercloneLt = coverSlabLtExtr.clone();
+                covercloneLt.position.set( footingLtType[8].x + concreteLt.x - 0.010, footingLtType[8].y + concreteLt.y, i*coverS );
+                showContainer.push( covercloneLt );
+
+                const covercloneRt = coverSlabRtExtr.clone();
+                covercloneRt.position.set( footingRtType[8].x + concreteRt.x + 0.010, footingRtType[8].y + concreteRt.y, i*coverS );
+                showContainer.push( covercloneRt );
+
+            }
+
+
+            /*  
+                집수정
+                집수정의 폭과 길이는 그레이팅(grating)에 따라 결정됨
+                집수정의 깊이는 하부 유공관의 직경에 따라 결정됨
+            */ 
+
+            // 그레이팅 제원
+            const gratingWidth = 0.450;
+            const gratingLength = 1.000;
+            const gratingHeight = 0.075;
+
+
+            const bottomPipeOutD = 0.300;
+            const bottomPipeInD = 0.280;
+
+
+            // 집수정 제원
+            const wellBottomThickness = 0.075;
+            const wellSideThickness = 0.050;
+
+            const wellDistance = 0.0; // 횡방향 이격
+            const wellSpacing = 0.5; // 종방향 이격
+
+            const wellDifference = ( gratingWidth - bottomPipeOutD )/2
+
+            const wellLength = gratingLength + 2*wellSideThickness;
+            const wellWidth = gratingWidth + 2*wellSideThickness;
+            const wellDepth = 0.05 + bottomPipeOutD + 0.05 + wellBottomThickness;
+
+
+            // 집수정 하부 외측
+            const wellOutLtShp = new THREE.Shape();
+            wellOutLtShp.moveTo( 0, -footingHeight );
+            wellOutLtShp.lineTo( 0, -footingHeight - wellDepth );
+            wellOutLtShp.lineTo( -wellWidth, -footingHeight - wellDepth );
+            wellOutLtShp.lineTo( -wellWidth, -footingHeight );
+            wellOutLtShp.lineTo( 0, -footingHeight );        
+
+            const wellOutLtExtr = addExtr( wellOutLtShp, 'indigo', wellLength, 0.9 );
+            wellOutLtExtr.position.set( concreteLt.x - wellDistance, concreteLt.y + wellDistance * -0.02, wellSpacing );
+            // showContainer.push( wellOutLtExtr )
+
+            const wellOutRtShp = new THREE.Shape();
+            wellOutRtShp.moveTo( 0, -footingHeight );
+            wellOutRtShp.lineTo( 0, -footingHeight - wellDepth );
+            wellOutRtShp.lineTo( wellWidth, -footingHeight - wellDepth );
+            wellOutRtShp.lineTo( wellWidth, -footingHeight );
+            wellOutRtShp.lineTo( 0, -footingHeight );        
+
+            const wellOutRtExtr = addExtr( wellOutRtShp, 'indigo', wellLength, 0.9 );
+            wellOutRtExtr.position.set( concreteRt.x + wellDistance, concreteRt.y + wellDistance * -0.02, wellSpacing );
+            // showContainer.push( wellOutRtExtr );
+
+
+            // 집수정 내측
+            const wellInLtShp = new THREE.Shape();
+            wellInLtShp.moveTo( -wellSideThickness - wellDifference, -( -wellSideThickness - wellDifference ) * -0.02 - gratingHeight );
+            wellInLtShp.lineTo( -wellSideThickness - wellDifference, -footingHeight - wellDepth + wellBottomThickness );
+            wellInLtShp.lineTo( -wellSideThickness - wellDifference - bottomPipeOutD, -footingHeight - wellDepth + wellBottomThickness );
+            wellInLtShp.lineTo( -wellSideThickness - wellDifference - bottomPipeOutD, -( -wellSideThickness - wellDifference - bottomPipeOutD ) * -0.02 - gratingHeight );
+            wellInLtShp.lineTo( -wellSideThickness - wellDifference, -( -wellSideThickness - wellDifference ) * -0.02 - gratingHeight );
+
+            const wellInLtExtr = addExtr( wellInLtShp, 'red', gratingLength - 2 * wellDifference, 0.9 );
+            wellInLtExtr.position.set( concreteLt.x - wellDistance, concreteLt.y + wellDistance * -0.02, wellSpacing + wellSideThickness + wellDifference );
+            // showContainer.push( wellInLtExtr );
+
+            const wellInRtShp = new THREE.Shape();
+            wellInRtShp.moveTo( wellSideThickness + wellDifference, ( wellSideThickness + wellDifference ) * -0.02 - gratingHeight );
+            wellInRtShp.lineTo( wellSideThickness + wellDifference, -footingHeight - wellDepth + wellBottomThickness );
+            wellInRtShp.lineTo( wellSideThickness + wellDifference + bottomPipeOutD, -footingHeight - wellDepth + wellBottomThickness );
+            wellInRtShp.lineTo( wellSideThickness + wellDifference + bottomPipeOutD, ( wellSideThickness + wellDifference + bottomPipeOutD ) * -0.02 - gratingHeight );
+            wellInRtShp.lineTo( wellSideThickness + wellDifference, ( wellSideThickness + wellDifference ) * -0.02 - gratingHeight );
+
+            const wellInRtExtr = addExtr( wellInRtShp, 'red', gratingLength - 2 * wellDifference, 0.9 );
+            wellInRtExtr.position.set( concreteRt.x + wellDistance, concreteRt.y + wellDistance * -0.02, wellSpacing + wellSideThickness + wellDifference );
+            // showContainer.push( wellInRtExtr );
+
+
+            // 집수정 뚜껑
+            const wellGratingLtShp = new THREE.Shape();
+            wellGratingLtShp.moveTo( -wellSideThickness, wellSideThickness * -0.02 );
+            wellGratingLtShp.lineTo( -wellSideThickness, wellSideThickness * -0.02 - gratingHeight );
+            wellGratingLtShp.lineTo( -wellSideThickness - gratingWidth, -(-wellSideThickness - gratingWidth)*-0.02 - gratingHeight );
+            wellGratingLtShp.lineTo( -wellSideThickness - gratingWidth, -(-wellSideThickness - gratingWidth)*-0.02 );
+            wellGratingLtShp.lineTo( -wellSideThickness, wellSideThickness * -0.02 );
+
+            const wellGratingLtExtr = addExtr( wellGratingLtShp, 'darkslategray', gratingLength, 0.9 );
+            wellGratingLtExtr.position.set( concreteLt.x - wellDistance, concreteLt.y + wellDistance * -0.02, wellSpacing + wellSideThickness );
+            // showContainer.push( wellGratingLtExtr )
+
+            const wellGratingRtShp = new THREE.Shape();
+            wellGratingRtShp.moveTo( wellSideThickness, wellSideThickness * -0.02 );
+            wellGratingRtShp.lineTo( wellSideThickness, wellSideThickness * -0.02 - gratingHeight );
+            wellGratingRtShp.lineTo( wellSideThickness + gratingWidth, ( wellSideThickness + gratingWidth )*-0.02 - gratingHeight );
+            wellGratingRtShp.lineTo( wellSideThickness + gratingWidth, ( wellSideThickness + gratingWidth )*-0.02 );
+            wellGratingRtShp.lineTo( wellSideThickness, wellSideThickness * -0.02 );
+
+            const wellGratingRtExtr = addExtr( wellGratingRtShp, 'darkslategray', gratingLength, 0.9 );
+            wellGratingRtExtr.position.set( concreteRt.x + wellDistance, concreteRt.y + wellDistance * -0.02, wellSpacing + wellSideThickness );
+            // showContainer.push( wellGratingRtExtr );
+
+
+            // 집수정 하부 생성
+            const wellSubLtCsg = new CSG();
+            wellSubLtCsg.subtract( [ wellOutLtExtr, wellInLtExtr, wellGratingLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const wellLtMesh = wellSubLtCsg.toMesh();
+            // showContainer.push( wellLtMesh );
+
+            const wellSubRtCsg = new CSG();
+            wellSubRtCsg.subtract( [ wellOutRtExtr, wellInRtExtr, wellGratingRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const wellRtMesh = wellSubRtCsg.toMesh();
+            // showContainer.push( wellRtMesh );
+
+
+
+            // 그레이팅 덮개
+            const gratingCoverShp = new THREE.Shape();
+            gratingCoverShp.moveTo(  0,                       0 );
+            gratingCoverShp.lineTo(  (gratingWidth-0.020)/2,  0 );
+            gratingCoverShp.lineTo(  (gratingWidth-0.020)/2, -(gratingLength-0.016)/2 );
+            gratingCoverShp.lineTo( -(gratingWidth-0.020)/2, -(gratingLength-0.016)/2 );
+            gratingCoverShp.lineTo( -(gratingWidth-0.020)/2,  0 );
+            gratingCoverShp.lineTo(  0,                       0 );
+
+            const gratingCoverHole1 = new THREE.Path();
+            gratingCoverHole1.moveTo(  0,     - 0.085 );
+            gratingCoverHole1.lineTo(  0.050, - 0.085 );
+            gratingCoverHole1.absarc(  0.050, - 0.100, 0.015, Math.PI/2, -Math.PI/2, true );
+            gratingCoverHole1.lineTo( -0.050, - 0.115 );
+            gratingCoverHole1.absarc( -0.050, - 0.100, 0.015, -Math.PI/2, Math.PI/2, true );
+            gratingCoverHole1.lineTo(  0,     - 0.085 );
+
+            const gratingCoverHole2 = new THREE.Path();
+            gratingCoverHole2.moveTo(  0,     -(gratingLength-0.016)/2 + 0.085 );
+            gratingCoverHole2.lineTo(  0.050, -(gratingLength-0.016)/2 + 0.085 );
+            gratingCoverHole2.absarc(  0.050, -(gratingLength-0.016)/2 + 0.100, 0.015, -Math.PI/2, Math.PI/2, false );
+            gratingCoverHole2.lineTo( -0.050, -(gratingLength-0.016)/2 + 0.115 );
+            gratingCoverHole2.absarc( -0.050, -(gratingLength-0.016)/2 + 0.100, 0.015, Math.PI/2, -Math.PI/2, false );
+            gratingCoverHole2.lineTo(  0,     -(gratingLength-0.016)/2 + 0.085 );
+
+            gratingCoverShp.holes.push( gratingCoverHole1 );
+            gratingCoverShp.holes.push( gratingCoverHole2 );
+            const gratingCoverExtr1 = addExtr( gratingCoverShp, 'red', 0.045, 0.9 );
+            gratingCoverExtr1.rotation.x = -Math.PI/2;
+            gratingCoverExtr1.position.set( concreteLt.x - wellDistance - wellWidth/2, concreteLt.y + (wellDistance +wellWidth/2) * -0.02, wellSpacing )
+            // showContainer.push( gratingCoverExtr1 );
+
+            const gratingCoverExtr2 = addExtr( gratingCoverShp, 'red', 0.045, 0.9 );
+            gratingCoverExtr2.rotation.x = -Math.PI/2;
+            gratingCoverExtr2.position.set( concreteLt.x - wellDistance - wellWidth/2, concreteLt.y + (wellDistance +wellWidth/2) * -0.02, wellSpacing + (gratingLength)/2 )
+            // showContainer.push( gratingCoverExtr2 );
+            
+
+
+            // 하부 유공관
+
+            //// 1.1 자르기 위한 하부유공관
+            const bottomPipeOutGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, ui.totalLength, 20 );
+            bottomPipeOutGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutGeo.translate( 0, 0, ui.totalLength/2 );
+
+            const bottomPipeInGeo = new THREE.CylinderBufferGeometry( bottomPipeInD/2, bottomPipeInD/2, ui.totalLength, 20 );
+            bottomPipeInGeo.rotateX( - Math.PI/2 );
+            bottomPipeInGeo.translate( 0, 0, ui.totalLength/2 );
+
+            const bottomPipeMat = new THREE.MeshPhongMaterial( {color: 'seagreen', opacity: 0.9, transparent: true } );
+
+            const bottomPipeOutMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            const bottomPipeInMesh = new THREE.Mesh( bottomPipeInGeo, bottomPipeMat );
+
+            const bottomPipeOutLtMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            bottomPipeOutLtMesh.position.set( -wellWidth/2 + concreteLt.x - wellDistance, concreteLt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            // showContainer.push( bottomPipeOutLtMesh );
+
+            const bottomPipeOutRtMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            bottomPipeOutRtMesh.position.set( +wellWidth/2 + concreteRt.x + wellDistance, concreteRt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            // showContainer.push( bottomPipeOutRtMesh );
+
+
+            //// 1.2 하부 유공관 뒤쪽
+            const bottomPipeOutBackGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, wellSpacing, 20 );
+            bottomPipeOutBackGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutBackGeo.translate( 0, 0, wellSpacing/2 );
+
+            const bottomPipeOutBackMesh = new THREE.Mesh( bottomPipeOutBackGeo, bottomPipeMat );
+
+            const bottomPipeBackCsg = new CSG();
+            bottomPipeBackCsg.subtract( [ bottomPipeOutBackMesh, bottomPipeInMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const bottomPipeBackLtMesh = bottomPipeBackCsg.toMesh();
+            bottomPipeBackLtMesh.position.set( -wellWidth/2 + concreteLt.x - wellDistance, concreteLt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            showContainer.push( bottomPipeBackLtMesh );
+
+            const bottomPipeBackRtMesh = bottomPipeBackLtMesh.clone();
+            bottomPipeBackRtMesh.position.set( +wellWidth/2 + concreteRt.x + wellDistance, concreteRt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            showContainer.push( bottomPipeBackRtMesh );
+
+
+            //// 1.3 하부 유공관 앞쪽
+            const bottomPipeOutFrontGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, ui.totalLength - wellSpacing - wellLength, 20 );
+            bottomPipeOutFrontGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutFrontGeo.translate( 0, 0, (ui.totalLength - wellSpacing - wellLength)/2 );
+
+            const bottomPipeOutFrontMesh = new THREE.Mesh( bottomPipeOutFrontGeo, bottomPipeMat );
+
+            const bottomPipeFrontCsg = new CSG();
+            bottomPipeFrontCsg.subtract( [ bottomPipeOutFrontMesh, bottomPipeInMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const bottomPipeFrontLtMesh = bottomPipeFrontCsg.toMesh();
+            bottomPipeFrontLtMesh.position.set( -wellWidth/2 + concreteLt.x - wellDistance, concreteLt.y - footingHeight - 0.05 - bottomPipeOutD/2, wellSpacing + wellLength );
+            showContainer.push( bottomPipeFrontLtMesh );
+
+            const bottomPipeFrontRtMesh = bottomPipeFrontLtMesh.clone();
+            bottomPipeFrontRtMesh.position.set( +wellWidth/2 + concreteRt.x + wellDistance, concreteRt.y - footingHeight - 0.05 - bottomPipeOutD/2, wellSpacing + wellLength );
+            showContainer.push( bottomPipeFrontRtMesh );
+
+
+
+            // 맹암거 그리기
+            const moleDrainageHeight = 0.05 + bottomPipeOutD + 0.05;
+
+            const moleW1 = 0.125;
+            const moleW2 = 0.300;
+            const moleW3 = 0.300;
+
+            const moleDrainageLtShp = new THREE.Shape();
+            moleDrainageLtShp.moveTo( concreteLt.x, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellDistance - wellWidth + moleW1 + moleW2 + moleW3, ( concreteLt.x - wellDistance - wellWidth + moleW1 + moleW2 + moleW3 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellDistance - wellWidth + moleW1 + moleW2, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellDistance - wellWidth + moleW1, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellDistance - wellWidth, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - footingHeight );
+
+            const moleDrainageLtLine1 = addLine( moleDrainageLtShp, 'slategray' );
+            showContainer.push( moleDrainageLtLine1 );
+
+            const moleDrainageLtLine2 = addLine( moleDrainageLtShp, 'slategray' );
+            moleDrainageLtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( moleDrainageLtLine2 );
+
+            const moleDrainageLtExtr1 = addExtr( moleDrainageLtShp, 'slategray', wellSpacing, 0.8 );
+            // showContainer.push( moleDrainageLtExtr1 );
+
+            const moleDrainageLtExtr2 = addExtr( moleDrainageLtShp, 'slategray', ui.totalLength - wellSpacing - wellLength, 0.8 );
+            moleDrainageLtExtr2.position.set( 0, 0, wellSpacing + wellLength, 0.8 )
+            // showContainer.push( moleDrainageLtExtr2 );
+        
+
+            const moleDrainageRtShp = new THREE.Shape();
+            moleDrainageRtShp.moveTo( concreteRt.x, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellDistance + wellWidth - moleW1 - moleW2 - moleW3, ( concreteRt.x + wellDistance + wellWidth - moleW1 - moleW2 - moleW3 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellDistance + wellWidth - moleW1 - moleW2, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellDistance + wellWidth - moleW1, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellDistance + wellWidth, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - footingHeight );
+
+            const moleDrainageRtLine1 = addLine( moleDrainageRtShp, 'slategray' );
+            showContainer.push( moleDrainageRtLine1 );
+
+            const moleDrainageRtLine2 = addLine( moleDrainageRtShp, 'slategray' );
+            moleDrainageRtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( moleDrainageRtLine2 );
+
+            const moleDrainageRtExtr1 = addExtr( moleDrainageRtShp, 'slategray', wellSpacing, 0.9 );
+            // showContainer.push( moleDrainageRtExtr1 );
+
+            const moleDrainageRtExtr2 = addExtr( moleDrainageRtShp, 'slategray', ui.totalLength - wellSpacing - wellLength, 0.9 );
+            moleDrainageRtExtr2.position.set( 0, 0, wellSpacing + wellLength)
+            // showContainer.push( moleDrainageRtExtr2 );
+            
+
+            // 측벽유공관 변수
+            const crossTSpacing = 5; // 종방향
+
+            const wallPipeOutD = 0.114; // 외경 114, 내경 100
+            const wallPipeInD = 0.100; // 외경 114, 내경 100
+
+            const crossDitchOutD = 0.06;
+            const crossDitchInD = 0.05;
+
+            const crossDitchSpacing = 3; // 종방향
+            
+
+            // 측벽유공관-좌측
+            {
+                // y = mx + d, 횡배수관 중심선
+                const mValue = -4/100; // -4%
+
+                const yInit = footingLtSlope[0].y - footingHeight;
+                const pipeAtan = Math.atan(4/100); // -4%각도
+                const dValue = -mValue*(concreteLt.x - wellDistance - wellWidth ) + yInit + wallPipeOutD/2/Math.cos(pipeAtan);
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                const aValue = r3Origin.x;
+                const bValue = r3Origin.y;
+                const rValue = r3Final - wallPipeOutD/2;
+
+                // difference = r^2(1+m^2) - (b-ma-d)^2
+                const difference = rValue*rValue*(1+mValue*mValue) - (bValue-mValue*aValue-dValue)*(bValue-mValue*aValue-dValue);
+
+                // x1 = [ a + b*m - d*m + sqrt(difference) ] / [ 1 + m^2 ]
+                // x2 = [ a + b*m - d*m - sqrt(difference) ] / [ 1 + m^2 ]
+                const x1Value = ( aValue+bValue*mValue - dValue*mValue + Math.sqrt(difference) ) / ( 1+mValue*mValue);
+                const x2Value = ( aValue+bValue*mValue - dValue*mValue - Math.sqrt(difference) ) / ( 1+mValue*mValue);
+
+                // 결과
+                const xValue = Math.min( x1Value, x2Value ); // min값
+                const yValue = mValue*xValue + dValue;
+
+
+                
+                // 측벽유공관
+                const wallPipeOutShp = new THREE.Shape();
+                wallPipeOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false );
+
+                const wallPipeOutExtr = addExtr( wallPipeOutShp, 'firebrick', ui.totalLength, 0.9 );
+                wallPipeOutExtr.position.set( xValue, yValue, 0 );
+                // showContainer.push( wallPipeOutExtr );
+
+                const wallPipeShp = new THREE.Shape();
+                wallPipeShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2, false );
+
+                const wallPipeHole = new THREE.Path();
+                wallPipeHole.absarc( 0, 0, wallPipeInD/2, 0, Math.PI*2, false );
+
+                wallPipeShp.holes.push( wallPipeHole );
+
+                const wallPipeLtExtr = addExtr( wallPipeShp, 'crimson', ui.totalLength, 0.9 );
+                wallPipeLtExtr.position.set( xValue, yValue, 0 );
+                showContainer.push( wallPipeLtExtr );
+
+
+                // 횡배수관T형(하부 유공관에 연결)
+                const crossTOutShp = new THREE.Shape();
+                crossTOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossTInShp = new THREE.Shape();
+                crossTInShp.absarc( 0, 0, wallPipeInD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌                
+
+                const crossTLtPath = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, 0 );
+                    const p2 = new THREE.Vector3( -wellWidth + concreteLt.x - wellDistance, mValue*(-wellWidth + concreteLt.x - wellDistance)+dValue, 0 );
+                    const p3 = new THREE.Vector3( -wellWidth/2 + concreteLt.x - wellDistance, concreteLt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+                    
+                    crossTLtPath.add( L1 );
+                    crossTLtPath.add( L2 );
+                }
+
+                const crossTOutLtSweep = addSweep( crossTOutShp, 'mediumaquamarine', crossTLtPath, 0.9 );
+                crossTOutLtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTOutLtSweep );
+
+                const crossTLtSweep = addSweep( wallPipeShp, 'navy', crossTLtPath, 0.9 );
+                crossTLtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTLtSweep );
+ 
+
+                // 횡배수관Y형(집수정에 연결)
+                const crossYLtPath1 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, -0.5 );
+                    const p2 = new THREE.Vector3( footingLtSlope[1].x+wellWidth/2, mValue*(footingLtSlope[1].x+wellWidth/2)+dValue, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossYLtPath1.add( L1 );
+                }
+
+                const crossYOutLtSweep1 = addSweep( crossTOutShp, 'mediumaquamarine', crossYLtPath1, 0.9 );
+                crossYOutLtSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYOutLtSweep1 );
+
+                const crossYLTSweep1 = addSweep( wallPipeShp, 'navy', crossYLtPath1, 0.9 );
+                crossYLTSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYLTSweep1 );
+ 
+
+                const crossPipeLtPath2 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, 0.5 );
+                    const p2 = new THREE.Vector3( footingLtSlope[1].x+wellWidth/2, mValue*(footingLtSlope[1].x+wellWidth/2)+dValue, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossPipeLtPath2.add( L1 );
+                }
+
+                const crossYOutLtSweep2 = addSweep( crossTOutShp, 'mediumaquamarine', crossPipeLtPath2, 0.9 );
+                crossYOutLtSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYOutLtSweep2 );
+
+                const crossYLTSweep2 = addSweep( wallPipeShp, 'navy', crossPipeLtPath2, 0.9 );
+                crossYLTSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYLTSweep2 );
+
+
+                // 횡배수관(Ditch에 연결)
+                const result = tangentPointPath( footingLtSlope[4].x, footingLtSlope[4].y, footingLtSlope[11].x, footingLtSlope[11].y, crossDitchOutD )
+
+                const crossDitchOutShp = new THREE.Shape();
+                crossDitchOutShp.absarc( 0, crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossPipeShp = new THREE.Shape();
+                crossPipeShp.absarc( 0, crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2, false );
+
+                const crossPipeShpHole = new THREE.Path();
+                crossPipeShpHole.absarc( 0, crossDitchOutD/2, crossDitchInD/2, 0, Math.PI*2, false );
+
+                crossPipeShp.holes.push( crossPipeShpHole );
+
+
+                const crossDitchLtPath = new THREE.CurvePath();
+
+                if ( footingType == '자연환기' ) {
+
+                    const p1 = new THREE.Vector3( footingLtSlope[4].x, footingLtSlope[4].y );
+                    const p2 = new THREE.Vector3( footingLtSlope[11].x, footingLtSlope[4].y );
+                    const p3 = new THREE.Vector3( footingLtSlope[11].x, footingLtSlope[11].y );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+
+                    crossDitchLtPath.add( L1 );
+                    crossDitchLtPath.add( L2 );
+
+                } else {
+
+                    const p1 = new THREE.Vector3( footingLtSlope[2].x, result[0]*footingLtSlope[2].x+result[1] );
+                    const p2 = new THREE.Vector3( footingLtSlope[12].x, result[0]*footingLtSlope[12].x+result[1] );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossDitchLtPath.add( L1 );
+
+                }
+
+
+                const crossDitchOutLtSweep = addSweep( crossDitchOutShp, 'mediumaquamarine', crossDitchLtPath, 0.9 );
+                crossDitchOutLtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchOutLtSweep );
+
+                const crossDitchLtSweep = addSweep( crossPipeShp, 'mediumaquamarine', crossDitchLtPath, 0.9 );
+                crossDitchLtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchLtSweep );
+
+
+
+                // 집수정 Final CSG
+                const WellLtFinalCsg = new CSG();
+                WellLtFinalCsg.subtract( [ wellLtMesh, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const WellLtFinalMesh = WellLtFinalCsg.toMesh();
+                showContainer.push( WellLtFinalMesh );
+
+
+                // 맹암거 Final CSG
+                const moleDrainageLtCsg1 = new CSG();
+                moleDrainageLtCsg1.subtract( [ moleDrainageLtExtr1, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageLtMesh1 = moleDrainageLtCsg1.toMesh();
+                showContainer.push( moleDrainageLtMesh1 );
+
+                const moleDrainageLtCsg2 = new CSG();
+                moleDrainageLtCsg2.subtract( [ moleDrainageLtExtr2, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageLtMesh2 = moleDrainageLtCsg2.toMesh();
+                showContainer.push( moleDrainageLtMesh2 );
+
+
+                // 횡배수관T형 Final Csg
+                const crossTLtFinalCsg = new CSG();
+                crossTLtFinalCsg.subtract( [ crossTLtSweep, wallPipeOutExtr, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossTLtFinalMesh = crossTLtFinalCsg.toMesh();
+                showContainer.push( crossTLtFinalMesh );
+
+
+                // 횡배수관Y형 Final CSG
+                const crossYLtFinalCsg1 = new CSG();
+                crossYLtFinalCsg1.subtract( [ crossYLTSweep1, wallPipeOutExtr, wellInLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYLtFinalMesh1 = crossYLtFinalCsg1.toMesh();
+                showContainer.push( crossYLtFinalMesh1 );
+                
+                const crossYLtFinalCsg2 = new CSG();
+                crossYLtFinalCsg2.subtract( [ crossYLTSweep2, wallPipeOutExtr, wellInLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYLtFinalMesh2 = crossYLtFinalCsg2.toMesh();
+                showContainer.push( crossYLtFinalMesh2 );
+                
+                
+                // 횡배수관Ditch Final CSG
+                const crossDitchLtCsg = new CSG();
+                crossDitchLtCsg.intersect( [ crossDitchLtSweep, footingLtExtr ] );
+                const crossDitchLtMesh = crossDitchLtCsg.toMesh();
+                showContainer.push( crossDitchLtMesh );
+
+
+                // 좌측 공동구 Final CSG
+                //// 좌측 공동구 : 집수정 subtract
+                const footingLtSubCsg1 = new CSG();
+                footingLtSubCsg1.subtract( [ footingLtExtr, wellInLtExtr, wellGratingLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingLtMesh1 = footingLtSubCsg1.toMesh();
+                // showContainer.push( footingLtMesh1 );
+
+
+                //// 좌측 공동구 : 측벽배수관 subtract
+                const footingLtSubCsg2 = new CSG();
+                footingLtSubCsg2.subtract( [ footingLtMesh1, wallPipeOutExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingLtMesh2 = footingLtSubCsg2.toMesh();
+                showContainer.push( footingLtMesh2 );
+
+
+                //// 좌측 공동구 : 횡배수관T형, 횡배수관Y형 subtract
+                // const footingLtSubCsg3 = new CSG();
+                // footingLtSubCsg3.subtract( [ footingLtMesh2, crossTOutLtSweep, crossYOutLtSweep1, crossYOutLtSweep2 ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                // const footingLtMesh3 = footingLtSubCsg3.toMesh();
+                // showContainer.push( footingLtMesh3 );
+
+            }
+
+
+            // 측벽유공관-우측
+            {
+                // y = mx + d, 횡배수관 중심선
+                const mValue = 4/100; // -4%
+
+                const yInit = footingRtSlope[0].y - footingHeight;
+                const pipeAtan = Math.atan(-4/100); // -4%각도
+                const dValue =  -mValue*( concreteRt.x + wellDistance + wellWidth ) + yInit + wallPipeOutD/2/Math.cos(pipeAtan);
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                const aValue = r5Origin.x;
+                const bValue = r5Origin.y;
+                const rValue = r5Final - wallPipeOutD/2;
+
+                // difference = r^2(1+m^2) - (b-m*a-d)^2
+                const difference = rValue*rValue*(1+mValue*mValue) - (bValue-mValue*aValue-dValue)*(bValue-mValue*aValue-dValue);
+
+                // x1 = [ a + b*m - d*m + sqrt(difference) ] / [ 1 + m^2 ]
+                // x2 = [ a + b*m - d*m - sqrt(difference) ] / [ 1 + m^2 ]
+                const x1Value = ( aValue+bValue*mValue - dValue*mValue + Math.sqrt(difference) ) / ( 1+mValue*mValue);
+                const x2Value = ( aValue+bValue*mValue - dValue*mValue - Math.sqrt(difference) ) / ( 1+mValue*mValue);
+
+
+                // 결과
+                const xValue = Math.max( x1Value, x2Value ); // max값
+                const yValue = mValue*xValue + dValue;
+
+
+                // 측벽유공관 생성
+                const wallPipeOutShp = new THREE.Shape();
+                wallPipeOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false );
+
+                const wallPipeOutExtr = addExtr( wallPipeOutShp, 'firebrick', ui.totalLength, 0.9 );
+                wallPipeOutExtr.position.set( xValue, yValue, 0 );
+                // showContainer.push( wallPipeOutExtr );
+
+                const wallPipeShp = new THREE.Shape();
+                wallPipeShp.absarc( 0, 0, -wallPipeOutD/2, 0, Math.PI*2, false );
+
+                const wallPipeHole = new THREE.Path();
+                wallPipeHole.absarc( 0, 0, -wallPipeInD/2, 0, Math.PI*2, false );
+
+                wallPipeShp.holes.push( wallPipeHole );
+
+                const wallPipeLtExtr = addExtr( wallPipeShp, 'crimson', ui.totalLength, 0.9 );
+                wallPipeLtExtr.position.set( xValue, yValue, 0 );
+                showContainer.push( wallPipeLtExtr );
+
+
+                // 횡배수관T형(하부 유공관에 연결)
+                const crossTOutShp = new THREE.Shape();
+                crossTOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossTInShp = new THREE.Shape();
+                crossTInShp.absarc( 0, 0, wallPipeInD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌                
+
+                const crossTRtPath = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, 0 );
+                    const p2 = new THREE.Vector3( wellWidth + concreteRt.x + wellDistance, mValue*(wellWidth + concreteRt.x + wellDistance)+dValue, 0 );
+                    const p3 = new THREE.Vector3( wellWidth/2 + concreteRt.x + wellDistance, concreteRt.y - footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+                    
+                    crossTRtPath.add( L1 );
+                    crossTRtPath.add( L2 );
+                }
+
+                const crossTOutRtSweep = addSweep( crossTOutShp, 'mediumaquamarine', crossTRtPath, 0.9);
+                crossTOutRtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTOutRtSweep );
+
+                const crossTRtSweep = addSweep( wallPipeShp, 'navy', crossTRtPath, 0.9 );
+                crossTRtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTRtSweep );
+
+
+                // 횡배수관Y형(집수정에 연결)
+                const crossYRtPath1 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, -0.5 );
+                    const p2 = new THREE.Vector3( footingRtSlope[1].x-wellWidth/2, mValue*(footingRtSlope[1].x-wellWidth/2)+dValue, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossYRtPath1.add( L1 );
+                }
+
+                const crossYOutRtSweep1 = addSweep( crossTOutShp, 'mediumaquamarine', crossYRtPath1, 0.9 );
+                crossYOutRtSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYOutRtSweep1 );
+
+                const crossYRtSweep1 = addSweep( wallPipeShp, 'navy', crossYRtPath1, 0.9 );
+                crossYRtSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYRtSweep1 );
+ 
+
+                const crossPipeRtPath2 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( xValue, yValue, 0.5 );
+                    const p2 = new THREE.Vector3( footingRtSlope[1].x-wellWidth/2, mValue*(footingRtSlope[1].x-wellWidth/2)+dValue, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossPipeRtPath2.add( L1 );
+                }
+
+                const crossYOutRtSweep2 = addSweep( crossTOutShp, 'mediumaquamarine', crossPipeRtPath2, 0.9 );
+                crossYOutRtSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYOutRtSweep2 );
+
+                const crossYRtSweep2 = addSweep( wallPipeShp, 'navy', crossPipeRtPath2, 0.9 );
+                crossYRtSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYRtSweep2 );
+
+
+                // 횡배수관(Ditch에 연결)
+                const result = tangentPointPath( footingRtSlope[4].x, footingRtSlope[4].y, footingRtSlope[11].x, footingRtSlope[11].y, crossDitchOutD )
+
+                const crossDitchOutShp = new THREE.Shape();
+                crossDitchOutShp.absarc( 0, -crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossPipeShp = new THREE.Shape();
+                crossPipeShp.absarc( 0, -crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2, false );
+
+                const crossPipeShpHole = new THREE.Path();
+                crossPipeShpHole.absarc( 0, -crossDitchOutD/2, crossDitchInD/2, 0, Math.PI*2, false );
+
+                crossPipeShp.holes.push( crossPipeShpHole );
+
+
+                const crossDitchRtPath = new THREE.CurvePath();
+
+                if ( footingType == '자연환기' ) {
+
+                    const p1 = new THREE.Vector3( footingRtSlope[4].x, footingRtSlope[4].y );
+                    const p2 = new THREE.Vector3( footingRtSlope[11].x, footingRtSlope[4].y );
+                    const p3 = new THREE.Vector3( footingRtSlope[11].x, footingRtSlope[11].y );
+
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+
+                    crossDitchRtPath.add( L1 );
+                    crossDitchRtPath.add( L2 );
+
+                } else {
+
+                    const p1 = new THREE.Vector3( footingRtSlope[2].x, result[0]*footingRtSlope[2].x+result[1] );
+                    const p2 = new THREE.Vector3( footingRtSlope[12].x, result[0]*footingRtSlope[12].x+result[1] );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossDitchRtPath.add( L1 );
+
+                }
+                
+                const crossDitchOutRtSweep = addSweep( crossDitchOutShp, 'mediumaquamarine', crossDitchRtPath, 0.9 );
+                crossDitchOutRtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchOutRtSweep );
+
+                const crossDitchRtSweep = addSweep( crossPipeShp, 'mediumaquamarine', crossDitchRtPath, 0.9 );
+                crossDitchRtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchRtSweep );
+
+
+                // 횡배수관Ditch Final CSG
+                const crossDitchRtCsg = new CSG();
+                crossDitchRtCsg.intersect( [ crossDitchRtSweep, footingRtExtr ] );
+                const crossDitchRtMesh = crossDitchRtCsg.toMesh();
+                showContainer.push( crossDitchRtMesh );
+
+
+                // 집수정 Final CSG
+                const WellRtFinalCsg = new CSG();
+                WellRtFinalCsg.subtract( [ wellRtMesh, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const WellRtFinalMesh = WellRtFinalCsg.toMesh();
+                showContainer.push( WellRtFinalMesh );
+
+
+                // 맹암거 Final CSG
+                const moleDrainageRtCsg1 = new CSG();
+                moleDrainageRtCsg1.subtract( [ moleDrainageRtExtr1, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageRtMesh1 = moleDrainageRtCsg1.toMesh();
+                showContainer.push( moleDrainageRtMesh1 );
+
+                const moleDrainageRtCsg2 = new CSG();
+                moleDrainageRtCsg2.subtract( [ moleDrainageRtExtr2, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageRtMesh2 = moleDrainageRtCsg2.toMesh();
+                showContainer.push( moleDrainageRtMesh2 );
+
+
+                // 횡배수관T형 Final Csg
+                const crossTRtFinalCsg = new CSG();
+                crossTRtFinalCsg.subtract( [ crossTRtSweep, wallPipeOutExtr, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossTRtFinalMesh = crossTRtFinalCsg.toMesh();
+                showContainer.push( crossTRtFinalMesh );
+
+
+                // 횡배수관Y형 Final CSG
+                const crossYRtFinalCsg1 = new CSG();
+                crossYRtFinalCsg1.subtract( [ crossYRtSweep1, wallPipeOutExtr, wellInRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYRtFinalMesh1 = crossYRtFinalCsg1.toMesh();
+                showContainer.push( crossYRtFinalMesh1 );
+                
+                const crossYRtFinalCsg2 = new CSG();
+                crossYRtFinalCsg2.subtract( [ crossYRtSweep2, wallPipeOutExtr, wellInRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYRtFinalMesh2 = crossYRtFinalCsg2.toMesh();
+                showContainer.push( crossYRtFinalMesh2 );                   
+
+
+                // 우측 공동구 Final CSG
+                //// 우측 공동구 : 집수정 subtract
+                const footingRtSubCsg1 = new CSG();
+                footingRtSubCsg1.subtract( [ footingRtExtr, wellInRtExtr, wellGratingRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingRtMesh1 = footingRtSubCsg1.toMesh();
+                // showContainer.push( footingRtMesh1 );
+
+                //// 우측 공동구 : 측벽배수관 subtract
+                const footingRtSubCsg2 = new CSG();
+                footingRtSubCsg2.subtract( [ footingRtMesh1, wallPipeOutExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingRtMesh2 = footingRtSubCsg2.toMesh();
+                showContainer.push( footingRtMesh2 );
+
+                //// 우측 공동구 : 횡배수관T형, 횡배수관Y형 subtract
+                // const footingRtSubCsg3 = new CSG();
+                // footingRtSubCsg3.subtract( [ footingRtMesh2, crossTOutRtSweep, crossYOutRtSweep1, crossYOutRtSweep2 ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                // const footingRtMesh3 = footingRtSubCsg3.toMesh();
+                // showContainer.push( footingRtMesh3 );
+
+            }
+
+
+
+
+
+
+            // 횡배수관(하부 유공관)
+            function tangentPointPath( xx, yy, aa, bb, rr ) {
+
+                // Point(x, y)
+                const x = xx;
+                const y = yy;
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                const a = aa;
+                const b = bb;
+                const r = rr;
+
+                // value of sqrt
+                const vs = Math.sqrt( (x-a)*(x-a) + (y-b)*(y-b) - r*r );
+
+                // 계산된 값
+                const x1 = ( r*r * ( x-a ) + r * ( y-b ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + a;
+                const y1 = ( r*r * ( y-b ) - r * ( x-a ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + b;
+                
+                const x2 = ( r*r * ( x-a ) - r * ( y-b ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + a;
+                const y2 = ( r*r * ( y-b ) + r * ( x-a ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + b;
+
+                // y = m*x + d
+                const yValue = Math.max( y1, y2 ); // max값
+
+                let xValue
+
+                if ( yValue == y1 ) { xValue = x1 } else { xValue = x2 }
+
+                const m = ( y - yValue ) / ( x - xValue );
+
+                const d = yValue - m * xValue
+
+                return [ m, d ]
+
+            }
+            
+
+
+
+
+
+
+            // raycaster = new THREE.Raycaster();
+
+            // // document.addEventListener( 'mousemove', onPointerMove );
+            // document.addEventListener( 'dblclick', onPointerMove );
+            
+
+
+            // 집수정 우측 대칭복사로 생성
+            // {
+            //     const wellRtGeometry = wellLtMesh.geometry.clone();
+
+            //     const mS = (new THREE.Matrix4()).identity();
+            //     //set -1 to the corresponding axis
+            //     // mS.elements[0] = -1; // x축
+            //     // mS.elements[5] = -1; // y축
+            //     mS.elements[10] = -1; // z축
+
+            //     wellRtGeometry.applyMatrix4( mS );
+
+            //     const wellRightMesh = new THREE.Mesh( wellRtGeometry, new THREE.MeshPhongMaterial( { color: 'navy', opacity: 0.9, transparent: true } ) );
+            // }
+            
+
+            // scene 생성
+            showContainer.forEach( mesh => { scene.add( mesh ) });
+
+
+            // 결과값 저장
+            sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
+
+
+
+        }
+
+
+
+        function createUI() {
+            
+            //onFinishChange : 최종적인 값의 변경, onChange : 값 변경 중의 매 순간 발생
+            const gui = new GUI();
+
+            const commonFolder = gui.addFolder( '공통' )
+            commonFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onChange( designTunnel );
+            commonFolder.add( ui, 'totalLength', 1, 20, 0.1 ).name( '적용 연장' ).onChange( designTunnel );
+            commonFolder.add( ui, 'opacity', 0.1, 1, 0.1 ).name( '투명도' ).onChange( designTunnel );
+
+            
+            commonFolder.open();
+
+        }
+        
+        
+
+        function addLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+       
+
+        function addDashLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineDashedMaterial( { color , dashSize: 0.2, gapSize: 0.05 } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            line.computeLineDistances(); //점선으로 만들어주기 위해 필요
+            return line;
+        }
+
+
+        function addSurf( shape, color, opacity ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.7, transparent: true, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, length, opacity ) {            
+            const extrudeSettings = {
+                steps : 1,
+                depth : length,
+                bevelEnabled : false,
+            }           
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true } );
+            // const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite : false } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+        function addArr ( path ) {
+            const arr = [];
+            for ( let i=0; i*0.01 <= path.getLength(); i++) {
+                const segment = path.getPointAt( i*0.01 / path.getLength() );
+                arr.push( new THREE.Vector3( segment.x, segment.y, 0 ) );
+            }
+            return arr
+        }
+
+        function addPath ( arr ) {
+            const curvePath = new THREE.CurvePath();
+            for ( let i=0; i < arr.length-1; i++ ) {
+                const point1 = new THREE.Vector3( arr[i].x, arr[i].y );
+                const point2 = new THREE.Vector3( arr[i+1].x, arr[i+1].y );
+                const line = new THREE.LineCurve3( point1, point2 );
+                curvePath.add( line )
+            }
+            return curvePath
+        }
+
+        function addSweep( shape, color, path, opacity ) {
+            const extrudeSettings = {
+                steps : 100, 
+                extrudePath : path
+            }
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite  : false } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+        function onPointerMove( event ) {
+
+            pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+        }
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        function render() {
+
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+            // // find intersections
+
+            // raycaster.setFromCamera( pointer, camera );
+
+            // const intersects = raycaster.intersectObjects( scene.children );
+
+            // if ( intersects.length > 0 ) {
+
+            //     if ( INTERSECTED != intersects[ 0 ].object ) {
+
+            //         if ( INTERSECTED ) INTERSECTED.material.color.set( INTERSECTED.current );
+
+            //         INTERSECTED = intersects[ 0 ].object;
+            //         // INTERSECTED.current = INTERSECTED.material.color
+            //         INTERSECTED.material.color.set( 0xff0000 );
+
+            //     }
+
+            // } else {
+
+            //     if ( INTERSECTED ) INTERSECTED.material.color.set( INTERSECTED.current );
+
+            //     INTERSECTED = null;
+
+            // }            
+
+
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+
+
+        // export GLTF
+        const exporter = new GLTFExporter();
+
+        document.getElementById("button").addEventListener("click", exportFile);        
+        
+        
+        function exportFile() {
+
+            const result = exporter.parse( scene, function ( result ) {
+
+					if ( result instanceof ArrayBuffer ) {
+
+						saveArrayBuffer( result, '단면.glb' );
+
+					} else {
+
+						const output = JSON.stringify( result, null, 2 );
+						saveString( output, '단면.gltf' );
+
+					}
+
+            } ) }
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+        
+    </script>
+    
+</body>
+
+</html>

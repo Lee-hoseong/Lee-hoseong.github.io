@@ -1,0 +1,1831 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }        
+
+        /* Add a black background color to the top navigation */
+            .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+                
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a href='TZ_Web4.html'>4. 강지보공</a>
+        <a class="active" href='TZ_Web5.html'>5. 라이닝구조도</a>
+        <a href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a href='TZ_Web9.html'>9. 부대시설</a>
+    </div>
+    
+    <canvas id="c"></canvas>
+    
+    <button id="button" type="button" >Export Model</button>    
+    
+    <script type="module">
+        
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+        
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+
+
+        // Three js 기본변수
+        let camera, scene, renderer
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
+        const liningT0 = JSON.parse( sessionStorage.getItem( '라이닝두께') );
+
+        const roadCenterDistance = JSON.parse( sessionStorage.getItem( '이격거리(최종)' ) );
+
+        const r1ThetaLt= JSON.parse( sessionStorage.getItem( '중심각좌측' ) );
+        const r1ThetaRt = JSON.parse( sessionStorage.getItem( '중심각우측' ) );
+        const r1Height = JSON.parse( sessionStorage.getItem( 'r1중심고' ) );
+        const r1Final = JSON.parse( sessionStorage.getItem( 'r1반지름' ) );
+
+        const r2Origin = JSON.parse( sessionStorage.getItem( 'r2원점' ) );
+        const r2Final = JSON.parse( sessionStorage.getItem( 'r2반지름' ) );
+
+        const r3Origin = JSON.parse( sessionStorage.getItem( 'r3원점' ) );
+        const r3Final = JSON.parse( sessionStorage.getItem( 'r3반지름' ) );
+
+        const r4Origin = JSON.parse( sessionStorage.getItem( 'r4원점' ) );
+        const r4Final = JSON.parse( sessionStorage.getItem( 'r4반지름' ) );
+
+        const r5Origin = JSON.parse( sessionStorage.getItem( 'r5원점' ) );
+        const r5Final = JSON.parse( sessionStorage.getItem( 'r5반지름' ) );
+
+
+        const footingType = JSON.parse( sessionStorage.getItem( '공동구타입' ) );
+        const footingHeight = JSON.parse( sessionStorage.getItem( '공동구높이' ) );
+        const footingLtType = JSON.parse( sessionStorage.getItem( '좌측공동구' ) );
+        const footingRtType = JSON.parse( sessionStorage.getItem( '우측공동구' ) );
+
+        const marginLeft = JSON.parse( sessionStorage.getItem( '좌측측대(최종)' ) );
+        const marginRight = JSON.parse( sessionStorage.getItem( '우측측대(최종)' ) );
+
+        const springLineEL =  JSON.parse( sessionStorage.getItem( '스프링라인EL' ) );
+
+        const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
+
+
+
+        // 파라메트릭 값
+        const ui = {
+
+            // 편경사
+            crossSlopeStandard : crossSlopeStandard,
+            
+            // 1스판길이
+            totalLength : 12.000,
+            
+            // 피복두께
+            coverDepth : 0.060,
+            
+            // 주철근(수직) 직경
+            mainCompDia : 0.016,
+            mainTensDia : 0.032,
+            
+            // 장철근 최대길이
+            outMaxLen : 8.000,
+            inMaxLen : 8.000,
+            
+            // 주철근 위치조정
+            outControl : 0.500,
+            inControl : 0.700,
+            
+            // 겹이음길이
+            lap : 0.500,
+            
+            // 종방향 간격
+            ctc : 0.125,
+            
+            // 배력철근(수평) 직경
+            distrDia : 0.013,
+
+            // 배력철근 간격
+            distrSpacing : 0.200,
+
+            // 전단철근 타입
+            shearType : '스터럽',
+            
+            // 전단철근 직경
+            shearDia : 0.013,
+
+            // 전단철근이 주철근 감싸는 개수
+            bindNum : 3,
+
+            // 전단철근 삭제
+            shearLtLastDel : false,
+            shearRtLastDel : false
+            
+        };
+
+
+        // Run        
+        initGraphic();
+        designTunnel();
+        createUI();
+        
+
+        function initGraphic() {
+            
+            const canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+
+            // Perspective
+            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            // camera.position.set( -7, 7, 15 );             
+            
+
+            // Orthographic
+            camera = new THREE.OrthographicCamera( 
+                window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            ); //left. right, top, bottom, near, far 
+            camera.position.set( 0, 0, 20 ); 
+            
+
+            // OrbitControl : 뷰 확대 및 회전
+            const controls = new OrbitControls( camera, canvas );
+            // controls.target.set( 0, 3, 0 );
+            controls.target.set( 0, 0, 0 );
+            controls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();               
+            scene.background = new THREE.Color( 0xf0f0f0 );
+            
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // 바닥 그리드
+            const size = 30;
+            const divisions = 30;
+            const gridHelper = new THREE.GridHelper( size, divisions );
+            gridHelper.position.y = - 2;
+            gridHelper.material.opacity = 0.4;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper(1); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+            
+            const light = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            // light.castShadow = true;
+            scene.add(light)
+            
+
+            // light helper
+            // const lightHelper = new THREE.SpotLightHelper( light, 10 );
+            // scene.add( lightHelper );            
+            
+
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.shadowMap.enabled = true;
+            
+        }
+        
+
+
+        function designTunnel() {
+            
+            // 이전 메쉬 삭제
+            for ( let i=0; i < showContainer.length; i++) {
+                
+                scene.remove( showContainer[i] );    
+                
+            };
+
+
+            // 배열초기화
+            showContainer = [];
+            
+
+            // 도로중심선
+            const roadCenterPoints = [];
+            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, - 2 ) );
+            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, roadWidth + shoulderRight ) );
+
+            const roadCenterShape = new THREE.Shape( roadCenterPoints );
+            
+            const roadCenterDashLine = addDashLine(  roadCenterShape, 'dimgray' );
+            // showContainer.push( roadCenterDashLine );
+
+
+            // 터널중심선
+            const tunnelCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            tunnelCenterDashLine.position.set( roadCenterDistance, 0, 0);
+            showContainer.push( tunnelCenterDashLine );
+
+
+            // 콘크리트포장과 시멘트필터층
+            const concreteLt = new THREE.Vector3( - roadCenterDistance - marginLeft, ( - roadCenterDistance - marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - roadCenterDistance + marginRight, ( roadWidth - roadCenterDistance + marginRight ) * ui.crossSlopeStandard / 100 );
+
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+
+            // 편경사변화에 따른 공동구 위치 계산 
+            let footingLtSlope = [];
+            let footingRtSlope = [];
+            
+            for ( let i=0; i < footingLtType.length; i++ ) {
+                footingLtSlope.push( new THREE.Vector2 ( footingLtType[i].x + concreteLt.x, footingLtType[i].y + concreteLt.y ) );
+            };
+            
+            for ( let i=0; i < footingRtType.length; i++ ) {
+                footingRtSlope.push( new THREE.Vector2 ( footingRtType[i].x + concreteRt.x, footingRtType[i].y + concreteRt.y ) );
+            };
+
+
+            // 시공이음
+            const jointH1 = 0.150; // 공동구 끝단에서 높이
+            const jointH2 = 0.100; // 조인트 높이
+            const jointL = 0.200; // 조인트 폭
+            
+            const r2Theta3 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y - jointH1) / r2Final ) + Math.PI/2 - r1ThetaLt;
+            
+            const r3Gamma3 = Math.asin( ( r3Origin.y - footingLtSlope[footingLtSlope.length-1].y - jointH1 + jointH2 ) / r3Final );
+            const r3Theta3 = Math.PI/2 - r1ThetaLt + r3Gamma3;
+            
+            const jointLtPt = new THREE.Shape( );
+            jointLtPt.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta3, Math.PI/2 + r1ThetaLt, true );
+            jointLtPt.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            
+            const jointLtShp = new THREE.Shape( );
+            jointLtShp.moveTo( jointLtPt.getPoint( 0 ).x         , jointLtPt.getPoint( 0 ).y );
+            jointLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL, jointLtPt.getPoint( 0 ).y );
+            jointLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL, jointLtPt.getPoint( 0 ).y - jointH2 );
+            jointLtShp.lineTo( jointLtPt.getPoint( 1 ).x         , jointLtPt.getPoint( 1 ).y );
+            
+            const jointLtLine = addLine( jointLtShp, 'skyblue' );
+            showContainer.push( jointLtLine );
+            
+
+            const r4Theta3 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y - jointH1 ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+            
+            const r5Gamma3 = Math.asin( ( r5Origin.y - footingRtSlope[footingRtSlope.length-1].y - jointH1 + jointH2) / r5Final );
+            const r5Theta3 = Math.PI/2 - r1ThetaRt + r5Gamma3;
+            
+            const jointRtPt = new THREE.Shape( );
+            jointRtPt.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - r4Theta3, Math.PI/2 - r1ThetaRt, false );
+            jointRtPt.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta3, true );
+            
+            const jointRtShp = new THREE.Shape( );
+            jointRtShp.moveTo( jointRtPt.getPoint( 0 ).x         , jointRtPt.getPoint( 0 ).y );
+            jointRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL, jointRtPt.getPoint( 0 ).y );
+            jointRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL, jointRtPt.getPoint( 0 ).y - jointH2 );
+            jointRtShp.lineTo( jointRtPt.getPoint( 1 ).x         , jointRtPt.getPoint( 1 ).y );            
+            
+            const jointRtLine = addLine( jointRtShp, 'skyblue' );
+            showContainer.push( jointRtLine );
+            
+            
+
+            // 터널형상 그리기
+            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
+
+            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+
+            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / r3Final );
+            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
+
+            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / r5Final );
+            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;
+
+            
+            const footingRtReverse = [...footingRtSlope].reverse();//원본 배열유지
+
+
+            const liningShp = new THREE.Shape();
+            liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta3, Math.PI/2 + r1ThetaLt, true ) ;
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2 - r1ThetaRt, true );
+            liningShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta3, true );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x          , jointRtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y - jointH2 );
+            liningShp.lineTo( jointRtPt.getPoint( 1 ).x          , jointRtPt.getPoint( 1 ).y );
+            liningShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta3, Math.PI/2 - r1ThetaRt, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt, Math.PI/2 + r1ThetaLt, false );
+            liningShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
+            liningShp.lineTo( jointLtPt.getPoint( 1 ).x          , jointLtPt.getPoint( 1 ).y );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y - jointH2 );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y );
+            liningShp.lineTo( jointLtPt.getPoint( 0 ).x          , jointLtPt.getPoint( 0 ).y );
+
+            const liningLine = addLine( liningShp, 'black' );
+            showContainer.push( liningLine );
+
+            const liningLineClone = liningLine.clone();
+            liningLineClone.position.set( 0, 0, ui.totalLength );
+            showContainer.push( liningLineClone );
+
+
+            // 공동구 형상
+            const sectionPath = [];
+            sectionPath.push( new THREE.Vector3( 0, 0, 0 ) );
+            sectionPath.push( new THREE.Vector3(0, 0, ui.totalLength ) );
+
+            const sectionPathConv = new THREE.CatmullRomCurve3( sectionPath );
+
+            const footingLtShp = new THREE.Shape( footingLtSlope );
+            footingLtShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt + r2Theta3, true );
+            footingLtShp.moveTo( jointLtPt.getPoint( 0 ).x          , jointLtPt.getPoint( 0 ).y );
+            footingLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y );
+            footingLtShp.lineTo( jointLtPt.getPoint( 0 ).x - jointL , jointLtPt.getPoint( 0 ).y - jointH2 );
+            footingLtShp.lineTo( jointLtPt.getPoint( 1 ).x          , jointLtPt.getPoint( 1 ).y );
+            footingLtShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt + r3Theta3, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            footingLtShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y - footingHeight );
+
+            const footingLtExtr = addExtr( footingLtShp, 'steelblue', sectionPathConv );
+            footingLtExtr.rotation.z = Math.PI/2;
+            showContainer.push( footingLtExtr );
+
+
+            const footingRtShp = new THREE.Shape( footingRtSlope );
+            footingRtShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - r4Theta1, Math.PI/2 - r1ThetaRt - r4Theta3, false );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x          , jointRtPt.getPoint( 0 ).y );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y );
+            footingRtShp.lineTo( jointRtPt.getPoint( 0 ).x + jointL , jointRtPt.getPoint( 0 ).y - jointH2 );
+            footingRtShp.lineTo( jointRtPt.getPoint( 1 ).x          , jointRtPt.getPoint( 1 ).y );
+            footingRtShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta3, Math.PI/2 - r1ThetaRt - r5Theta1, true );
+            footingRtShp.lineTo( footingRtSlope[0].x, footingRtSlope[0].y - footingHeight );
+
+            const footingRtExtr = addExtr( footingRtShp, 'steelblue', sectionPathConv );
+            footingRtExtr.rotation.z = Math.PI/2;
+            showContainer.push( footingRtExtr );
+
+
+
+
+            
+            // 주철근 main, Main Rebar
+            // 배력철근 distr, Distribution Rebar
+            // 전단철근 shear, Shear Rebar
+            // 압축 comp, Compression
+            // 인장 tens, Tension
+            // 왼쪽 lt, Left
+            // 오른쪽 rt, Right
+            
+            
+            // 1. 주철근 형상 Main Rebar, 
+            const main1Shp = new THREE.Shape();
+            main1Shp.absarc( 0, 0, ui.mainCompDia/2, 0, Math.PI * 2, false );
+            
+            const main2Shp = new THREE.Shape();
+            main2Shp.absarc( 0, 0, ui.mainTensDia/2, 0, Math.PI * 2, false );
+            
+            // 1.1 주철근 최대 직경 결정
+            let mainMaxDia = Math.max( ui.mainCompDia, ui.mainTensDia );
+
+            
+            // 2. 주철근 경로 생성
+            
+            // 2.1 외측 경로
+            const r3Gamma4 = Math.asin( ( r3Origin.y - jointLtShp.getPoint( 1 ).y ) / ( r3Final - ui.coverDepth ) );
+            const r3Theta4 = Math.PI/2 - r1ThetaLt + r3Gamma4;
+            
+            const r5Gamma4 = Math.asin( ( r5Origin.y - jointRtShp.getPoint( 1 ).y ) / ( r5Final - ui.coverDepth ) );
+            const r5Theta4 = Math.PI/2 - r1ThetaRt + r5Gamma4;
+            
+            const mainOutLtPath = new THREE.Shape();
+            mainOutLtPath.absarc( r5Origin.x, r5Origin.y, r5Final - ui.coverDepth, Math.PI/2 - r1ThetaRt - r5Theta4, Math.PI/2 - r1ThetaRt, false );
+            mainOutLtPath.absarc( 0, r1Height, r1Final + liningT0 - ui.coverDepth, Math.PI/2 - r1ThetaRt, Math.PI/2 + r1ThetaLt, false );
+            mainOutLtPath.absarc( r3Origin.x, r3Origin.y, r3Final - ui.coverDepth, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta4, false );
+            
+            const mainOutRtPath = new THREE.Shape();
+            mainOutRtPath.absarc( r3Origin.x, r3Origin.y, r3Final - ui.coverDepth, Math.PI/2 + r1ThetaLt + r3Theta4, Math.PI/2 + r1ThetaLt, true );
+            mainOutRtPath.absarc( 0, r1Height, r1Final + liningT0 - ui.coverDepth, Math.PI/2 + r1ThetaLt, Math.PI/2 - r1ThetaRt, true );
+            mainOutRtPath.absarc( r5Origin.x, r5Origin.y, r5Final - ui.coverDepth, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta4, true );
+
+            
+            // 2.2 내측 경로
+            const r2Theta4 = Math.asin( ( r2Origin.y - jointLtShp.getPoint( 0 ).y ) / ( r2Final + ui.coverDepth ) ) + Math.PI/2 - r1ThetaLt;
+            const r4Theta4 = Math.asin( ( r4Origin.y - jointRtShp.getPoint( 0 ).y ) / ( r4Final + ui.coverDepth ) ) + Math.PI/2 - r1ThetaRt;
+            
+            const mainInLtPath = new THREE.Shape();
+            mainInLtPath.absarc( r4Origin.x, r4Origin.y, r4Final + ui.coverDepth, Math.PI/2 - r1ThetaRt - r4Theta4, Math.PI/2 - r1ThetaRt, false );
+            mainInLtPath.absarc( 0, r1Height, r1Final + ui.coverDepth, Math.PI/2 - r1ThetaRt, Math.PI/2 + r1ThetaLt, false );
+            mainInLtPath.absarc( r2Origin.x, r2Origin.y, r2Final + ui.coverDepth, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r2Theta4, false );
+            
+            const mainInRtPath = new THREE.Shape();
+            mainInRtPath.absarc( r2Origin.x, r2Origin.y, r2Final + ui.coverDepth, Math.PI/2 + r1ThetaLt + r2Theta4, Math.PI/2 + r1ThetaLt, true );
+            mainInRtPath.absarc( 0, r1Height, r1Final + ui.coverDepth, Math.PI/2 + r1ThetaLt, Math.PI/2 - r1ThetaRt, true );
+            mainInRtPath.absarc( r4Origin.x, r4Origin.y, r4Final + ui.coverDepth, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta4, true );
+            
+            
+            // 3. 주철근 모델링
+            const mainRebarNum = Math.floor( ( ui.totalLength - ui.coverDepth ) / ui.ctc );// 주철근 종방향 개수
+            
+            const mainRebarGroup = new THREE.Group();
+            
+            
+            // 3.1 주철근 외측 모델링
+            const outBaseLen = mainOutRtPath.getLength() * ui.outControl; 
+            const outRtLen = mainOutRtPath.getLength() - outBaseLen;
+            const outLtLen = outBaseLen + ui.lap;
+            
+            const outLapArr = [];
+            
+            // 외측 우측
+            const outLapNumRt = Math.max ( Math.ceil ( ( outRtLen - ui.outMaxLen ) / ( ui.outMaxLen - ui.lap ) ), 0);// 이음개수
+            
+            for ( let i=0; i<= outLapNumRt; i++) {
+                
+                // 경로생성
+                const startLen = outBaseLen;
+                const previousLen = i * ( ui.outMaxLen - ui.lap );
+                const drawLen = Math.min( ui.outMaxLen + i * ( ui.outMaxLen - ui.lap ), outRtLen ) - ( i * ( ui.outMaxLen - ui.lap ) );// =j
+                
+                const mainOutRtPathPts = [];
+                
+                for ( let j=0; j*0.01 <= drawLen; j++ ) {
+                    
+                    const segment = mainOutRtPath.getPointAt( ( startLen + previousLen + j*0.01 ) / mainOutRtPath.getLength() );
+                    
+                    mainOutRtPathPts.push( new THREE.Vector3( segment.x, segment.y, 0 ) );
+                    
+                };
+                
+                const mainOutRtPathConv = new THREE.CatmullRomCurve3( mainOutRtPathPts );
+                
+                // 모델링
+                if ( i % 2 == 0 ) {
+
+                    const mainOutRtExtr = addExtr( main1Shp, 'crimson', mainOutRtPathConv );
+                    mainOutRtExtr.position.set( 0, 0, ui.coverDepth );
+                    mainRebarGroup.add( mainOutRtExtr );
+
+                } else {
+
+                    const mainOutRtExtr = addExtr( main2Shp, 'midnightblue', mainOutRtPathConv );
+                    mainOutRtExtr.position.set( 0, 0, ui.mainCompDia/2 + ui.mainTensDia/2 + ui.coverDepth );
+                    mainRebarGroup.add( mainOutRtExtr );
+
+                };
+                
+                // 겹이음표시
+                const lapPt1 = mainOutRtPath.getPointAt( (mainOutRtPath.getLength() - ( outRtLen ) + i * ( ui.outMaxLen - ui.lap ) ) / mainOutRtPath.getLength() );
+                const lapPt2 = mainOutRtPath.getPointAt( (mainOutRtPath.getLength() - ( outRtLen ) + i * ( ui.outMaxLen - ui.lap ) + drawLen ) / mainOutRtPath.getLength() );
+
+                outLapArr.push( lapPt1 );
+                outLapArr.push( lapPt2 );                
+                
+            };
+            
+            // 외측 좌측
+            const outLapNumLt = Math.max ( Math.ceil ( ( outLtLen - ui.outMaxLen ) / ( ui.outMaxLen - ui.lap ) ), 0);// 이음개수
+            
+            for ( let i=0; i<= outLapNumLt; i++) {
+                
+                // 경로생성
+                const startLen = mainOutLtPath.getLength() - ( outLtLen );
+                const previousLen = i * ( ui.outMaxLen - ui.lap );
+                const drawLen = Math.min( ui.outMaxLen + i * ( ui.outMaxLen - ui.lap ), outLtLen ) - ( i * ( ui.outMaxLen - ui.lap ) );// =j
+                
+                const mainOutLtPathPts = [];
+                
+                for ( let j=0; j*0.01 <= drawLen; j++ ) {
+
+                    const segment = mainOutLtPath.getPointAt( ( startLen + previousLen + j*0.01 ) / mainOutLtPath.getLength() );
+                    
+                    mainOutLtPathPts.push( new THREE.Vector3( segment.x, segment.y, 0 ) );                
+
+                };
+
+                const mainOutLtPathConv = new THREE.CatmullRomCurve3( mainOutLtPathPts );                 
+                
+                // 모델링
+                if ( i % 2 == 0 ) {
+
+                    const mainOutLtExtr = addExtr( main2Shp, 'midnightblue', mainOutLtPathConv );
+                    mainOutLtExtr.position.set( 0, 0, ui.mainCompDia/2 + ui.mainTensDia/2 + ui.coverDepth );
+                    mainRebarGroup.add( mainOutLtExtr );
+
+                } else {
+
+                    const mainOutLtExtr = addExtr( main1Shp, 'crimson', mainOutLtPathConv );
+                    mainOutLtExtr.position.set( 0, 0, ui.coverDepth );
+                    mainRebarGroup.add( mainOutLtExtr );
+
+                };                
+                
+                // 겹이음표시
+                const lapPt1 = mainOutLtPath.getPointAt( (mainOutLtPath.getLength() - ( outLtLen ) + i * ( ui.outMaxLen - ui.lap ) ) / mainOutLtPath.getLength() );
+                const lapPt2 = mainOutLtPath.getPointAt( (mainOutLtPath.getLength() - ( outLtLen ) + i * ( ui.outMaxLen - ui.lap ) + drawLen ) / mainOutLtPath.getLength() );
+
+                outLapArr.push( lapPt1 );
+                outLapArr.push( lapPt2 );
+            
+            };
+            
+            
+            // 3.2 주철근 내측 모델링
+            const inBaseLen = mainInRtPath.getLength() * ui.inControl; 
+            const inRtLen = mainInRtPath.getLength() - inBaseLen;
+            const inLtLen = inBaseLen + ui.lap;
+            
+            const inLapArr = []; 
+            
+            // 내측 우측
+            const inLapNumRt = Math.max ( Math.ceil ( ( inRtLen - ui.inMaxLen ) / ( ui.inMaxLen - ui.lap ) ), 0);//이음개수
+            
+            for ( let i=0; i<= inLapNumRt; i++) {
+                
+                // 경로생성
+                const startLen = inBaseLen;
+                const previousLen = i * ( ui.inMaxLen - ui.lap );
+                const drawLen = Math.min( ui.inMaxLen + i * ( ui.inMaxLen - ui.lap ), inRtLen ) - ( i * ( ui.inMaxLen - ui.lap ) );// =j
+                
+                const mainInRtPathPts = [];
+
+                for ( let j=0; j*0.01 <= drawLen; j++ ) {
+
+                    const segment = mainInRtPath.getPointAt( ( startLen + previousLen + j*0.01 ) / mainInRtPath.getLength() );
+
+                    mainInRtPathPts.push( new THREE.Vector3( segment.x, segment.y, 0 ) );
+
+                }; 
+                
+                const mainInRtPathConv = new THREE.CatmullRomCurve3( mainInRtPathPts );
+                
+                // 모델링
+                if ( i % 2 == 0 ) {
+
+                    const mainInRtExtr = addExtr( main1Shp, 'crimson', mainInRtPathConv );            
+                    mainInRtExtr.position.set( 0, 0, ui.coverDepth );
+                    mainRebarGroup.add( mainInRtExtr );
+
+                } else {
+
+                    const mainInRtExtr = addExtr( main2Shp, 'midnightblue', mainInRtPathConv );
+                    mainInRtExtr.position.set( 0, 0, ui.mainCompDia/2 + ui.mainTensDia/2 + ui.coverDepth );
+                    mainRebarGroup.add( mainInRtExtr );
+
+                };
+                    
+                // 겹이음표시
+                const lapPt1 = mainInRtPath.getPointAt( (mainInRtPath.getLength() - ( inRtLen ) + i * ( ui.inMaxLen - ui.lap ) ) / mainInRtPath.getLength() );
+                const lapPt2 = mainInRtPath.getPointAt( (mainInRtPath.getLength() - ( inRtLen ) + i * ( ui.inMaxLen - ui.lap ) + drawLen ) / mainInRtPath.getLength() );
+                
+                inLapArr.push( lapPt1 );
+                inLapArr.push( lapPt2 );                
+                
+            };
+            
+            // 내측 좌측
+            const inLapNumLt = Math.max ( Math.ceil ( ( inLtLen - ui.inMaxLen ) / ( ui.inMaxLen - ui.lap ) ), 0);// 이음개수
+            
+            for ( let i=0; i<= inLapNumLt; i++) {
+                
+                // 경로생성
+                const startLen = mainInLtPath.getLength() - ( inLtLen );
+                const previousLen = i * ( ui.inMaxLen - ui.lap );
+                const drawLen = Math.min( ui.inMaxLen + i * ( ui.inMaxLen - ui.lap ), inLtLen ) - ( i * ( ui.inMaxLen - ui.lap ) );// =j
+                
+                const mainInLtPathPts = [];
+                
+                for ( let j=0; j*0.01 <= drawLen; j++ ) {
+
+                    const segment = mainInLtPath.getPointAt( ( startLen + previousLen + j*0.01 ) / mainInLtPath.getLength() );                
+
+                    mainInLtPathPts.push( new THREE.Vector3( segment.x, segment.y, 0 ) );                
+
+                };
+
+                const mainInLtPathConv = new THREE.CatmullRomCurve3( mainInLtPathPts );                 
+                
+                // 모델링    
+                if ( i % 2 == 0 ) {
+
+                    const mainInLtExtr = addExtr( main2Shp, 'midnightblue', mainInLtPathConv );
+                    mainInLtExtr.position.set( 0, 0, ui.mainCompDia/2 + ui.mainTensDia/2 + ui.coverDepth );
+                    mainRebarGroup.add( mainInLtExtr );
+
+                } else {
+
+                    const mainInLtExtr = addExtr( main1Shp, 'crimson', mainInLtPathConv );
+                    mainInLtExtr.position.set( 0, 0, ui.coverDepth );
+                    mainRebarGroup.add( mainInLtExtr );
+
+                };
+                    
+                // 겹이음표시
+                const lapPt1 = mainInLtPath.getPointAt( (mainInLtPath.getLength() - ( inLtLen ) + i * ( ui.inMaxLen - ui.lap ) ) / mainInLtPath.getLength() );
+                const lapPt2 = mainInLtPath.getPointAt( (mainInLtPath.getLength() - ( inLtLen ) + i * ( ui.inMaxLen - ui.lap ) + drawLen ) / mainInLtPath.getLength() );
+
+                inLapArr.push( lapPt1 );
+                inLapArr.push( lapPt2 );
+            
+            };
+            
+            
+            // 4. 주철근 겹이음 표현
+            const outLapFilterArr = 
+                outLapArr.filter(
+                    (element, i) => element != null
+                );
+
+            const inLapFilterArr = 
+                inLapArr.filter(
+                    (element, i) => element != null
+                );
+            
+            // point를 합쳐줌
+            const lapArr = [
+                ...outLapFilterArr,
+                ...inLapFilterArr,
+            ];
+            
+            // 겹이음 포인트
+            const pointsGeometry = new THREE.BufferGeometry().setFromPoints( lapArr );            
+            const pointsMaterial = new THREE.PointsMaterial( { color: 'deeppink', size: 7 } );
+            const points = new THREE.Points( pointsGeometry, pointsMaterial );
+            showContainer.push( points );
+            
+            
+            // 5. 주철근 배치
+            for ( let i=0; i<=mainRebarNum; i++) {
+            
+                const mainRebar = mainRebarGroup.clone();
+                mainRebar.position.set( 0, 0, i * ui.ctc );
+                showContainer.push( mainRebar );
+            
+            }
+            
+            
+            // 6. 배력철근 경로
+            const distrGroup = new THREE.Group();
+            
+            // 배력철근 외측 경로
+            const r3Gamma5 = Math.asin( ( r3Origin.y - jointLtShp.getPoint( 1 ).y ) / ( r3Final - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2 ) );
+            const r3Theta5 = Math.PI/2 - r1ThetaLt + r3Gamma5;
+            
+            const distrOutLtPath = new THREE.Shape();
+            distrOutLtPath.absarc( 0, r1Height, r1Final + liningT0 - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            distrOutLtPath.absarc( r3Origin.x, r3Origin.y, r3Final - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta5, false );
+            
+            const distrOutLtPathLine = addLine( distrOutLtPath, 'lightgrey' );
+            showContainer.push( distrOutLtPathLine );
+            
+            const r5Gamma5 = Math.asin( ( r5Origin.y - jointRtShp.getPoint( 1 ).y ) / ( r5Final - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2 ) );
+            const r5Theta5 = Math.PI/2 - r1ThetaRt + r5Gamma5;            
+            
+            const distrOutRtPath = new THREE.Shape();
+            distrOutRtPath.absarc( 0, r1Height, r1Final + liningT0 - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            distrOutRtPath.absarc( r5Origin.x, r5Origin.y, r5Final - ui.coverDepth - mainMaxDia/2 - ui.distrDia/2, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta5, true );
+            
+            const distrOutRtPathLine = addLine( distrOutRtPath, 'lightgrey' );
+            showContainer.push( distrOutRtPathLine );
+            
+            
+            // 배력철근 내측 경로
+            const r2Theta5 = Math.asin( ( r2Origin.y - jointLtShp.getPoint( 0 ).y ) / ( r2Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2 ) ) + Math.PI/2 - r1ThetaLt;
+            
+            const distrInLtPath = new THREE.Shape();
+            distrInLtPath.absarc( 0, r1Height, r1Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2, Math.PI/2, Math.PI/2 + r1ThetaLt, false );
+            distrInLtPath.absarc( r2Origin.x, r2Origin.y, r2Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r2Theta5, false );
+            
+            const distrInLtLine = addLine( distrInLtPath, 'lightgrey' ); // raycast Target Object
+            showContainer.push( distrInLtLine );
+            
+            const r4Theta5 = Math.asin( ( r4Origin.y - jointRtShp.getPoint( 0 ).y ) / ( r4Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2 ) ) + Math.PI/2 - r1ThetaRt;            
+            
+            const distrInRtPath = new THREE.Shape();
+            distrInRtPath.absarc( 0, r1Height, r1Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            distrInRtPath.absarc( r4Origin.x, r4Origin.y, r4Final + ui.coverDepth + mainMaxDia/2 + ui.distrDia/2, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta5, true );
+            
+            const distrInRtLine = addLine( distrInRtPath, 'lightgrey' ); // raycast Target Object            
+            showContainer.push( distrInRtLine );
+            
+            
+            // 배력철근 위치결정
+            
+            const distrPts = [];
+            
+            for ( let i=0; i*ui.distrSpacing < distrOutLtPath.getLength(); i++ ) {
+                
+                // 일정길이로 나누기
+                const segment = distrOutLtPath.getPointAt( i*ui.distrSpacing / distrOutLtPath.getLength() );
+                distrPts.push( segment )
+                
+                const tangent = distrOutLtPath.getTangentAt( i*ui.distrSpacing / distrOutLtPath.getLength() );
+                
+
+                // raycast
+                const raycast = new THREE.Raycaster();
+                raycast.set( new THREE.Vector3( segment.x, segment.y, 0 ), new THREE.Vector3( -tangent.x, -tangent.y, 0 ).normalize() );
+                const intersect = raycast.intersectObject( distrInLtLine )
+                
+                distrPts.push( new THREE.Vector2( intersect[0].point.x, intersect[0].point.y ) );
+
+                
+                // 배력철근 배치 가이드라인
+                // const guideShp = new THREE.Shape();
+                // guideShp.moveTo( segment.x, segment.y );
+                // guideShp.lineTo( segment.x - tangent.y, segment.y + tangent.x);
+                
+                // const guideLine = addLine( guideShp, 'lightgrey' );
+                // showContainer.push( guideLine );
+                
+            };
+            
+            for ( let i=1; i*ui.distrSpacing < distrOutRtPath.getLength(); i++ ) {
+                
+                // 일정길이로 나누기
+                const segment = distrOutRtPath.getPointAt( i*ui.distrSpacing / distrOutRtPath.getLength() );
+                distrPts.push( segment )
+                
+                const tangent = distrOutRtPath.getTangentAt( i*ui.distrSpacing / distrOutRtPath.getLength() );
+                
+                // raycast
+                const raycast = new THREE.Raycaster();
+                raycast.set( new THREE.Vector3( segment.x, segment.y, 0 ), new THREE.Vector3( -tangent.x, -tangent.y, 0 ).normalize() );
+                const intersect = raycast.intersectObject( distrInRtLine )
+                
+                distrPts.push( new THREE.Vector2( intersect[0].point.x, intersect[0].point.y ) );
+                
+                // 배력철근 배치 가이드라인
+                // const guideShp = new THREE.Shape();
+                // guideShp.moveTo( segment.x, segment.y );
+                // guideShp.lineTo( segment.x + tangent.y, segment.y - tangent.x);
+                
+                // const guideLine = addLine( guideShp, 'lightgrey' );
+                // showContainer.push( guideLine );
+                
+            };            
+            
+            
+            // 배력철근 그리기
+            const horGeo = new THREE.CylinderBufferGeometry( ui.distrDia/2, ui.distrDia/2, ui.totalLength, 32 );
+            const horMat = new THREE.MeshPhongMaterial( {color: '#2FA1D6', shininess: 100} );            
+            
+            for ( let i=0; i <= distrPts.length-1; i++ ) {
+                
+                const horMesh = new THREE.Mesh( horGeo, horMat );
+                horMesh.castShadow = true;
+                horMesh.position.y = ui.totalLength/2;
+                
+                const blockSystem = new THREE.Object3D(); // 빈 객체에 회전된 객체를 넣음, 캐드에서 블록을 만드는 개념
+                blockSystem.add( horMesh );
+                
+                blockSystem.position.set ( distrPts[i].x, distrPts[i].y, 0);
+                blockSystem.rotation.x = Math.PI * 0.5;
+                
+                distrGroup.add( blockSystem );
+                
+            };
+            
+            showContainer.push( distrGroup );
+            
+            
+            // 7. 전단철근
+            const shearShp = new THREE.Shape();
+            shearShp.absarc( 0, 0, ui.shearDia/2, 0, Math.PI * 2, false );
+                      
+            const shearSpacing = 2 * ui.distrSpacing;
+            
+            const shearContainerLt = [];
+            const shearContainerRt = [];
+
+            
+            // 전단철근 좌측 배치
+            for ( let i=0; i * shearSpacing < distrOutLtPath.getLength() - ui.shearDia; i++ ) {
+                
+                const shearPts = [];
+                
+                // 일정길이로 나누기
+                const segment = distrOutLtPath.getPointAt( ( i * shearSpacing + ui.distrDia/2 + ui.shearDia/2 ) / distrOutLtPath.getLength() );
+                
+                const tangent = distrOutLtPath.getTangentAt( ( i * shearSpacing + ui.distrDia/2 + ui.shearDia/2 ) / distrOutLtPath.getLength() );
+                
+                // 전단철근 형상 포인트
+                const raycast = new THREE.Raycaster();
+                raycast.set( new THREE.Vector3( segment.x, segment.y, 0 ), new THREE.Vector3( -tangent.x, -tangent.y, 0 ).normalize() );
+                const intersect = raycast.intersectObject( distrInLtLine )
+                
+                // 전단철근 타입에 따른 경로
+                if ( ui.shearType =='스터럽' ) {
+
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.1
+                    ) );
+                
+                
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.03
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.01
+                    ) ); 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );                 
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia +  mainMaxDia
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );                  
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.03
+                    ) );                
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );                  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x, 
+                        segment.y, 
+                        0.00
+                    ) );                  
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x, 
+                        intersect[0].point.y, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                
+                                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) );
+
+                } else if ( ui.shearType == '조립용철근' ) {
+
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) );
+
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );                  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x, 
+                        segment.y, 
+                        0.00
+                    ) );                  
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x, 
+                        intersect[0].point.y, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                
+                                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) );
+
+                };
+
+                // 전단철근 생성
+                const shearPathConv = new THREE.CatmullRomCurve3( shearPts );
+                
+                const shearExtr = addExtr( shearShp, 'black', shearPathConv );            
+                shearExtr.position.set( 0, 0, ui.coverDepth - ui.mainCompDia/2 - ui.shearDia/2 );
+                shearContainerLt.push( shearExtr );
+
+            };
+            
+
+            // 전단철근 우측 배치
+            for ( let i=1; i * shearSpacing < distrOutRtPath.getLength() - ui.shearDia; i++ ) {
+                
+                const shearPts = [];
+                
+                // 일정길이로 나누기
+                const segment = distrOutRtPath.getPointAt( ( i * shearSpacing - ui.distrDia/2 - ui.shearDia/2 ) / distrOutRtPath.getLength() );
+                
+                const tangent = distrOutRtPath.getTangentAt( ( i * shearSpacing - ui.distrDia/2 - ui.shearDia/2 ) / distrOutRtPath.getLength() );
+                
+                // 전단철근 형상 포인트
+                const raycast = new THREE.Raycaster();
+                raycast.set( new THREE.Vector3( segment.x, segment.y, 0 ), new THREE.Vector3( -tangent.x, -tangent.y, 0 ).normalize() );
+                const intersect = raycast.intersectObject( distrInRtLine )
+                
+                // 전단철근 타입에 따른 경로
+                if ( ui.shearType =='스터럽' ) {
+
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.1
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.03
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.01
+                    ) ); 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );                 
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia +  mainMaxDia
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );                  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia 
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        ( ui.bindNum - 1 ) * ui.ctc + 2 * ui.shearDia + mainMaxDia - 0.03
+                    ) );                
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );                  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x, 
+                        segment.y, 
+                        0.00
+                    ) );                  
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x, 
+                        intersect[0].point.y, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                
+                                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) );
+
+                } else if ( ui.shearType == '조립용철근') {
+
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) ); 
+
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        segment.y - tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );                  
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x + ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        segment.y - ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                 
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        segment.x, 
+                        segment.y, 
+                        0.00
+                    ) );                  
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x, 
+                        intersect[0].point.y, 
+                        0.00
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.4, 
+                        0.00
+                    ) );                
+                                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.6, 
+                        0.00
+                    ) );                
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - ( tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        intersect[0].point.y + ( tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2) ) * 0.8, 
+                        0.00
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.00
+                    ) );
+                                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.01
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.02
+                    ) );
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.03
+                    ) );
+                    
+                    
+                    shearPts.push( new THREE.Vector3( 
+                        intersect[0].point.x - tangent.y * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        intersect[0].point.y + tangent.x * -(ui.distrDia/2 + mainMaxDia + ui.shearDia/2), 
+                        0.10
+                    ) );
+
+                };
+                
+
+                // 전단철근 생성
+                const shearPathConv = new THREE.CatmullRomCurve3( shearPts );
+                
+                const shearExtr = addExtr( shearShp, 'black', shearPathConv );            
+                shearExtr.position.set( 0, 0, ui.coverDepth - ui.mainCompDia/2 - ui.shearDia/2 );
+                shearContainerRt.push( shearExtr );
+
+            };
+
+
+            // 마지막 전단철근 삭제
+            if (ui.shearLtLastDel == true) {
+
+                shearContainerLt.pop();
+
+            };
+            
+            if (ui.shearRtLastDel == true) {
+
+                shearContainerRt.pop();
+
+            };
+
+            
+            // 전단철근 1Cycle과 2Cycle
+            const shearGroup1 = new THREE.Group();
+            const shearGroup2 = new THREE.Group();
+
+
+            for( let i=0; i < shearContainerLt.length; i++) {
+
+                if( i % 2 ==0 ) {
+
+                    shearGroup1.add( shearContainerLt[ i ] )
+
+                } else {
+
+                    shearGroup2.add( shearContainerLt[ i ] )
+
+                }
+
+            }
+
+            for( let i=0; i < shearContainerRt.length; i++) {
+
+                if( i % 2 ==0 ) {
+
+                    shearGroup2.add( shearContainerRt[ i ] )
+
+                } else {
+
+                    shearGroup1.add( shearContainerRt[ i ] )
+
+                }
+
+            }
+            
+
+            // 9. 전단철근 종방향 배치
+            const stirrupNum = parseInt( ( ui.totalLength - ui.coverDepth ) / ( ( ui.bindNum - 1 ) * ui.ctc ) ); // 종방향 길이에 따른 스터럽 개수
+
+            for ( let i=0; i<stirrupNum; i++ ) {
+
+                if( i % 2 == 0 ) {
+
+                    const shearRebar1 = shearGroup1.clone();
+                    shearRebar1.position.set( 0, 0, ( ui.bindNum - 1 ) * i * ui.ctc );
+                    showContainer.push( shearRebar1 );
+
+                } else {
+
+                    const shearRebar2 = shearGroup2.clone();
+                    shearRebar2.position.set( 0, 0, ( ui.bindNum - 1 ) * i * ui.ctc );
+                    showContainer.push( shearRebar2 );
+
+                }
+
+            }
+
+
+            // scene 생성
+            showContainer.forEach( mesh => {
+
+                scene.add( mesh );
+
+            });
+
+            // 결과값 저장
+            sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
+
+
+        }
+
+
+        function createUI() {
+            
+            const gui = new GUI();
+            
+            const commonFolder = gui.addFolder( '공통' )
+            commonFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onChange( designTunnel );
+            commonFolder.add( ui, 'totalLength', 1, 20, 0.1 ).name( '적용 연장' ).onChange( designTunnel );
+            commonFolder.open();
+            
+            const mainRebarFolder = gui.addFolder( '주철근' );
+            mainRebarFolder.add( ui, 'mainCompDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경1(빨강)' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'mainTensDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경2(파랑)' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'outMaxLen', 6.000, 12.000, 1.000 ).name( '외측 장철근길이' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'inMaxLen', 6.000, 12.000, 1.000 ).name( '내측 장철근길이' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'lap', 0.300, 1.500, 0.010 ).name( '겹이음길이' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'ctc', 0.100, 0.400, 0.005 ).name( '종간격' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'outControl', 0.100, 0.900, 0.001 ).name( '외측위치조절' ).onChange( designTunnel );
+            mainRebarFolder.add( ui, 'inControl', 0.100, 0.900, 0.001 ).name( '내측위치조절' ).onChange( designTunnel );
+
+            const distrFolder = gui.addFolder( '배력철근' );
+            distrFolder.add( ui, 'distrDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경' ).onChange( designTunnel );
+            distrFolder.add( ui, 'distrSpacing', 0.100, 0.400, 0.050 ).name( '횡간격' ).onChange( designTunnel );
+            
+            const shearFolder = gui.addFolder( '전단철근' );
+            shearFolder.add( ui, 'shearType', [ '스터럽', '조립용철근' ] ).name( '타입' ).onChange( designTunnel );
+            shearFolder.add( ui, 'shearDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경' ).onChange( designTunnel );
+            shearFolder.add( ui, 'bindNum', 2, 5, 1 ).name( '주철근감싸는개수' ).onChange( designTunnel );
+            shearFolder.add( ui, 'shearLtLastDel').name( '좌측하단 삭제' ).onChange( designTunnel );
+            shearFolder.add( ui, 'shearRtLastDel').name( '우측하단 삭제' ).onChange( designTunnel );
+            
+        }
+        
+        function addLine( shape, color ) {
+            const points = shape.getPoints( 1000 ); // 곡선에서 raycast점을 찾기 위해
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+
+        function addDashLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineDashedMaterial( { color , dashSize: 0.2, gapSize: 0.05 } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            line.computeLineDistances(); //점선으로 만들어주기 위해 필요
+            return line;
+        }
+
+        function addSurf( shape, color ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.7, transparent: true, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, extrPath ) {
+            
+            const extrudeSettings = {
+                steps : 100, // sweep하기 위해 step분할
+                depth : length,
+                bevelEnabled : false,
+                extrudePath : extrPath
+            }
+            
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity: 0.9, transparent: true } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat );
+            return mesh;
+            
+        }
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        function render() {
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+
+            // 
+
+            
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+
+
+        //export GLTF
+        const exporter = new GLTFExporter();
+
+        document.getElementById("button").addEventListener("click", exportFile);        
+        
+        
+        function exportFile() {
+
+            const result = exporter.parse( scene, function ( result ) {
+
+					if ( result instanceof ArrayBuffer ) {
+
+						saveArrayBuffer( result, '라이닝구조도.glb' );
+
+					} else {
+
+						const output = JSON.stringify( result, null, 2 );
+						saveString( output, '라이닝구조도.gltf' );
+
+					}
+
+            } ) }
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+        
+    </script>
+    
+</body>
+
+</html>

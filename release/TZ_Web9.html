@@ -1,0 +1,954 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }        
+
+        /* Add a black background color to the top navigation */
+            .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+                
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a href='TZ_Web4.html'>4. 강지보공</a>
+        <a href='TZ_Web5.html'>5. 라이닝구조도</a>
+        <a href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a class="active" href='TZ_Web9.html'>9. 부대시설</a>
+    </div>
+    
+    <canvas id="c"></canvas>
+    
+    <button id="button" type="button" >Export Model</button>    
+    
+    <script type="module">
+        
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+
+        import { RectAreaLightHelper } from 'https://Lee-hoseong.github.io/jsm/helpers/RectAreaLightHelper.js';
+        import { RectAreaLightUniformsLib } from 'https://Lee-hoseong.github.io/jsm/lights/RectAreaLightUniformsLib.js';
+
+        import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';        
+
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+        let jetfanWingContainer = [];
+
+
+        // GLTF Loader 선언
+        let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );        
+
+
+        // texture Loader 선언
+        const textureLoader = new THREE.TextureLoader();
+
+        const texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/texture/aerial_asphalt_01_diff_1k.png' );
+        texture1.wrapS = THREE.RepeatWrapping;
+        texture1.wrapT = THREE.RepeatWrapping;
+        texture1.repeat.set( 0.2, 0.2 );
+
+        const texture2 = textureLoader.load( 'https://Lee-hoseong.github.io/texture/Granite.png' );
+        texture2.wrapS = THREE.RepeatWrapping;
+        texture2.wrapT = THREE.RepeatWrapping;
+        texture2.repeat.set( 0.2, 0.2 );
+
+        const texture3 = textureLoader.load( 'https://Lee-hoseong.github.io/texture/floor_bricks_02_diff_1k.png' );
+        texture3.wrapS = THREE.RepeatWrapping;
+        texture3.wrapT = THREE.RepeatWrapping;
+        texture3.rotation = Math.PI/2;
+        texture3.repeat.set(0.4, 0.4);
+
+        // Three js 기본변수
+        let camera, scene, renderer
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
+        const liningT0 = JSON.parse( sessionStorage.getItem('라이닝두께') );
+
+        const roadCenterDistance = JSON.parse( sessionStorage.getItem('이격거리(최종)' ) );
+
+        const r1ThetaLt= JSON.parse( sessionStorage.getItem('중심각좌측' ) );
+        const r1ThetaRt = JSON.parse( sessionStorage.getItem('중심각우측' ) );
+        const r1Height = JSON.parse( sessionStorage.getItem('r1중심고' ) );
+        const r1Final = JSON.parse( sessionStorage.getItem('r1반지름' ) );
+
+        const r2Origin = JSON.parse( sessionStorage.getItem('r2원점' ) );
+        const r2Final = JSON.parse( sessionStorage.getItem('r2반지름' ) );
+
+        const r3Origin = JSON.parse( sessionStorage.getItem('r3원점' ) );
+        const r3Final = JSON.parse( sessionStorage.getItem('r3반지름' ) );
+
+        const r4Origin = JSON.parse( sessionStorage.getItem('r4원점' ) );
+        const r4Final = JSON.parse( sessionStorage.getItem('r4반지름' ) );
+
+        const r5Origin = JSON.parse( sessionStorage.getItem('r5원점' ) );
+        const r5Final = JSON.parse( sessionStorage.getItem('r5반지름' ) );
+
+
+        const footingType = JSON.parse( sessionStorage.getItem('공동구타입' ) );
+        const footingHeight = JSON.parse( sessionStorage.getItem('공동구높이' ) );
+        const footingLtType = JSON.parse( sessionStorage.getItem('좌측공동구' ) );
+        const footingRtType = JSON.parse( sessionStorage.getItem('우측공동구' ) );
+
+        const marginLeft = JSON.parse( sessionStorage.getItem('좌측측대(최종)' ) );
+        const marginRight = JSON.parse( sessionStorage.getItem('우측측대(최종)' ) );
+
+        const lampOrigin = JSON.parse( sessionStorage.getItem('조명위치' ) );
+        const jetfanPositionLog = JSON.parse( sessionStorage.getItem('제트팬위치' ) );
+        const jetfanOutterDiameterLog =  JSON.parse( sessionStorage.getItem('제트팬직경' ) );
+        const jetfanXLog =  JSON.parse( sessionStorage.getItem('제트팬이격거리' ) );
+        
+        const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
+        
+
+        // 파라메트릭 값
+        const ui = {
+
+            // 편경사
+            crossSlopeStandard :  crossSlopeStandard,
+
+            // 1span 길이
+            span : 10,
+            
+            // 숏크리트 두께
+            shotcrete : 0.120,
+                        
+        };
+
+
+        // Run        
+        initGraphic();
+        designTunnel();
+        createUI();
+        
+
+        function initGraphic() {
+            
+            const canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+
+            // Perspective
+            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            camera.position.set( 0, 3, 30 );             
+            
+
+            // // Orthographic
+            // camera = new THREE.OrthographicCamera( 
+            //     window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            // ); //left. right, top, bottom, near, far 
+            // camera.position.set( 0, 0, 20 ); 
+            
+
+            // OrbitControl : 뷰 확대 및 회전
+            const controls = new OrbitControls( camera, canvas );
+            controls.target.set( 0, 3, 0 );
+            // controls.target.set( 0, 0, 0 );
+            controls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();               
+            scene.background = new THREE.Color( 0x000000 );
+            
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // 바닥 그리드
+            const size = 30;
+            const divisions = 30;
+            const gridHelper = new THREE.GridHelper( size, divisions );
+            gridHelper.position.y = - 2;
+            gridHelper.material.opacity = 0.4;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper(1); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 'white', 0.5 ) );
+            
+            
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.shadowMap.enabled = true;
+            
+        }
+        
+
+
+        function designTunnel() {
+            
+            // 이전 메쉬 삭제
+            showContainer.forEach( i => scene.remove( i ) )
+            jetfanWingContainer.forEach( i => scene.remove( i ) )
+
+            // 배열초기화
+            showContainer = [];
+            jetfanWingContainer = [];
+
+
+            // 콘크리트포장과 시멘트필터층
+            const concreteLt = new THREE.Vector3( - roadCenterDistance - marginLeft, ( - roadCenterDistance - marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - roadCenterDistance + marginRight, ( roadWidth - roadCenterDistance + marginRight ) * ui.crossSlopeStandard / 100 );
+
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+            const concretePavementShp = new THREE.Shape();
+            concretePavementShp.moveTo( concreteLt.x, concreteLt.y );
+            concretePavementShp.lineTo( concreteRt.x, concreteRt.y );
+            concretePavementShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+            concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+            const concretePavementExtr1 = addExtr( concretePavementShp, 'gray', ui.span );
+            concretePavementExtr1.material.map = texture2;
+            showContainer.push( concretePavementExtr1 ); 
+
+           
+            const cementeFilterShp = new THREE.Shape();
+            cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+
+            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'silver', ui.span );
+            showContainer.push( cementeFilterExtr1 );
+
+
+
+            
+            // 맹암거 그리기
+            const moleDrainageHeight = 0.400;
+
+            const moleDrainageLtShp = new THREE.Shape();
+            moleDrainageLtShp.moveTo( concreteLt.x, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x + 0.175, ( concreteLt.x + 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.125, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.425, concreteLt.y - footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - 0.550, concreteLt.y - footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - footingHeight );
+
+            const moleDrainageLtExtr1 = addExtr( moleDrainageLtShp, 'slategray', ui.span );
+            showContainer.push( moleDrainageLtExtr1 );
+       
+
+            const moleDrainageRtShp = new THREE.Shape();
+            moleDrainageRtShp.moveTo( concreteRt.x, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x - 0.175, ( concreteRt.x - 0.175 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.125, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.425, concreteRt.y - footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + 0.550, concreteRt.y - footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - footingHeight );
+
+            const moleDrainageRtExtr1 = addExtr( moleDrainageRtShp, 'slategray', ui.span );
+            showContainer.push( moleDrainageRtExtr1 );
+          
+
+
+            // 편경사변화에 따른 공동구 위치 계산 
+
+            /*
+             * 배열 내장함수(map, forEach)
+             *
+             * map : 변화함수
+             * map은 배열 안의 원소를 변화하여 새로운 배열을 만듬
+             * 1) 새로운 배열을 선언하고, 2) for문으로 바꿔서 넣는 것은 한 번에 함.
+             * 
+             * 
+             * forEach : 콜백함수
+             * forEach는 원소에 대하여 처리하고 싶은 코드를 함수로 넣어줌
+             */ 
+
+            const footingLtSlope = footingLtType.map( i => new THREE.Vector2 ( i.x + concreteLt.x, i.y + concreteLt.y ) );
+            const footingRtSlope = footingRtType.map( i => new THREE.Vector2 ( i.x + concreteRt.x, i.y + concreteRt.y ) );
+
+            // let footingLtSlope = [];
+            // let footingRtSlope = [];
+            
+            // for ( let i=0; i < footingLtType.length; i++ ) {
+            //     footingLtSlope.push( new THREE.Vector2 ( footingLtType[i].x + concreteLt.x, footingLtType[i].y + concreteLt.y ) );
+            // };
+
+            // for ( let i=0; i < footingRtType.length; i++ ) {
+            //     footingRtSlope.push( new THREE.Vector2 ( footingRtType[i].x + concreteRt.x, footingRtType[i].y + concreteRt.y ) );
+            // };
+
+
+            // 터널형상 그리기
+            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
+
+            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
+
+            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / r3Final );
+            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
+
+            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / r5Final );
+            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;
+
+
+            const footingRtReverse = [...footingRtSlope].reverse();// 원본 배열유지
+
+
+            const liningShp = new THREE.Shape();
+            liningShp.moveTo( footingLtSlope[0].x, footingLtSlope[0].y );
+            footingLtSlope.forEach( i => { liningShp.lineTo( i.x, i.y ) } );
+            // for ( let i=1; i < footingLtSlope.length; i++) { liningShp.lineTo( footingLtSlope[i].x, footingLtSlope[i].y ) };
+            liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2, true );
+            liningShp.absarc( 0, r1Height, r1Final, Math.PI/2, Math.PI/2 - r1ThetaRt, true );
+            liningShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+            footingRtReverse.forEach( i => { liningShp.lineTo( i.x, i.y ) } );
+            // for ( let i=0; i < footingRtReverse.length; i++) { liningShp.lineTo( footingRtReverse[i].x, footingRtReverse[i].y ) };
+            liningShp.lineTo( footingRtReverse[footingRtReverse.length-1].x, footingRtReverse[footingRtReverse.length-1].y - footingHeight );
+            liningShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            liningShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            liningShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            liningShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y - footingHeight );
+            liningShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y );
+
+            const liningExtr1 = addExtr( liningShp, 'gray', ui.span );
+            liningExtr1.material.map = texture1;
+            showContainer.push( liningExtr1 );
+
+            
+
+            // 터널타일 : 정확한 길이 아님(수정해야함)
+            const r2TileShp = new THREE.Shape();
+            r2TileShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta1, Math.PI/2 + r1ThetaLt, true );
+            r2TileShp.absarc( r2Origin.x+0.01, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r2Theta1, false );
+
+            const r2TileExtr = addExtr( r2TileShp, 'gray', ui.span );
+            r2TileExtr.material.map = texture3;
+            showContainer.push( r2TileExtr );
+
+            const r4TileShp = new THREE.Shape();
+            r4TileShp.absarc( r4Origin.x, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r4Theta1, true );
+            r4TileShp.absarc( r4Origin.x-0.01, r4Origin.y, r4Final, Math.PI/2 - r1ThetaRt - r4Theta1, Math.PI/2 - r1ThetaRt, false );
+
+            const r4TileExtr = addExtr( r4TileShp, 'gray', ui.span );
+            r4TileExtr.material.map = texture3;
+            showContainer.push( r4TileExtr );
+
+
+
+            // 숏크리트 그리기
+            const r3Gamma2 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final + ui.shotcrete ) );
+            const r3Theta2 = Math.PI/2 - r1ThetaLt + r3Gamma2;
+            
+            const r5Gamma2 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / ( r5Final + ui.shotcrete ) );
+            const r5Theta2 = Math.PI/2 - r1ThetaRt + r5Gamma2;
+
+            const scShp = new THREE.Shape();    
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false );
+            scShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false );
+            scShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
+            scShp.absarc( r3Origin.x, r3Origin.y, r3Final + ui.shotcrete, Math.PI/2 + r1ThetaLt + r3Theta2, Math.PI/2 + r1ThetaLt, true );
+            scShp.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2 + r1ThetaLt,  Math.PI/2, true );
+            scShp.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2,  Math.PI/2 - r1ThetaRt, true );
+            scShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
+
+            const scExtr1 = addExtr( scShp, 'gray', ui.span );
+            scExtr1.material.map = texture2;
+            showContainer.push( scExtr1 );
+
+
+
+
+
+            
+
+            // 공동구 뚜껑 생성
+            let coverLeftB0, coverRightB0, coverL, coverS;
+            const coverT = 0.060;
+
+            switch ( footingType ) {
+
+                case '자연환기' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[15].x - footingRtType[8].x );
+
+                    coverL = 0.480;
+                    coverS = 0.500; // spacing
+
+                    break;
+
+                case '기계환기' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[15].x - footingRtType[8].x );
+              
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+                case '기계환기(물분무)' :
+
+                    coverLeftB0 = -( footingLtType[15].x - footingLtType[8].x );
+                    coverRightB0 = ( footingRtType[16].x - footingRtType[8].x );
+
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+            }
+
+            const coverLeftB1 = ( ( coverLeftB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabLtShp = new THREE.Shape();
+            coverSlabLtShp.moveTo( 0, 0 );
+            coverSlabLtShp.lineTo( 0, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1, 0 );
+            coverSlabLtShp.lineTo( 0, 0 );
+
+            const coverSlabLtExtr = addExtr( coverSlabLtShp, 'darkgray', coverT );
+            coverSlabLtExtr.rotateX( Math.PI/2 )
+
+
+            const coverRightB1 = ( ( coverRightB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabRtShp = new THREE.Shape();
+            coverSlabRtShp.moveTo( 0, 0 );
+            coverSlabRtShp.lineTo( 0, coverL );
+            coverSlabRtShp.lineTo( coverRightB1, coverL );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1, 0 );
+            coverSlabRtShp.lineTo( 0, 0 );
+
+            const coverSlabRtExtr = addExtr( coverSlabRtShp, 'darkgray', coverT );
+            coverSlabRtExtr.rotateX( Math.PI/2 )            
+
+
+            for ( let i=0; i*coverS<ui.span; i++ ) {
+
+                const covercloneLt = coverSlabLtExtr.clone();
+                covercloneLt.position.set( footingLtType[8].x + concreteLt.x - 0.010, footingLtType[8].y + concreteLt.y, i*coverS );
+                showContainer.push( covercloneLt );
+
+                const covercloneRt = coverSlabRtExtr.clone();
+                covercloneRt.position.set( footingRtType[8].x + concreteRt.x + 0.010, footingRtType[8].y + concreteRt.y, i*coverS );
+                showContainer.push( covercloneRt );
+
+            }
+
+
+
+
+            // 조명(lamp) 배치
+            const lampGroup = new THREE.Group();
+
+            {
+                gltfLoader.load( 'TunnelLight.glb', function ( gltf ) {
+
+                    gltf.scene.traverse( function( node ) {
+                        if ( node instanceof THREE.Mesh ) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    } );
+
+                    const mesh11 = gltf.scene.children[ 0 ]
+                    
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        roughness : 0,
+                        color : 0x272727,
+                        opacity : 1, 
+                        transparent: true,
+                    });
+
+                    mesh11.traverse((o) => {
+                        if ( o.isMesh ) o.material = newMaterial;
+                    });
+
+                    // 메쉬생성
+                    for ( let i=0; i<ui.span; i++) {
+            
+                        const mesh22 = mesh11.clone();
+                        mesh22.position.set ( lampOrigin.x - 0.30, lampOrigin.y - 0.40, i+0.5);
+
+                        lampGroup.add( mesh22 );
+
+                        const mesh33 = mesh11.clone();
+                        mesh33.position.set ( -lampOrigin.x + 0.30, lampOrigin.y - 0.40, i+0.5);
+
+                        lampGroup.add( mesh33 );
+
+                    };
+
+                } )
+
+            }
+
+            showContainer.push( lampGroup )
+
+
+            // Rect Light
+            RectAreaLightUniformsLib.init();
+
+            for ( let i=0; i<ui.span; i++) {
+
+                const light1 = new THREE.RectAreaLight( 0xffffff, 100, 0.30, 0.70 ); // intensity, width, height
+                const rectLight1 = light1
+                rectLight1.rotation.x = THREE.MathUtils.degToRad( -90 );
+                rectLight1.add( new RectAreaLightHelper( rectLight1 ) );
+                rectLight1.position.set ( lampOrigin.x - 0.30, lampOrigin.y - 0.40 - 0.25, i+0.5 );
+                
+                showContainer.push( rectLight1 );
+
+
+                const light2 = new THREE.RectAreaLight( 0xffffff, 100, 0.30, 0.70 );
+                const rectLight2 = light2
+                rectLight2.rotation.x = THREE.MathUtils.degToRad( -90 );
+                rectLight2.add( new RectAreaLightHelper( rectLight2 ) );
+                rectLight2.position.set ( -lampOrigin.x + 0.30, lampOrigin.y - 0.40 - 0.25, i+0.5 );
+                
+                showContainer.push( rectLight2 );
+
+            }
+
+            // jetfan 본체 배치
+            const jetfanMainGroup1 = new THREE.Group();
+            const jetfanMainGroup2 = new THREE.Group();
+
+            {
+                gltfLoader.load( '1250_main.glb', function ( gltf ) {
+
+                    gltf.scene.traverse( function( node ) {
+                        if ( node instanceof THREE.Mesh ) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    } );
+
+                    const mesh11 = gltf.scene.children[ 0 ]
+                    
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        roughness : 0,
+                        color : 'dimgray',
+                        opacity : 1, 
+                        transparent: true,
+                    });
+
+                    mesh11.traverse((o) => {
+                        if ( o.isMesh ) o.material = newMaterial;
+                    });
+
+
+                    // 고치기 ////////////////////////////////////
+                    // mesh11.rotation.y = Math.PI/2;
+                    // mesh11.scale.set ( 0.5, 0.5, 0.5)
+                    
+                    // mesh11.children[0].children[3].material = new THREE.MeshStandardMaterial({ color : 'red' })
+                    ////////////////////////////////////////////
+
+                    jetfanMainGroup1.add( mesh11.clone() )
+                    jetfanMainGroup2.add( mesh11.clone() )
+
+
+                } )
+
+            }
+
+            jetfanMainGroup1.position.set( -jetfanPositionLog.x, jetfanPositionLog.y, ui.span );
+            showContainer.push( jetfanMainGroup1 )
+
+            jetfanMainGroup2.position.set( jetfanPositionLog.x, jetfanPositionLog.y, ui.span );
+            showContainer.push( jetfanMainGroup2 )
+
+
+            // jetfan 날개 배치
+            const jetfanWingGroup1 = new THREE.Group();
+            const jetfanWingGroup2 = new THREE.Group();
+
+            {
+                gltfLoader.load( '1250_fan.glb', function ( gltf ) {
+
+                    gltf.scene.traverse( function( node ) {
+                        if ( node instanceof THREE.Mesh ) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    } );
+
+                    const mesh11 = gltf.scene.children[ 0 ]
+                    
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        roughness : 0,
+                        color : 'black',
+                        opacity : 1, 
+                        transparent: true,
+                    });
+
+                    mesh11.traverse((o) => {
+                        if ( o.isMesh ) o.material = newMaterial;
+                    });
+
+                    jetfanWingGroup1.add( mesh11.clone() )
+                    jetfanWingGroup2.add( mesh11.clone() )
+
+
+                } )
+
+            }
+
+            jetfanWingGroup1.position.set( -jetfanPositionLog.x, jetfanPositionLog.y, ui.span );
+            jetfanWingContainer.push( jetfanWingGroup1 )
+
+            jetfanWingGroup2.position.set( jetfanPositionLog.x, jetfanPositionLog.y, ui.span );
+            jetfanWingContainer.push( jetfanWingGroup2 )
+
+
+            // VMS
+            const VMSGroup = new THREE.Group();
+
+            {
+                gltfLoader.load( 'VMS.glb', function ( gltf ) {
+
+                    gltf.scene.traverse( function( node ) {
+                        if ( node instanceof THREE.Mesh ) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    } );
+
+                    const mesh11 = gltf.scene.children[ 0 ]
+                    
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        roughness : 0,
+                        color : 'silver',
+                        opacity : 1, 
+                        transparent: true,
+                    });
+
+                    mesh11.traverse((o) => {
+                        if ( o.isMesh ) o.material = newMaterial;
+                    });
+
+                    VMSGroup.add( mesh11.clone() )
+
+
+                } )
+
+            }
+
+            VMSGroup.position.set( 0, lampOrigin.y-0.65, 1 );
+            showContainer.push( VMSGroup )
+
+            // const jetfanOutterDiameterShp = new THREE.Shape()
+            //     .absarc( jetfanPositionLog.x, jetfanPositionLog.y, jetfanOutterDiameterLog/2, 0, Math.PI*2, false );
+
+            // const jetfanOutterDiameterLine = addLine( jetfanOutterDiameterShp, 'red')
+
+            // jetfanOutterDiameterLine.position.set( 0, 0, ui.span )
+            // showContainer.push( jetfanOutterDiameterLine )
+
+
+            // const jetfanDistanceShp = new THREE.Shape()
+            //     .absarc( jetfanPositionLog.x, jetfanPositionLog.y, jetfanXLog, 0, Math.PI*2, false );
+
+            // const jetfanDistanceLine = addLine( jetfanDistanceShp, 'gray')
+            // jetfanDistanceLine.position.set( 0, 0, ui.span )
+            // showContainer.push( jetfanDistanceLine )
+
+            // const jetfanDistanceShp2 = new THREE.Shape()
+            //     .absarc( -jetfanPositionLog.x, jetfanPositionLog.y, jetfanXLog, 0, Math.PI*2, false );
+
+            // const jetfanDistanceLine2 = addLine( jetfanDistanceShp2, 'gray')
+            // jetfanDistanceLine2.position.set( 0, 0, ui.span )
+            // showContainer.push( jetfanDistanceLine2 )
+
+
+            // scene 생성
+            showContainer.forEach( i => scene.add( i ) );
+            jetfanWingContainer.forEach( i => scene.add( i ) );
+
+        }
+
+
+        // 시간차 라이트 생성
+        // RectAreaLightUniformsLib.init();
+
+        // start( 0 );
+
+        // function start( i ){
+        //     if( i < ui.span ) {
+        //         setTimeout(function(){
+
+        //             const light1 = new THREE.RectAreaLight( 0xffffff, 100, 0.30, 0.70 ); // intensity, width, height
+        
+        //             const rectLight1 = light1
+        //             rectLight1.rotation.x = THREE.MathUtils.degToRad( -90 );
+        //             rectLight1.add( new RectAreaLightHelper( rectLight1 ) );
+        //             rectLight1.position.set ( lampOrigin.x + 0.35, lampOrigin.y - 0.40 - 0.25, i+0.5 );
+                    
+        //             scene.add( rectLight1 );
+
+        //             const light2 = new THREE.RectAreaLight( 0xffffff, 100, 0.30, 0.70 );
+        //             const rectLight2 = light2
+        //             rectLight2.rotation.x = THREE.MathUtils.degToRad( -90 );
+        //             rectLight2.add( new RectAreaLightHelper( rectLight2 ) );
+        //             rectLight2.position.set ( -lampOrigin.x - 0.35, lampOrigin.y - 0.40 - 0.25, i+0.5 );
+                    
+        //             scene.add( rectLight2 );
+
+        //             i++;
+
+        //             start( i ) ;
+
+        //         }, 200);
+
+        //     }
+
+        // }
+
+        
+
+
+        function createUI() {
+            
+            const gui = new GUI();
+            
+            const crossSlopeStandardFolder = gui.addFolder( '편경사' )
+            crossSlopeStandardFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onChange( designTunnel );
+            
+            const excavationMethodFolder = gui.addFolder( '1span길이' )          
+            excavationMethodFolder.add( ui, 'span', 1.000, 20.000, 0.100 ).name( '길이 ' ).onChange( designTunnel );
+            
+
+
+        }
+        
+        
+
+        function addLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+
+        function addSurf( shape, color ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.7, transparent: true, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, length ) {
+            
+            const extrudeSettings = {
+                steps : 1,
+                depth : length,
+                bevelEnabled : false,
+            }
+            
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshStandardMaterial( { color, opacity: 1, transparent: true, roughness: 0.2, metalness: 0 } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+            
+        };
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        function render() {
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+
+            jetfanWingContainer[0].rotation.z -= 0.15;
+            jetfanWingContainer[1].rotation.z -= 0.15;
+
+            
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+
+
+        //export GLTF
+        const exporter = new GLTFExporter();
+
+        document.getElementById("button").addEventListener("click", exportFile);        
+        
+        
+        function exportFile() {
+
+            const result = exporter.parse( scene, function ( result ) {
+
+					if ( result instanceof ArrayBuffer ) {
+
+						saveArrayBuffer( result, '지보패턴.glb' );
+
+					} else {
+
+						const output = JSON.stringify( result, null, 2 );
+						saveString( output, '지보패턴.gltf' );
+
+					}
+
+            } ) }
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+        
+    </script>
+    
+</body>
+
+</html>
