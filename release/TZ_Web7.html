@@ -274,24 +274,24 @@
             
             shotcrete : 0.120, // 숏크리트 두께
             
-            rbZone : '없음', // 록볼트 영역           
+            rbZone : '전단면', // 록볼트 영역           
             rbLength : 3.000, // 록볼트 길이
             rbCircSpacing : 1.500, // 록볼트 횡간격(Circumferential Spacing)
             rbLtLastDel : false, 
             rbRtLastDel : false,
             
-            steelribType : '없음', // 강지보타입
+            steelribType : 'LG-50', // 강지보타입
 
             // 연결통로 
             psgeLongSpacing : 1.500, // 굴진장/지보장 (longitudinalSpacing)
 
             psgeShotcrete : 0.120, // 숏크리트 두께
 
-            psgeRbZone : '없음', // 록볼트 영역   
+            psgeRbZone : '전단면', // 록볼트 영역   
             psgeRbLength : 3.000, // 록볼트 길이
             psgeRbCircSpacing : 1.500, // 록볼트 횡간격(Circumferential Spacing)
 
-            psgeSteelribType : '없음', // 강지보타입
+            psgeSteelribType : 'LG-50', // 강지보타입
 
 
             // <구조도>
@@ -5686,19 +5686,19 @@
             crossPageSupportFolder.add( ui, 'psgeSteelribType', [ '없음', 'LG-50', 'LG-70', 'LG-95', 'H-100', 'H-125', 'H-150' ] ).name( '강지보공' ).onFinishChange( designTunnel );
 
             const psgeMainFolder = gui.addFolder( '연결통로 주철근' );
-            psgeMainFolder.add( ui, 'mainCompDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경1(빨강)' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'mainTensDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경2(파랑)' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'outMaxLen', 6.000, 12.000, 1.000 ).name( '외측 장철근길이' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'inMaxLen', 6.000, 12.000, 1.000 ).name( '내측 장철근길이' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'lap', 0.300, 1.500, 0.010 ).name( '겹이음길이' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'ctc', 0.100, 0.400, 0.005 ).name( '종간격' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'outControl', 0.100, 0.900, 0.001 ).name( '외측위치조절' ).onChange( designTunnel );
-            psgeMainFolder.add( ui, 'inControl', 0.100, 0.900, 0.001 ).name( '내측위치조절' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeMainCompDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경1(빨강)' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeMainTensDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경2(파랑)' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeOutMaxLen', 6.000, 12.000, 1.000 ).name( '외측 장철근길이' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeInMaxLen', 6.000, 12.000, 1.000 ).name( '내측 장철근길이' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeLap', 0.300, 1.500, 0.010 ).name( '겹이음길이' ).onChange( designTunnel );
+            psgeMainFolder.add( ui, 'psgeCtc', 0.100, 0.400, 0.005 ).name( '종간격' ).onChange( designTunnel );
+            // psgeMainFolder.add( ui, 'outControl', 0.100, 0.900, 0.001 ).name( '외측위치조절' ).onChange( designTunnel );
+            // psgeMainFolder.add( ui, 'inControl', 0.100, 0.900, 0.001 ).name( '내측위치조절' ).onChange( designTunnel );
+
 
             const psgeDistrFolder = gui.addFolder( '연결통로 배력철근' );
-            psgeDistrFolder.add( ui, 'distrDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경' ).onChange( designTunnel );
-            psgeDistrFolder.add( ui, 'distrSpacing', 0.100, 0.400, 0.050 ).name( '횡간격' ).onChange( designTunnel );
-
+            psgeDistrFolder.add( ui, 'psgeDistrDia', { H13 : 0.013, H16 : 0.016, H19 : 0.019, H22 : 0.022, H25 : 0.025, H29 : 0.029, H32 : 0.032 } ).name( '직경' ).onChange( designTunnel );
+            psgeDistrFolder.add( ui, 'psgeDistrSpacing', 0.100, 0.400, 0.050 ).name( '횡간격' ).onChange( designTunnel );
 
             tunnelSupportFolder.hide();
             crossPageSupportFolder.hide();

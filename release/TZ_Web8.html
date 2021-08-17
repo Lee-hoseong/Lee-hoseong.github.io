@@ -196,7 +196,8 @@
         let showContainer = [];
 
         // Three js 기본변수
-        let camera, scene, renderer, clippingPlane, orbitControls
+        let canvas, camera, scene, renderer, clippingPlane, orbitControls
+        let cameraPerspective, cameraOrtho
 
 
         // 계산값 불러오기
@@ -252,13 +253,28 @@
             crossSlopeStandard : (crossSlopeMin + crossSlopeMax)/2,
             
             // 갱문타입
-            portalType : '버드빅',
+            portalType : '벨마우스변형',
 
             // 개착터널
             totalLength : 17.000, 
             footingHeight : 0.600,
             liningT3 : 0.600,
             
+            // 아치면벽
+            wallBackHeightConst : 5.500, // 옹벽높이
+            wallLtLength : 7.700, // 옹벽좌측길이
+            wallRtLength : 7.700, // 옹벽우측길이
+
+            portalL1 : 0.700, // 갱문길이1
+            portalL2 : 1.600, // 갱문길이2
+
+            parapetCtr : 1.500, // 파라펫 중앙높이
+            parapetLt : 1.000, // 파라펫 좌측높이
+            parapetRt : 1.000, // 파라펫 우측높이
+
+            footHeight : 1.200, // 갱문기초 두께
+            footLength : 3.900, // 갱문기초 길이
+
             // 벨마우스 마우스칼라부
             collarH1 : 1.200,
             collarH2 : 0.300,
@@ -283,22 +299,22 @@
 
         function initGraphic() {
             
-            const canvas = document.querySelector('#c'); 
+            canvas = document.querySelector('#c'); 
             
             // camera(필수)
 
-            // // Perspective
-            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            // camera.position.set( -7, 7, 15 );             
+            // Perspective
+            cameraPerspective = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            cameraPerspective.position.set( -7, 7, 15 );             
             
 
             // Orthographic
-            camera = new THREE.OrthographicCamera( 
+            cameraOrtho = new THREE.OrthographicCamera( 
                 window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
             ); //left. right, top, bottom, near, far 
-            camera.position.set( 0, 0, 40 );
-            // camera.position.set( -40, 0, 0 ); 
+            cameraOrtho.position.set( 0, 0, 40 );
             
+            camera = cameraPerspective;
 
             // OrbitControl : 뷰 확대 및 회전
             orbitControls = new OrbitControls( camera, canvas );
@@ -404,7 +420,24 @@
             concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
             concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
 
-            const concretePavementExtr1 = addExtr( concretePavementShp, 'darkslategray', ui.totalLength );
+
+            let pavementLength;
+            
+            if ( ui.portalType == '버드빅' ) {
+
+                pavementLength = ui.totalLength - ui.birdSlopeWidth + ui.birdCollarL;
+
+            } else if( ui.portalType == '아치면벽' ) {
+
+                pavementLength = ui.totalLength + ui.portalL1 + ui.portalL2; // + Math.max( ui.wallLtLength, ui.wallRtLength )
+
+            } else if ( ui.portalType == '벨마우스변형' ) {
+
+                pavementLength = ui.totalLength
+
+            }
+
+            const concretePavementExtr1 = addExtr( concretePavementShp, 0x474c55, pavementLength );
             showContainer.push( concretePavementExtr1 ); 
 
             const cementeFilterShp = new THREE.Shape();
@@ -414,7 +447,7 @@
             cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
             cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
             
-            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'silver', ui.totalLength );
+            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'gray', pavementLength );
             showContainer.push( cementeFilterExtr1 );
 
             // 편경사변화에 따른 공동구 위치 계산 
@@ -488,34 +521,17 @@
             if ( ui.portalType =='아치면벽' ) {
 
                 // 옹벽과 갱문 변수 ////////////////////////////////////////////////////////////////////////////////////////////////////
-                const wallBackHeightConst = 5.500; // 옹벽높이
-
-                const wallLtLength = 7.700; // 옹벽좌측길이
-                const wallRtLength = 7.700; // 옹벽우측길이
-
                 const wallLtPosX = -0.750 -0.430; // L형측구 시작폭 : 0.750, L형측구2-3폭 : 0.430
                 const wallLtPosY = wallLtPosX * 2/100;
 
                 const wallRtPosX = 0.750 + 0.535; // L형측구 시작폭 : 0.750, L형측구2-2폭 : 0.535 
                 const wallRtPosY = wallRtPosX * -2/100;
-
-                const parapetCtr = 1.500; // 파라펫 중앙높이
-                const parapetLt = 1.000; // 파라펫 좌측높이
-                const parapetRt = 1.000; // 파라펫 우측높이
                 
                 const ditchH = 0.850; // 측구높이
 
-                const portalL1 = 0.700; // 갱문길이1
-                const portalL2 = 1.600; // 갱문길이2
-
-                const footHeight = 1.200; // 갱문기초 두께
-                const footLength = 3.900; // 갱문기초 길이
-
-
-
                 // 1. 개착터널 ////////////////////////////////////////////////////////////////////////////////////////////////////
                 const cutCoverExtr = addExtr( cutCoverShp, 'silver', ui.totalLength );
-                cutCoverExtr.material.opacity = 0.5;
+                cutCoverExtr.material.opacity = 0.9;
                 showContainer.push( cutCoverExtr );
 
 
@@ -526,18 +542,18 @@
                 if( ui.crossSlopeStandard < 0 ) {
 
                     console.log( '편경사(-) : 좌측이 높음')
-                    const wallBackHeightVar = concreteLt.y - concreteRt.y + wallBackHeightConst;
+                    const wallBackHeightVar = concreteLt.y - concreteRt.y + ui.wallBackHeightConst;
 
-                    wallBackLtHeight = wallBackHeightConst;
+                    wallBackLtHeight = ui.wallBackHeightConst;
                     wallBackRtHeight = wallBackHeightVar;
 
                 } else {
 
                     console.log( '편경사(+) : 우측이 높음')
-                    const wallBackHeightVar = concreteRt.y - concreteLt.y + wallBackHeightConst;
+                    const wallBackHeightVar = concreteRt.y - concreteLt.y + ui.wallBackHeightConst;
 
                     wallBackLtHeight = wallBackHeightVar;
-                    wallBackRtHeight = wallBackHeightConst;
+                    wallBackRtHeight = ui.wallBackHeightConst;
 
                 }
 
@@ -635,25 +651,25 @@
 
                 // 2.6 옹벽좌측 생성
                 // 포인트 이동
-                const wallFrontLt2Move = wallFrontLt2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, portalL2 + wallLtLength ) ) );
+                const wallFrontLt2Move = wallFrontLt2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL2 + ui.wallLtLength ) ) );
 
                 // 포인트 합치기
                 const wallLtPts = [ ...wallFrontLt2Move, ...wallBackLt2 ];
 
                 // convex로 모델링
                 const wallLtGeo = new ConvexGeometry( wallLtPts );
-                const wallLtMat = new THREE.MeshStandardMaterial( { color: 'mediumturquoise', opacity: 1 , transparent: true, clippingPlanes: [ clippingPlane ] } );
+                const wallLtMat = new THREE.MeshStandardMaterial( { color: 0x5c5d57, opacity: 1 , transparent: true, clippingPlanes: [ clippingPlane ] } );
 
                 const wallLtMesh = new THREE.Mesh( wallLtGeo, wallLtMat );
-                wallLtMesh.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, portalL1 + ui.totalLength) );
+                wallLtMesh.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, ui.portalL1 + ui.totalLength) );
                 // showContainer.push( wallLtMesh );
 
-                const wallLtToe = addExtr( wallFrontLt1Shp, 'mediumturquoise', portalL1 + portalL2 + wallLtLength );
+                const wallLtToe = addExtr( wallFrontLt1Shp, 0x5c5d57, ui.portalL1 + ui.portalL2 + ui.wallLtLength );
                 wallLtToe.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, ui.totalLength ) )
                 // showContainer.push( wallLtToe );
 
                 // 옹벽배면
-                const wallBackLtExtr = addExtr( wallBackLt2Shp, 'mediumturquoise', portalL1 );
+                const wallBackLtExtr = addExtr( wallBackLt2Shp, 0x5c5d57, ui.portalL1 );
                 wallBackLtExtr.position.set( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, ui.totalLength );
                 // showContainer.push( wallBackLtExtr );
 
@@ -666,24 +682,24 @@
 
                 // 2.7 옹벽우측 생성
                 // 포인트 이동
-                const wallFrontRt2Move = wallFrontRt2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, portalL2 + wallLtLength ) ) );
+                const wallFrontRt2Move = wallFrontRt2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL2 + ui.wallRtLength ) ) );
 
                 // 포인트 합치기
                 const wallRtPts = [ ...wallFrontRt2Move, ...wallBackRt2 ];
 
                 // convex로 모델링
                 const wallRtGeo = new ConvexGeometry( wallRtPts );
-                const wallRtMat = new THREE.MeshStandardMaterial( { color: 'tan', opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
+                const wallRtMat = new THREE.MeshStandardMaterial( { color: 0x55493f, opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
                 const wallRtMesh = new THREE.Mesh( wallRtGeo, wallRtMat );
-                wallRtMesh.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY, portalL1 + ui.totalLength ) );
+                wallRtMesh.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY, ui.portalL1 + ui.totalLength ) );
                 // showContainer.push( wallRtMesh );
 
-                const wallRtToe = addExtr( wallFrontRt1Shp, 'tan', portalL1 + portalL2 + wallRtLength );
+                const wallRtToe = addExtr( wallFrontRt1Shp, 0x55493f, ui.portalL1 + ui.portalL2 + ui.wallRtLength );
                 wallRtToe.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY, ui.totalLength ) );
                 // showContainer.push( wallRtToe );
                 
                 // 옹벽배면
-                const wallBackRtExtr = addExtr( wallBackRt2Shp, 'tan', portalL1 );
+                const wallBackRtExtr = addExtr( wallBackRt2Shp, 0x55493f, ui.portalL1 );
                 wallBackRtExtr.position.set( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY, ui.totalLength );
                 // showContainer.push( wallBackRtExtr );
 
@@ -695,9 +711,9 @@
 
 
                 // 3. 갱문, portal ////////////////////////////////////////////////////////////////////////////////////////////////////
-                const portalTop = r1Height + r1Final + ui.liningT3 + ditchH + parapetCtr;
+                const portalTop = r1Height + r1Final + ui.liningT3 + ditchH + ui.parapetCtr;
                 const portalMid = r1Height + r1Final + ui.liningT3 + ditchH;
-                const portalBot = r1Height + r1Final + ui.liningT3 - portalL2/Math.tan( Math.PI/12 ); // degree 15
+                const portalBot = r1Height + r1Final + ui.liningT3 - ui.portalL2/Math.tan( Math.PI/12 ); // degree 15
 
                 const portalLtTop = wallBackLt2[1].applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, 0 ) ); //옹벽좌측상단
                 const portalRtTop = wallBackRt2[1].applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY, 0 ) ); //옹벽우측상단
@@ -734,11 +750,11 @@
                 const portalTopRtTheta = portalTopRtValue.theta;
 
                 // 갱문Mid Radius, portalMid
-                const portalMidLtValue = findRadius( new THREE.Vector3 ( 0, portalMid, 0 ), new THREE.Vector3 ( portalLtTop.x, portalLtTop.y-parapetLt, 0 ), 1 );
+                const portalMidLtValue = findRadius( new THREE.Vector3 ( 0, portalMid, 0 ), new THREE.Vector3 ( portalLtTop.x, portalLtTop.y-ui.parapetLt, 0 ), 1 );
                 const portalMidLtRadius = portalMidLtValue.final;
                 const portalMidLtTheta = portalMidLtValue.theta;
 
-                const portalMidRtValue = findRadius( new THREE.Vector3 ( 0, portalMid, 0 ), new THREE.Vector3 ( portalRtTop.x, portalRtTop.y-parapetRt, 0 ), -1 );
+                const portalMidRtValue = findRadius( new THREE.Vector3 ( 0, portalMid, 0 ), new THREE.Vector3 ( portalRtTop.x, portalRtTop.y-ui.parapetRt, 0 ), -1 );
                 const portalMidRtRadius = portalMidRtValue.final;
                 const portalMidRtTheta = portalMidRtValue.theta;
                 
@@ -797,17 +813,17 @@
                 // 3.3.1 갱문mid
                 // 포인트 이동
                 const portalMidArr = addArr( portalMidShp );
-                const portalMidArrMove = portalMidArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, portalL1 ) ) ); 
+                const portalMidArrMove = portalMidArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 ) ) ); 
 
                 const portalBotArr = addArr( portalBotShp );
-                const portalBotArrMove = portalBotArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, portalL1 + portalL2 ) ) );
+                const portalBotArrMove = portalBotArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 + ui.portalL2 ) ) );
 
                 // 포인트 합치기
                 const portalMidPts = [ ...portalMidArrMove, ...portalBotArrMove ];
 
                 // convex로 모델링
                 const portalMidGeo = new ConvexGeometry( portalMidPts );
-                const portalMidMat = new THREE.MeshStandardMaterial( { color: 'paleturquoise', opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
+                const portalMidMat = new THREE.MeshStandardMaterial( { color: 'lightgray', opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
                 const portalMidMesh = new THREE.Mesh( portalMidGeo, portalMidMat );
                 portalMidMesh.position.set( 0, 0, ui.totalLength );
                 // showContainer.push( portalMidMesh );
@@ -817,14 +833,14 @@
                 // 포인트 이동
                 const portalTopArr = addArr( portalTopShp );
                 const portalTopArr2 = addArr( portalTopShp );
-                const portalTopArrMove = portalTopArr2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, portalL1 ) ) ); 
+                const portalTopArrMove = portalTopArr2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 ) ) ); 
 
                 // 포인트 합치기
                 const portalTopPts = [ ...portalTopArr, ...portalTopArrMove ];
 
                 // convex로 모델링
                 const portalTopGeo = new ConvexGeometry( portalTopPts );
-                const portalTopMat = new THREE.MeshStandardMaterial( { color: 'paleturquoise', opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
+                const portalTopMat = new THREE.MeshStandardMaterial( { color: 'lightgray', opacity: 1, transparent: true, clippingPlanes: [ clippingPlane ] } );
                 const portalTopMesh = new THREE.Mesh( portalTopGeo, portalTopMat );
                 portalTopMesh.position.set( 0, 0, ui.totalLength );
                 // showContainer.push( portalTopMesh );
@@ -835,16 +851,16 @@
                 const portalSideLtShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( 0, wallBackLtHeight )
-                    .lineTo( portalL1, wallBackLtHeight )
-                    .lineTo( portalL1, wallBackLtHeight - parapetLt )
-                    .lineTo( portalL1 + portalL2, 0);
+                    .lineTo( ui.portalL1, wallBackLtHeight )
+                    .lineTo( ui.portalL1, wallBackLtHeight - ui.parapetLt )
+                    .lineTo( ui.portalL1 + ui.portalL2, 0);
 
                 const portalSideLtLine = addLine( portalSideLtShp, 'orange' );
                 portalSideLtLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
                 portalSideLtLine.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
                 // showContainer.push( portalSideLtLine );
 
-                const portalSideLtExtr = addExtr( portalSideLtShp, 'paleturquoise', 0.300 );
+                const portalSideLtExtr = addExtr( portalSideLtShp, 'lightgray', 0.300 );
                 portalSideLtExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
                 portalSideLtExtr.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
                 showContainer.push( portalSideLtExtr );
@@ -853,16 +869,16 @@
                 const portalSideRtShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( 0, wallBackRtHeight )
-                    .lineTo( portalL1, wallBackRtHeight )
-                    .lineTo( portalL1, wallBackRtHeight - parapetRt )
-                    .lineTo( portalL1 + portalL2, 0);
+                    .lineTo( ui.portalL1, wallBackRtHeight )
+                    .lineTo( ui.portalL1, wallBackRtHeight - ui.parapetRt )
+                    .lineTo( ui.portalL1 + ui.portalL2, 0);
 
                 const portalSideRtLine = addLine( portalSideRtShp, 'darkred' );
                 portalSideRtLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
                 portalSideRtLine.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.3, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
                 // showContainer.push( portalSideRtLine );
                     
-                const portalSideRtExtr = addExtr( portalSideRtShp, 'paleturquoise', 0.300 );
+                const portalSideRtExtr = addExtr( portalSideRtShp, 'lightgray', 0.300 );
                 portalSideRtExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
                 portalSideRtExtr.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.3, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
                 showContainer.push( portalSideRtExtr );
@@ -891,7 +907,7 @@
                 const portalCutLine = addLine( portalCut, 'red' );
                 // showContainer.push( portalCutLine );
 
-                const portalCutExtr = addExtr( portalCut, 'hotpink', portalL1 + portalL2 +2 );
+                const portalCutExtr = addExtr( portalCut, 'hotpink', ui.portalL1 + ui.portalL2 +2 );
                 portalCutExtr.position.set( 0, 0, ui.totalLength -1 );
                 // showContainer.push( portalCutExtr );
 
@@ -900,9 +916,9 @@
                 const sideLtCutShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( 0, wallBackLtHeight + 1 )
-                    .lineTo( portalL1, wallBackLtHeight + 1 )
-                    .lineTo( portalL1, wallBackLtHeight - parapetLt )
-                    .lineTo( portalL1 + portalL2, 0);
+                    .lineTo( ui.portalL1, wallBackLtHeight + 1 )
+                    .lineTo( ui.portalL1, wallBackLtHeight - ui.parapetLt )
+                    .lineTo( ui.portalL1 + ui.portalL2, 0);
 
                 const sideLtCutShpLine = addLine( sideLtCutShp, 'orange' );
                 sideLtCutShpLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
@@ -919,9 +935,9 @@
                 const sideRtCutShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( 0, wallBackRtHeight + 1 )
-                    .lineTo( portalL1, wallBackRtHeight + 1 )
-                    .lineTo( portalL1, wallBackRtHeight - parapetRt )
-                    .lineTo( portalL1 + portalL2, 0);
+                    .lineTo( ui.portalL1, wallBackRtHeight + 1 )
+                    .lineTo( ui.portalL1, wallBackRtHeight - ui.parapetRt )
+                    .lineTo( ui.portalL1 + ui.portalL2, 0);
 
                 const sideRtCutLine = addLine( sideRtCutShp, 'darkred' );
                 sideRtCutLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
@@ -964,28 +980,28 @@
                 const footLtShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( -wallBackLtWidthFinal - 0.300, 0 )
-                    .lineTo( -wallBackLtWidthFinal - 0.300, -footHeight )
-                    .lineTo( 0, -footHeight );
+                    .lineTo( -wallBackLtWidthFinal - 0.300, -ui.footHeight )
+                    .lineTo( 0, -ui.footHeight );
 
                 const footLtLine = addLine( footLtShp, 'indigo' );
                 footLtLine.position.set( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY -0.9, 0 );
                 // showContainer.push( footLtLine );
 
-                const footLtExtr = addExtr( footLtShp, 'cadetblue', footLength );
+                const footLtExtr = addExtr( footLtShp, 'gray', ui.footLength );
                 footLtExtr.position.set( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength );
                 showContainer.push( footLtExtr );
 
                 const footRtShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( wallBackRtWidthFinal + 0.300, 0 )
-                    .lineTo( wallBackRtWidthFinal + 0.300, -footHeight )
-                    .lineTo( 0, -footHeight );
+                    .lineTo( wallBackRtWidthFinal + 0.300, -ui.footHeight )
+                    .lineTo( 0, -ui.footHeight );
 
                 const footRtLine = addLine( footRtShp, 'indigo' );
                 footRtLine.position.set( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY -0.9, 0 );
                 // showContainer.push( footRtLine );
 
-                const footRtExtr = addExtr( footRtShp, 'peru', footLength );
+                const footRtExtr = addExtr( footRtShp, 'gray', ui.footLength );
                 footRtExtr.position.set( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength );
                 showContainer.push( footRtExtr );
 
@@ -1249,14 +1265,14 @@
                 //           \ 6, 15
                 //          /  \
                 //   11, 16 \    \ 7, 14
-                //            \   -----------------8
-                //              \ |                 |
-                //             / -----------------1,9
-                //            /   | 10, 13          |
-                //      5, 12 |   |                 |
-                //            |   |                 |
-                //            -----------------------
-                //         4      3                  2
+                //          \ \   ----------------8
+                //           \  \|                 |
+                //            \ / -----------------1,9
+                //             / | 10, 13          |
+                //       5, 12 | |                 |
+                //             | |                 |
+                //             ---------------------
+                //            4  3                 2
                 
                 // 측면도
                 const alpha = Math.atan( ui.birdSlopeHeight/ui.birdSlopeWidth );
@@ -1407,7 +1423,7 @@
 
                 // 3. 개착터널 절단 ////////////////////////////////////////////////////////////////////////////////////////////////////
                 const cutGeo2 = new THREE.BoxBufferGeometry( 40, 40, 40 );
-                const cutMat2 = new THREE.MeshBasicMaterial( {color: 'darkblue', opacity: 0.8, transparent: true} );
+                const cutMat2 = new THREE.MeshBasicMaterial( {color: 'darkblue', opacity: 0.3, transparent: true} );
                 const cutMesh2 = new THREE.Mesh( cutGeo2, cutMat2 );
                 cutMesh2.position.z = 40/2;
                 cutMesh2.applyMatrix4( matrix.makeRotationX( beta-Math.PI/2 ) );
@@ -1423,6 +1439,7 @@
                 cutLine1.lineTo( ui.totalLength + ui.totalLength/2, -4 );
                 
                 const cutLine1Extr = addExtr( cutLine1, 'orange', 40 );
+                cutLine1Extr.material.opacity = 0.3;
                 cutLine1Extr.applyMatrix4( matrix.makeRotationY( Math.PI * 1.5 ) );
                 cutLine1Extr.applyMatrix4( matrix.makeTranslation( 20, 0, 0 ) );
                 // showContainer.push( cutLine1Extr );
@@ -1432,7 +1449,7 @@
                 const corverSub1Csg = new CSG();
                 corverSub1Csg.subtract( [ cutCoverExtr, cutMesh2, cutLine1Extr  ] );
                 const corverSub1Mesh = corverSub1Csg.toMesh();
-                // showContainer.push( corverSub1Mesh );
+                showContainer.push( corverSub1Mesh );
 
 
             }
@@ -1494,30 +1511,14 @@
             // onFinishChange 적용
             const gui = new GUI();
             
-            const commonFolder = gui.addFolder( '공통' )
+            const commonFolder = gui.addFolder( '공통' );
             commonFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onFinishChange( designTunnel );
             commonFolder.add( ui, 'totalLength', 5, 40, 1 ).name( '적용 연장' ).onFinishChange( designTunnel );
+            commonFolder.open();
             
-            const portalTypeFolder = gui.addFolder( '갱문형식' )
-            portalTypeFolder.add( ui, 'portalType', [ '아치면벽', '벨마우스변형', '버드빅' ] ).name( '타입' ).onFinishChange( designTunnel );
-
-            const cutAndCoverFolder = gui.addFolder( '개착터널' )
-            cutAndCoverFolder.add( ui, 'liningT3', 0.300, 0.800, 0.100 ).name( '라이닝두께' ).onChange( designTunnel );
-            cutAndCoverFolder.add( ui, 'footingHeight', 0.300, 0.800, 0.100 ).name( '공동구높이' ).onChange( designTunnel );
-
-            const bellCollarFolder = gui.addFolder( '벨마우스칼라부' )
-            bellCollarFolder.add( ui, 'collarH1', 0.100, 1.500, 0.100 ).name( '높이1' ).onChange( designTunnel );
-            bellCollarFolder.add( ui, 'collarH2', 0.100, 1.500, 0.100 ).name( '높이2' ).onChange( designTunnel );
-            bellCollarFolder.add( ui, 'slopeWidth', 2.100, 5.000, 0.100 ).name( '기울기폭' ).onChange( designTunnel );
-            bellCollarFolder.add( ui, 'slopeHeight', 1.000, 3.000, 0.100 ).name( '기울기높이' ).onChange( designTunnel );
-
-            const birdCollarFolder = gui.addFolder( '버드빅칼라부')
-            birdCollarFolder.add( ui, 'birdCollarH1', 0.100, 1.500, 0.100 ).name( '높이' ).onChange( designTunnel );
-            birdCollarFolder.add( ui, 'birdCollarL', 0.100, 1.500, 0.100 ).name( '길이' ).onChange( designTunnel );
-            birdCollarFolder.add( ui, 'birdSlopeWidth', 2.100, 5.000, 0.100 ).name( '기울기폭' ).onChange( designTunnel );
-            birdCollarFolder.add( ui, 'birdSlopeHeight', 1.000, 3.000, 0.100 ).name( '기울기높이' ).onChange( designTunnel );            
-            
-
+            const portalTypeFolder = gui.addFolder( '갱문형식' );
+            portalTypeFolder.add( ui, 'portalType', [ '아치면벽', '벨마우스변형', '버드빅' ] ).name( '타입' ).onFinishChange( portalDetail );
+            portalTypeFolder.open();
 
             const clippingFolder = gui.addFolder( '절단면' )
             const props = { 
@@ -1537,10 +1538,72 @@
             clippingFolder.add( props, '생성' );
             clippingFolder.add( props, '위치', -3, 10 );
 
+            const cutAndCoverFolder = gui.addFolder( '개착터널' );
+            cutAndCoverFolder.add( ui, 'liningT3', 0.300, 0.800, 0.100 ).name( '라이닝두께' ).onFinishChange( designTunnel );
+            cutAndCoverFolder.add( ui, 'footingHeight', 0.300, 0.800, 0.100 ).name( '공동구높이' ).onFinishChange( designTunnel );
 
+            const wallFolder = gui.addFolder( '옹벽' );
+            wallFolder.add( ui, 'wallBackHeightConst', 3.000, 8.000, 0.100 ).name( '옹벽높이' ).onFinishChange( designTunnel );
+            wallFolder.add( ui, 'wallLtLength', 3.000, 20.000, 0.100 ).name( '옹벽좌측길이' ).onFinishChange( designTunnel );
+            wallFolder.add( ui, 'wallRtLength', 3.000, 20.000, 0.100 ).name( '옹벽우측길이' ).onFinishChange( designTunnel );
+
+            const portalFolder = gui.addFolder( '아치면벽' );
+            portalFolder.add( ui, 'portalL1', 0.500, 3.000, 0.100 ).name( '갱문길이1' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'portalL2', 0.500, 3.000, 0.100 ).name( '갱문길이2' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetCtr', 0.500, 4.000, 0.100 ).name( '파라펫 중앙높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetLt', 0.500, 4.000, 0.100 ).name( '파라펫 좌측높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetRt', 0.500, 4.000, 0.100 ).name( '파라펫 우측높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'footHeight', 0.500, 3.000, 0.100 ).name( '기초두께' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'footLength', 1.000, 6.000, 0.100 ).name( '기초길이' ).onFinishChange( designTunnel );
+
+            const bellCollarFolder = gui.addFolder( '벨마우스칼라부' );
+            bellCollarFolder.add( ui, 'collarH1', 0.100, 1.500, 0.100 ).name( '높이1' ).onFinishChange( designTunnel );
+            bellCollarFolder.add( ui, 'collarH2', 0.100, 1.500, 0.100 ).name( '높이2' ).onFinishChange( designTunnel );
+            bellCollarFolder.add( ui, 'slopeWidth', 2.100, 5.000, 0.100 ).name( '기울기폭' ).onFinishChange( designTunnel );
+            bellCollarFolder.add( ui, 'slopeHeight', 1.000, 3.000, 0.100 ).name( '기울기높이' ).onFinishChange( designTunnel );
+
+            const birdCollarFolder = gui.addFolder( '버드빅칼라부');
+            birdCollarFolder.add( ui, 'birdCollarH1', 0.100, 1.500, 0.100 ).name( '높이' ).onFinishChange( designTunnel );
+            birdCollarFolder.add( ui, 'birdCollarL', 0.100, 1.500, 0.100 ).name( '길이' ).onFinishChange( designTunnel );
+            birdCollarFolder.add( ui, 'birdSlopeWidth', 2.100, 5.000, 0.100 ).name( '기울기폭' ).onFinishChange( designTunnel );
+            birdCollarFolder.add( ui, 'birdSlopeHeight', 1.000, 3.000, 0.100 ).name( '기울기높이' ).onFinishChange( designTunnel );            
+            
+            wallFolder.hide();
+            portalFolder.hide();
+            bellCollarFolder.hide();
+            birdCollarFolder.show();
+
+            function portalDetail() {
+
+                if( ui.portalType == '아치면벽') {
+
+                    wallFolder.show();
+                    portalFolder.show();
+                    bellCollarFolder.hide();
+                    birdCollarFolder.hide();
+                    designTunnel();
+                
+                } else if( ui.portalType == '벨마우스변형') {
+
+                    wallFolder.hide();
+                    portalFolder.hide();
+                    bellCollarFolder.show();
+                    birdCollarFolder.hide();
+                    designTunnel();
+
+                } else if( ui.portalType == '버드빅') {
+
+                    wallFolder.hide();
+                    portalFolder.hide();
+                    bellCollarFolder.hide();
+                    birdCollarFolder.show();
+                    designTunnel();
+
+                }
+
+            }
 
         }
-        
 
         function addLine( shape, color ) {
             const points = shape.getPoints( 1000 ); // 곡선에서 raycast점을 찾기 위해
@@ -1641,13 +1704,39 @@
                 case 82: /*R*/
 
                     moveCam( 40, 0, 0, 0, 0, 0 );
-
                     break;
 
                 case 70: /*F*/
 
                     moveCam( 0, 0, 100, 0, 0, 0 );
+                    break;
 
+                case 79: /*O*/
+
+                    camera = cameraOrtho;
+                    camera.position.set( 0, 0, 40 );
+
+                    orbitControls = new OrbitControls( cameraOrtho, canvas );
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    cameraOrtho.updateProjectionMatrix();
+                    console.log( 'camera', camera )
+                    console.log( 'control', orbitControls )
+
+                    break;
+
+                case 80: /*P*/
+
+                    camera = cameraPerspective;
+                    orbitControls = new OrbitControls( cameraPerspective, canvas );
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    cameraPerspective.updateProjectionMatrix();
+                    
+                    console.log( 'camera', camera )
+                    console.log( 'control', orbitControls )
                     break;
 
             }
@@ -1662,10 +1751,10 @@
         
 
         function resizeRendererToDisplaySize(renderer) {
-            const canvas = renderer.domElement;
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            const needResize = canvas.width !== width || canvas.height !== height;
+            const canvas1 = renderer.domElement;
+            const width = canvas1.clientWidth;
+            const height = canvas1.clientHeight;
+            const needResize = canvas1.width !== width || canvas1.height !== height;
             if (needResize) {
                 renderer.setSize(width, height, false);
             }
@@ -1675,11 +1764,12 @@
         
         function render() {
             if (resizeRendererToDisplaySize(renderer)) {
-                const canvas = renderer.domElement;
-                camera.aspect = canvas.clientWidth / canvas.clientHeight;
-                camera.updateProjectionMatrix();
-            }
 
+                const canvas2 = renderer.domElement;
+                camera.aspect = canvas2.clientWidth / canvas2.clientHeight;
+                camera.updateProjectionMatrix();
+
+            }
 
             // 
 

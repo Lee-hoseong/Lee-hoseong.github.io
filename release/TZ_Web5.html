@@ -84,7 +84,8 @@
         import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
         import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
-        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+        // import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+        import { STLExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/STLExporter.js';
         
 
         // Matrix 선언
@@ -1777,27 +1778,38 @@
 
 
         //export GLTF
-        const exporter = new GLTFExporter();
+        // const exporter = new GLTFExporter();
 
-        document.getElementById("button").addEventListener("click", exportFile);        
+        // document.getElementById("button").addEventListener("click", exportFile);        
         
         
+        // function exportFile() {
+
+        //     const result = exporter.parse( scene, function ( result ) {
+
+		// 			if ( result instanceof ArrayBuffer ) {
+
+		// 				saveArrayBuffer( result, '라이닝구조도.glb' );
+
+		// 			} else {
+
+		// 				const output = JSON.stringify( result, null, 2 );
+		// 				saveString( output, '라이닝구조도.gltf' );
+
+		// 			}
+
+        //     } ) }
+
+        // export STL        
         function exportFile() {
 
-            const result = exporter.parse( scene, function ( result ) {
+            const result = exporter.parse( scene, { binary: true } );
+            saveArrayBuffer( result, '라이닝구조도.stl' );
+            
+        };
 
-					if ( result instanceof ArrayBuffer ) {
-
-						saveArrayBuffer( result, '라이닝구조도.glb' );
-
-					} else {
-
-						const output = JSON.stringify( result, null, 2 );
-						saveString( output, '라이닝구조도.gltf' );
-
-					}
-
-            } ) }
+        const exporter = new STLExporter();
+        document.getElementById("button").addEventListener("click", exportFile);
 
         const link = document.createElement( 'a' );
         link.style.display = 'none';

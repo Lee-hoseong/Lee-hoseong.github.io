@@ -226,14 +226,14 @@
             scene.background = new THREE.Color( 0xf0f0f0 );
             
 
-            // // 바닥면 : 그림자를 받기 위함
-            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
-            // planeGeometry.rotateX( - Math.PI/2 );
-            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
-            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-            // plane.position.y = -1.999;
-            // // plane.receiveShadow = true;
-            // scene.add( plane );
+            // 바닥면 : 그림자를 받기 위함
+            const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            planeGeometry.rotateX( - Math.PI/2 );
+            const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            plane.position.y = -1.999;
+            plane.receiveShadow = true;
+            scene.add( plane );
             
 
             // 바닥 그리드
@@ -248,24 +248,33 @@
 
             // 좌표축 생성, x축:red, y축:green, z축:blue
             const axes = new THREE.AxesHelper(1); 
-            scene.add(axes);
+            scene.add( axes );
             
 
             // light(필수) : AmbientLight는 그림자와 상관없음     
-            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+            scene.add( new THREE.AmbientLight( 0xf0f0f0, 1 ) );
             
-            const light = new THREE.DirectionalLight( 0xffffff, 0.1 );
-            // light.castShadow = true;
-            scene.add(light);
+            const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            directionalLight.position.set( 3, 40, 0 );
+            directionalLight.target.position.set(-5, 0, 0);
+            directionalLight.castShadow = true;
+            scene.add( directionalLight );
+            scene.add( directionalLight.target );
             
-
             // light helper
-            // const lightHelper = new THREE.SpotLightHelper( light, 10 );
-            // scene.add( lightHelper );            
+            const lightHelper = new THREE.DirectionalLightHelper( directionalLight, 10 );
+            scene.add( lightHelper );            
             
+            function updateLight() {
+                directionalLight.target.updateMatrixWorld();
+                lightHelper.update();
+            }
+
+            updateLight();            
 
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer.physicallyCorrectLights = true
             renderer.shadowMap.enabled = true;
             
         }
@@ -1581,7 +1590,7 @@
             }
             
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshStandardMaterial ( { color, opacity: 0.8, transparent: true } );
+            const extrudeMat = new THREE.MeshStandardMaterial ( { color, roughness : 0.8, metalness : 0.2, transparent: true } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
             
