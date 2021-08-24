@@ -111,6 +111,8 @@
         const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
 
         const liningT0 = JSON.parse( sessionStorage.getItem('라이닝두께') );
+        const liningT1 = JSON.parse( sessionStorage.getItem('공동구측벽두께1') );
+        const liningT2 = JSON.parse( sessionStorage.getItem('공동구측벽두께2') );
 
         const roadCenterDistance = JSON.parse( sessionStorage.getItem('이격거리(최종)' ) );
 
@@ -118,19 +120,6 @@
         const r1ThetaRt = JSON.parse( sessionStorage.getItem('중심각우측' ) );
         const r1Height = JSON.parse( sessionStorage.getItem('r1중심고' ) );
         const r1Final = JSON.parse( sessionStorage.getItem('r1반지름' ) );
-
-        const r2Origin = JSON.parse( sessionStorage.getItem('r2원점' ) );
-        const r2Final = JSON.parse( sessionStorage.getItem('r2반지름' ) );
-
-        const r3Origin = JSON.parse( sessionStorage.getItem('r3원점' ) );
-        const r3Final = JSON.parse( sessionStorage.getItem('r3반지름' ) );
-
-        const r4Origin = JSON.parse( sessionStorage.getItem('r4원점' ) );
-        const r4Final = JSON.parse( sessionStorage.getItem('r4반지름' ) );
-
-        const r5Origin = JSON.parse( sessionStorage.getItem('r5원점' ) );
-        const r5Final = JSON.parse( sessionStorage.getItem('r5반지름' ) );
-
 
         const footingType = JSON.parse( sessionStorage.getItem('공동구타입' ) );
         const footingHeight = JSON.parse( sessionStorage.getItem('공동구높이' ) );
@@ -200,24 +189,24 @@
             
             // camera(필수)
 
-            // // Perspective
-            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            // camera.position.set( -7, 7, 15 );             
+            // Perspective
+            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            camera.position.set( -7, 7, 15 );             
             
 
             // Orthographic
-            camera = new THREE.OrthographicCamera( 
-                window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.1, 1000 
-            ); //left. right, top, bottom, near, far 
-            camera.zoom = 20
-            camera.position.set( 0, 0, 60 ); 
+            // camera = new THREE.OrthographicCamera( 
+            //     window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.1, 1000 
+            // ); //left. right, top, bottom, near, far 
+            // camera.zoom = 20
+            // camera.position.set( 0, 0, 60 ); 
             
             
 
             // OrbitControl : 뷰 확대 및 회전
             const controls = new OrbitControls( camera, canvas );
-            // controls.target.set( 0, 3, 0 );
-            controls.target.set( 0, 0, 0 );
+            controls.target.set( 0, 3, 0 );
+            // controls.target.set( 0, 0, 0 );
             controls.update();
             
 
@@ -274,7 +263,7 @@
 
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
-            renderer.physicallyCorrectLights = true
+            // renderer.physicallyCorrectLights = true
             renderer.shadowMap.enabled = true;
             
         }
@@ -283,6 +272,8 @@
 
         function designTunnel() {
             
+            console.log( '!브라켓형상이 편경사에 따라 변경이 안됨!')
+
             // 이전 메쉬 삭제
             showContainer.forEach( i => scene.remove( i ) )
 
@@ -315,7 +306,8 @@
             // const concretePavementLine = addLine( concretePavementShp, 'darkslategray' );
             // showContainer.push( concretePavementLine );
 
-            const concretePavementExtr1 = addExtr( concretePavementShp, 'darkslategray', ui.totalLength );
+            const concretePavementExtr1 = addExtr( concretePavementShp, 0x474c55, ui.totalLength );
+            concretePavementExtr1.name = '포장';
             showContainer.push( concretePavementExtr1 );
 
            
@@ -329,7 +321,8 @@
             // const cementeFilterLine = addLine( cementeFilterShp, 'silver' );
             // showContainer.push( cementeFilterLine );
 
-            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'silver', ui.totalLength );
+            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'gray', ui.totalLength );
+            cementeFilterExtr1.name = '필터층';
             showContainer.push( cementeFilterExtr1 );
 
             
@@ -346,15 +339,19 @@
             moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - footingHeight );
 
             const moleDrainageLtExtr1 = addExtr( moleDrainageLtShp, 'slategray', ui.longSpacing );
+            moleDrainageLtExtr1.name = '맹암거 좌측';
             cycle1Group.add( moleDrainageLtExtr1 );
 
             const moleDrainageLtExtr2 = addExtr( moleDrainageLtShp, 'slategray', ui.longSpacing );
+            moleDrainageLtExtr2.name = '맹암거 좌측';
             cycle2Group.add( moleDrainageLtExtr2 );
 
             const moleDrainageLtExtr3 = addExtr( moleDrainageLtShp, 'slategray', remainderLength );
+            moleDrainageLtExtr3.name = '맹암거 좌측';
             cycle3Group.add( moleDrainageLtExtr3 );
 
             const moleDrainageLtExtr4 = addExtr( moleDrainageLtShp, 'slategray', remainderLength );
+            moleDrainageLtExtr4.name = '맹암거 좌측';
             cycle4Group.add( moleDrainageLtExtr4 );
 
 
@@ -368,15 +365,19 @@
             moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - footingHeight );
 
             const moleDrainageRtExtr1 = addExtr( moleDrainageRtShp, 'slategray', ui.longSpacing );
+            moleDrainageRtExtr1.name = '맹암거 우측';
             cycle1Group.add( moleDrainageRtExtr1 );
 
             const moleDrainageRtExtr2 = addExtr( moleDrainageRtShp, 'slategray', ui.longSpacing );
+            moleDrainageRtExtr2.name = '맹암거 우측';
             cycle2Group.add( moleDrainageRtExtr2 );
 
             const moleDrainageRtExtr3 = addExtr( moleDrainageRtShp, 'slategray', remainderLength );
+            moleDrainageRtExtr3.name = '맹암거 우측';
             cycle3Group.add( moleDrainageRtExtr3 );
 
             const moleDrainageRtExtr4 = addExtr( moleDrainageRtShp, 'slategray', remainderLength );
+            moleDrainageRtExtr4.name = '맹암거 우측';
             cycle4Group.add( moleDrainageRtExtr4 );
 
 
@@ -410,20 +411,178 @@
             // };
 
 
+            // 터널제원 계산
+            // a) r2상단점, r4상단점
+            const r1ArchShp = new THREE.Shape()
+                .absarc( 0, r1Height, r1Final, Math.PI/2+r1ThetaLt, Math.PI/2-r1ThetaRt, true );
+
+            const r2TopPoint = r1ArchShp.getPoint( 0 );
+            const r4TopPoint = r1ArchShp.getPoint( 1 );
+
+            // b) 공동구 끝점
+            const footingLtEndPoint = new THREE.Vector3( footingLtSlope[footingLtSlope.length-1].x, footingLtSlope[footingLtSlope.length-1].y, 0 );
+            const footingRtEndPoint = new THREE.Vector3( footingRtSlope[footingRtSlope.length-1].x, footingRtSlope[footingRtSlope.length-1].y, 0 );
+            
+            // c) 공동구 하단점
+            const commonDuctLt = new THREE.Vector3( footingLtSlope[12].x, footingLtSlope[12].y, 0 );
+            
+            let commonDuctRt;
+                    
+            if( footingType == '기계환기(물분무)' ) { 
+
+                commonDuctRt = new THREE.Vector3( footingRtSlope[13].x, footingRtSlope[13].y, 0 );
+
+            } else { 
+                
+                commonDuctRt = new THREE.Vector3( footingRtSlope[12].x, footingRtSlope[12].y, 0 ); 
+
+            };          
+            
+            // d) r2계산
+            const r2Value = r2Calculation ( r2TopPoint, footingLtEndPoint );
+
+            function r2Calculation ( topPoint, bottomPoint, ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint ) / 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaLt + rAlpha;// 방향반대
+                const rFinal = rLine / Math.cos( rBeta );
+
+                const rOrigin = new THREE.Vector3( 0, r1Final - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );//방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0) );
+
+                const rTheta = Math.PI - 2 * rBeta;
+
+                return [ rFinal, rOrigin, rTheta ]
+                
+            }
+
+            const r2Final = r2Value[0];
+            const r2Origin = r2Value[1];
+            const r2Theta1 = r2Value[2];
+
+            // e) r3계산
+            const r3TopPoint1 = new THREE.Vector3( 0, r1Final + liningT0 - liningT1 );
+            r3TopPoint1.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            r3TopPoint1.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );
+
+            const r3TopPoint2 = new THREE.Vector3( 0, r1Final + liningT0 - liningT2 );
+            r3TopPoint2.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+            r3TopPoint2.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );
+
+            const r3Value_1 = r3Calculation( r3TopPoint1, footingLtEndPoint, liningT1 );
+            const r3Value_2 = r3Calculation( r3TopPoint2, commonDuctLt, liningT2 );
+
+            function r3Calculation ( topPoint, bottomPoint, liningThickness ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint )/ 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaLt + rAlpha;
+                const rSubline = rLine / Math.cos( rBeta ) ;
+                const rFinal = rSubline + liningThickness;
+
+                const rOrigin = new THREE.Vector3( 0, r1Final + liningT0 - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( r1ThetaLt ) );
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );
+                
+                const rTheta = Math.PI/2 - r1ThetaLt + Math.asin( ( rOrigin.y -( concreteLt.y - footingHeight ) ) / rFinal ); // 스프링라인 계산식으로 변경했음
+
+                return [ rFinal, rOrigin, rTheta ]
+                
+            }
+
+            // f) r3결정
+            let r3Final, r3Origin, r3Theta1;
+
+            if ( r3Value_1[0] >= r3Value_2[0] ) {
+
+                r3Final = r3Value_1[0];
+                r3Origin = r3Value_1[1];
+                r3Theta1 = r3Value_1[2];
+
+            } else {
+
+                r3Final = r3Value_2[0];
+                r3Origin = r3Value_2[1];
+                r3Theta1 = r3Value_2[2];
+
+            };
+            
+            // g) r4계산
+            const r4Value = r4Calculation ( r4TopPoint, footingRtEndPoint );
+
+            function r4Calculation ( topPoint, bottomPoint, ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint ) / 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaRt - rAlpha;// 방향반대
+                const rFinal = rLine / Math.cos( rBeta );
+
+                const rOrigin = new THREE.Vector3( 0, r1Final - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );// 방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0) );
+
+                const rTheta = Math.PI - 2 * rBeta;
+
+                return [ rFinal, rOrigin, rTheta ]
+
+            }
+
+            const r4Final = r4Value[0];
+            const r4Origin = r4Value[1];
+            const r4Theta1 = r4Value[2];
+
+            // h) r5계산
+            const r5TopPoint1 = new THREE.Vector3( 0, r1Final + liningT0 - liningT1 );
+            r5TopPoint1.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );
+            r5TopPoint1.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );
+
+            const r5TopPoint2 = new THREE.Vector3( 0, r1Final + liningT0 - liningT2 );
+            r5TopPoint2.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );
+            r5TopPoint2.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );            
+
+            const r5Value_1 = r5Calculation( r5TopPoint1, footingRtEndPoint, liningT1 );
+            const r5Value_2 = r5Calculation( r5TopPoint2, commonDuctRt, liningT2 );
+
+            function r5Calculation ( topPoint, bottomPoint, liningThickness ) {
+
+                const rLine = topPoint.distanceTo( bottomPoint )/ 2;
+                const rAlpha = Math.atan( ( bottomPoint.x - topPoint.x )/( bottomPoint.y - topPoint.y ) );
+                const rBeta = r1ThetaRt - rAlpha;// 방향반대
+                const rSubline = rLine / Math.cos( rBeta ) ;
+                const rFinal = rSubline + liningThickness;
+
+                const rOrigin = new THREE.Vector3( 0, r1Final + liningT0 - rFinal );
+                rOrigin.applyMatrix4( matrix.makeRotationZ( -r1ThetaRt ) );// 방향반대
+                rOrigin.applyMatrix4( matrix.makeTranslation( 0, r1Height, 0 ) );
+
+                const rTheta = Math.PI/2 - r1ThetaRt + Math.asin( ( rOrigin.y -( concreteRt.y - footingHeight ) ) / rFinal ); // 스프링라인 계산식으로 변경했음
+
+                return [ rFinal, rOrigin, rTheta ]
+
+            }
+
+            // i) r5결정
+            let r5Final, r5Origin, r5Theta1;
+
+            if ( r5Value_1[0] >= r5Value_2[0] ) {
+
+                r5Final = r5Value_1[0];
+                r5Origin = r5Value_1[1];
+                r5Theta1 = r5Value_1[2];
+
+            } else {
+
+                r5Final = r5Value_2[0];
+                r5Origin = r5Value_2[1];
+                r5Theta1 = r5Value_2[2];
+
+            }
+
+
             // 터널형상 그리기
-            const r2Theta1 = Math.asin( ( r2Origin.y - footingLtSlope[footingLtSlope.length-1].y ) / r2Final ) + Math.PI/2 - r1ThetaLt;
-
-            const r4Theta1 = Math.asin( ( r4Origin.y - footingRtSlope[footingRtSlope.length-1].y ) / r4Final ) + Math.PI/2 - r1ThetaRt;
-
-            const r3Gamma1 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / r3Final );
-            const r3Theta1 = Math.PI/2 - r1ThetaLt + r3Gamma1;
-
-            const r5Gamma1 = Math.asin( ( r5Origin.y - ( concreteRt.y - footingHeight ) ) / r5Final );
-            const r5Theta1 = Math.PI/2 - r1ThetaRt + r5Gamma1;
-
-
             const footingRtReverse = [...footingRtSlope].reverse();// 원본 배열유지
-
 
             const liningShp = new THREE.Shape();
             liningShp.moveTo( footingLtSlope[0].x, footingLtSlope[0].y );
@@ -444,17 +603,20 @@
             liningShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y );
 
             const liningExtr1 = addExtr( liningShp, 'steelblue', ui.longSpacing );
+            liningExtr1.name = '라이닝';
             cycle1Group.add( liningExtr1 );
 
             const liningExtr2 = addExtr( liningShp, 'steelblue', ui.longSpacing );
+            liningExtr2.name = '라이닝';
             cycle2Group.add( liningExtr2 );
 
             const liningExtr3 = addExtr( liningShp, 'steelblue', remainderLength );
+            liningExtr3.name = '라이닝';
             cycle3Group.add( liningExtr3 );
             
             const liningExtr4 = addExtr( liningShp, 'steelblue', remainderLength );
+            liningExtr4.name = '라이닝';
             cycle4Group.add( liningExtr4 );
-
 
 
             // 숏크리트 그리기
@@ -475,15 +637,19 @@
             scShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
 
             const scExtr1 = addExtr( scShp, 'skyblue', ui.longSpacing );
+            scExtr1.name = '숏크리트';
             cycle1Group.add( scExtr1 );
 
             const scExtr2 = addExtr( scShp, 'skyblue', ui.longSpacing );
+            scExtr2.name = '숏크리트';
             cycle2Group.add( scExtr2 );
 
             const scExtr3 = addExtr( scShp, 'skyblue', remainderLength );
+            scExtr3.name = '숏크리트';
             cycle3Group.add( scExtr3 );
 
             const scExtr4 = addExtr( scShp, 'skyblue', remainderLength );
+            scExtr4.name = '숏크리트';
             cycle4Group.add( scExtr4 );
 
 
@@ -933,8 +1099,8 @@
             
             
             // 록볼트 보강영역
-            let rbPathLeft
-            let rbPathRight
+            let rbPathLeft, rbPathRight;
+            const rbTotalNum = []; // 록볼트 개수 기록
             
             if ( ( ui.auxiliaryMethod =='선진보강(대)' || ui.auxiliaryMethod =='선진보강(소)' ) && ui.auxiliaryZone =='120도') {
              
@@ -1202,6 +1368,7 @@
 
                 // 록볼트 1Cycle, 2Cycle 배치
                 rbGroup1.position.set( 0, 0, ui.longSpacing*0.5 );
+                rbGroup1.name = '록볼트1'
                 cycle1Group.add( rbGroup1 );
 
                 const newMaterial = new THREE.MeshStandardMaterial( {color: 'darkslateblue'} );
@@ -1220,11 +1387,13 @@
                 cycle4Group.add( rbGroup3 )
 
 
-                console.log( '록볼트 개수', rbGroup1.children.length + rbGroup2.children.length )
-                
-            }
+                // 록볼트 개수 기록
+                rbTotalNum.push( rbGroup1.children.length );
+                rbTotalNum.push( rbGroup2.children.length );
+                rbTotalNum.push( rbGroup3.children[0].children.length );
+                rbTotalNum.push( rbGroup4.children[0].children.length );
 
-            
+            }
 
             // 공동구 뚜껑 생성
             let coverLeftB0, coverRightB0, coverL, coverS;
@@ -1407,7 +1576,12 @@
 
 
 
-            // 1cycle, 2cycle 배치
+
+            // 1cycle, 2cycle 배치 및 수량계산
+            let rbSum = 0; // 록볼트 개수
+            let liningSum = 0; // 라이닝 체적
+            let scSum = 0; // 라이닝 체적
+
             for ( let i=0; i*ui.longSpacing < ui.totalLength; i++) {
 
                 if ( i == parseInt( ui.totalLength/ui.longSpacing) ) { // 1cycle, 2cycle이 아닌 나머지의 경우
@@ -1418,11 +1592,46 @@
                         cycle4Clone.position.set( 0, 0, ui.totalLength - i*ui.longSpacing - remainderLength );
                         showContainer.push( cycle4Clone );
 
+                        // console.log( 'cycle4 록볼트 개수', cycle4Group.children[5].children[0].children.length );
+                        rbSum += rbTotalNum[3];
+
+                        // 라이닝 체적
+                        cycle4Group.traverse( (o) => { 
+                            if ( o.isMesh && o.name == '라이닝' ) {
+                                liningSum += getVolume( o.geometry);
+                            } 
+                        } );
+
+                        // 숏크리트 체적
+                        cycle4Group.traverse( (o) => { 
+                            if ( o.isMesh && o.name == '숏크리트' ) {
+                                scSum += getVolume( o.geometry);
+                            } 
+                        } );
+
                     } else {
 
                         const cycle3Clone = cycle3Group.clone();
                         cycle3Clone.position.set( 0, 0, ui.totalLength - i*ui.longSpacing - remainderLength );
                         showContainer.push( cycle3Clone );
+
+                        // console.log( 'cycle3 록볼트 개수', cycle3Group.children[5].children[0].children.length );
+                        rbSum += rbTotalNum[2];
+
+                        // 라이닝 체적
+                        cycle3Group.traverse( (o) => { 
+                            if ( o.isMesh && o.name == '라이닝' ) {
+                                liningSum += getVolume( o.geometry);
+                            } 
+                        } );
+                        
+                        // 숏크리트 체적
+                        cycle3Group.traverse( (o) => { 
+                            if ( o.isMesh && o.name == '숏크리트' ) {
+                                scSum += getVolume( o.geometry);
+                            } 
+                        } );
+
 
                     }
 
@@ -1432,15 +1641,53 @@
                     cycle1Clone.position.set( 0, 0, ui.totalLength - i*ui.longSpacing - ui.longSpacing );
                     showContainer.push( cycle1Clone );
 
+                    // console.log( 'cycle1 록볼트 개수', cycle1Group.children[5].children.length );
+                    rbSum += rbTotalNum[0];
+
+                    // 라이닝 체적
+                    cycle1Group.traverse( (o) => { 
+                        if ( o.isMesh && o.name == '라이닝' ) {
+                            liningSum += getVolume( o.geometry);
+                        } 
+                    } );
+
+                    // 숏크리트 체적
+                    cycle1Group.traverse( (o) => { 
+                        if ( o.isMesh && o.name == '숏크리트' ) {
+                            scSum += getVolume( o.geometry);
+                        } 
+                    } );                    
+
                 } else {
 
                     const cycle2Clone = cycle2Group.clone();
-                    cycle2Clone.position.set( 0, 0, ui.totalLength - i*ui.longSpacing - ui.longSpacing  );
+                    cycle2Clone.position.set( 0, 0, ui.totalLength - i*ui.longSpacing - ui.longSpacing );
                     showContainer.push( cycle2Clone );
+
+                    // 록볼트 개수
+                    // console.log( 'cycle2 록볼트 개수', cycle2Group.children[5].children.length );
+                    rbSum += rbTotalNum[1];
+
+                    // 라이닝 체적
+                    cycle2Group.traverse( (o) => { 
+                        if ( o.isMesh && o.name == '라이닝' ) {
+                            liningSum += getVolume( o.geometry);
+                        } 
+                    } );
+
+                    // 숏크리트 체적
+                    cycle2Group.traverse( (o) => { 
+                        if ( o.isMesh && o.name == '숏크리트' ) {
+                            scSum += getVolume( o.geometry);
+                        } 
+                    } ); 
 
                 }
 
             }
+
+            
+
 
             // 보조공법 배치
             for ( let i=0; ui.totalLength - i*6 > 0; i++) {
@@ -1464,16 +1711,32 @@
 
             }
 
+            
+
+            // for( let i=0; i<showContainer.length; i++ ) {
+
+            //     if( showContainer[i].isMesh ) {
+
+            //         if ( showContainer[i].name =='포장' ) {
+
+            //             console.log( '포장' )
+
+            //         }
+                    
+            //     }
+
+            // }
+
 
             // 결과값 저장
             sessionStorage.setItem('스프링라인EL', JSON.stringify( ui.springLineEL ) );
             sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
 
 
-
             // 체적계산
-            console.log( '숏크리트 체적', getVolume(scExtr1.geometry) )
-            console.log( '라이닝 체적', getVolume(liningExtr1.geometry) )
+            console.log( '록볼트 총 개수', rbSum );
+            console.log( '숏크리트 체적', scSum )
+            console.log( '라이닝 체적', liningSum )
 
             function getVolume(geometry) {
                 if (!geometry.isBufferGeometry) {
