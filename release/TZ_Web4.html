@@ -803,14 +803,14 @@
 
             const rBar1LfArr = addArr( rBar1FullFaceLeft );
             const rBar1LfPath = addPath( rBar1LfArr );
-            const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath, 0.9 );
+            const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath );
 
             steelRibGroup.add( rBar1LfSweep );
 
 
             const rBar1RhArr = addArr( rBar1FullFaceRight );
             const rBar1RhPath = addPath( rBar1RhArr );
-            const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath, 0.9 );
+            const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath );
             
             steelRibGroup.add( rBar1RhSweep );
 
@@ -820,11 +820,11 @@
             
                 const rBar2Lf1Arr = addArr( rBar2FullFaceLeft );
                 const rBar2Lf1Path = addPath( rBar2Lf1Arr );
-                const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path, 0.9 );
+                const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path );
 
                 const rBar2Rh1Arr = addArr( rBar2FullFaceRight );
                 const rBar2Rh1Path = addPath( rBar2Rh1Arr );
-                const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path, 0.9 );
+                const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path );
 
                 const rBar2Lf2Clone = rBar2Lf1Sweep.clone();
                 const rBar2Rh2Clone = rBar2Rh1Sweep.clone();
@@ -1214,14 +1214,14 @@
             return mesh;
         }
         
-        function addExtr( shape, color, length, opacity ) {            
+        function addExtr( shape, color, length ) {            
             const extrudeSettings = {
                 steps : 1,
                 depth : length,
                 bevelEnabled : false,
             }           
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite : false } );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, transparent: true, depthWrite : false } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
@@ -1246,13 +1246,13 @@
             return curvePath
         }
 
-        function addSweep( shape, color, path, opacity ) {
+        function addSweep( shape, color, path ) {
             const extrudeSettings = {
                 steps : 100, 
                 extrudePath : path
             }
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshPhongMaterial( { color, opacity, transparent: true, depthWrite  : false } );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, transparent: true, depthWrite  : false } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
@@ -1272,7 +1272,7 @@
                 } );
             
                 const mesh = gLeft.scene;
-                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, color : 'crimson', opacity : 0.9, transparent: true } );
+                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, color : 'crimson' } );
 
                 mesh.traverse( (o) => { if ( o.isMesh ) o.material = newMaterial } );
 
@@ -1367,7 +1367,7 @@
                 } );
                 
                 const mesh = gLeft.scene;
-                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide,  color : 'deeppink', opacity : 0.9, transparent: false } );
+                const newMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide,  color : 'deeppink' } );
 
                 mesh.traverse((o) => { if ( o.isMesh ) o.material = newMaterial });
                 

@@ -33,11 +33,15 @@
         #info {
             position: absolute;
             top: 40px;
+            left : 50%;
+            /* top: 40px; */
             padding: 10px;
+            transform : translate( -50% );
+            text-align: center;
             background: rgba( 0, 0, 0, 0 );
             color: black;
             font-size: 12px;
-        }        
+        }       
 
         /* Add a black background color to the top navigation */
         .topnav {
@@ -159,7 +163,11 @@
     
     <canvas id="c"></canvas>
 
-    <div id="info"> <b>R:</b> Right, <b>F:</b> Front </div>
+    <div id="info">
+        <b> Camera : </b><b style="color:#2FA1D6">P </b>Perspective, <b style="color:#2FA1D6">O </b>Orthographic
+        <br>
+        <b> View : </b> <b style="color:#2FA1D6">F </b> Front, <b style="color:#2FA1D6">B </b> Back, <b style="color:#2FA1D6">R </b> Right, <b style="color:#2FA1D6">L </b> Left, <b style="color:#2FA1D6">T </b> Top 
+    </div>
     
     <button id="button" type="button" >Export Model</button>
 
@@ -204,6 +212,7 @@
 
         // Three js 기본변수
         let camera, scene, renderer, clippingPlane, orbitControls
+        let cameraPerspective, cameraOrtho
 
 
         // 계산값 불러오기
@@ -541,22 +550,24 @@
             // camera(필수)
 
             // Perspective
-            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            camera.position.set( 7, 7, 40 );             
+            cameraPerspective = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            // cameraPerspective.position.set( -14, 9, 30 );
+            cameraPerspective.position.set( 7, 7, 40 );
             
 
             // Orthographic
-            // camera = new THREE.OrthographicCamera( 
-            //     window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
-            // ); //left. right, top, bottom, near, far 
-            // camera.position.set( 0, 0, 40 );
-            // // camera.position.set( -40, 0, 0 ); 
+            cameraOrtho = new THREE.OrthographicCamera( 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
+            ); //left. right, top, bottom, near, far 
+            cameraOrtho.position.set( 0, 0, 40 );
+            cameraOrtho.zoom = 30;
             
+            camera = cameraPerspective;
+
 
             // OrbitControl : 뷰 확대 및 회전
             orbitControls = new OrbitControls( camera, canvas );
-            orbitControls.target.set( 0, 3, 0 );
-            // orbitControls.target.set( 0, 0, 0 );
+            orbitControls.target.set( 0, 0, 0 );
             orbitControls.update();
             
 
@@ -658,7 +669,7 @@
             concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
             concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
 
-            const concretePavementExtr1 = addExtr( concretePavementShp, 'darkslategray', ui.totalLength, 0.9 );
+            const concretePavementExtr1 = addExtr( concretePavementShp, 'darkslategray', ui.totalLength );
             showContainer.push( concretePavementExtr1 ); 
 
             const cementeFilterShp = new THREE.Shape();
@@ -668,7 +679,7 @@
             cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
             cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
             
-            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'silver', ui.totalLength, 0.9 );
+            const cementeFilterExtr1 = addExtr( cementeFilterShp, 'silver', ui.totalLength );
             showContainer.push( cementeFilterExtr1 );
 
             // 편경사변화에 따른 공동구 위치 계산 
@@ -970,7 +981,7 @@
             mainTunnelShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y - footingHeight );
             mainTunnelShp.lineTo( footingLtSlope[0].x, footingLtSlope[0].y );
 
-            const mainTunnelExtr1 = addExtr( mainTunnelShp, 'steelblue', mainTunnelLength, 1 );
+            const mainTunnelExtr1 = addExtr( mainTunnelShp, 'steelblue', mainTunnelLength );
             showContainer.push( mainTunnelExtr1 );
 
             // 1.2 본선2(main Tunnel)형상
@@ -993,7 +1004,7 @@
             mainConnShp.absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false );
             mainConnShp.absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
 
-            const mainConnExtr = addExtr( mainConnShp, 'steelblue', footingConnLength + stairLength * 3 + stairLength * 3, 1 ); // 계단길이포함
+            const mainConnExtr = addExtr( mainConnShp, 'steelblue', footingConnLength + stairLength * 3 + stairLength * 3 ); // 계단길이포함
             mainConnExtr.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength ) );
             // showContainer.push( mainConnExtr );
 
@@ -1004,7 +1015,7 @@
                 .absarc( 0, r1Height, r1Final + liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false )
                 .absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false );
 
-            const outterAreaExtr = addExtr( outterAreaShp, 'mediumvioletred', ui.totalLength, 1 );
+            const outterAreaExtr = addExtr( outterAreaShp, 'mediumvioletred', ui.totalLength );
             // showContainer.push( outterAreaExtr )
 
             // 내측 라이닝 - 연결통로 자를 때 사용
@@ -1015,7 +1026,7 @@
                 .absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2, true )
                 .lineTo( 0, footingConnSlope[footingConnSlope.length-1].y - 1 )
 
-            const innerAreaExtr = addExtr( innerAreaShp, 'seagreen', ui.totalLength, 1 );
+            const innerAreaExtr = addExtr( innerAreaShp, 'seagreen', ui.totalLength );
             // showContainer.push( innerAreaExtr )
 
             // 1.4 본선1 숏크리트 
@@ -1035,7 +1046,7 @@
             mainScShp.absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2,  Math.PI/2 - r1ThetaRt, true );
             mainScShp.absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
 
-            const mainScExtr1 = addExtr( mainScShp, 'skyblue', mainTunnelLength, 1.0 );
+            const mainScExtr1 = addExtr( mainScShp, 'skyblue', mainTunnelLength );
             showContainer.push( mainScExtr1 );
 
             // 1.5 본선2 숏크리트 
@@ -1044,7 +1055,7 @@
             showContainer.push( mainScExtr2 ); 
 
             // 1.6 본선접속부 숏크리트 
-            const mainConnScExtr = addExtr( mainScShp, 'skyblue', footingConnLength + stairLength * 3 + stairLength * 3, 1 );
+            const mainConnScExtr = addExtr( mainScShp, 'skyblue', footingConnLength + stairLength * 3 + stairLength * 3 );
             mainConnScExtr.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength ) );
             // showContainer.push( mainConnScExtr );
 
@@ -1055,7 +1066,7 @@
                 .absarc( 0, r1Height, r1Final + liningT0 + ui.shotcrete, Math.PI/2,  Math.PI/2 - r1ThetaRt, true )
                 .absarc( r5Origin.x, r5Origin.y, r5Final + ui.shotcrete, Math.PI/2 - r1ThetaRt, Math.PI/2 - r1ThetaRt - r5Theta2, true );
 
-            const scAreaExtr = addExtr( scAreaShp, 'hotpink', ui.totalLength, 1 );
+            const scAreaExtr = addExtr( scAreaShp, 'hotpink', ui.totalLength );
             // showContainer.push( scAreaExtr );
 
 
@@ -1081,7 +1092,7 @@
             stair1Shp.lineTo( getPointShp.getPoint(1).x, getPointShp.getPoint(1).y );
             stair1Shp.lineTo( stair1Slope[0].x, stair1Slope[0].y - footingHeight );
 
-            const stair1Extr1 = addExtr( stair1Shp, 'steelblue', stairLength, 0.9 );
+            const stair1Extr1 = addExtr( stair1Shp, 'steelblue', stairLength );
             stair1Extr1.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength ) );
             showContainer.push( stair1Extr1 );
 
@@ -1096,7 +1107,7 @@
             stair2Shp.lineTo( getPointShp.getPoint(1).x, getPointShp.getPoint(1).y );
             stair2Shp.lineTo( stair2Slope[0].x, stair2Slope[0].y - footingHeight );
 
-            const stair2Extr1 = addExtr( stair2Shp, 'steelblue', stairLength, 0.9 );
+            const stair2Extr1 = addExtr( stair2Shp, 'steelblue', stairLength );
             stair2Extr1.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength + stairLength ) );
             showContainer.push( stair2Extr1 );
 
@@ -1111,7 +1122,7 @@
             stair3Shp.lineTo( getPointShp.getPoint(1).x, getPointShp.getPoint(1).y );
             stair3Shp.lineTo( stair3Slope[0].x, stair3Slope[0].y - footingHeight );
 
-            const stair3Extr1 = addExtr( stair3Shp, 'steelblue', stairLength, 0.9 );
+            const stair3Extr1 = addExtr( stair3Shp, 'steelblue', stairLength );
             stair3Extr1.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength + stairLength * 2 ) );
             showContainer.push( stair3Extr1 );
 
@@ -1132,7 +1143,7 @@
             connFootingShp.lineTo( footingConnSlope[0].x, footingConnSlope[0].y - footingHeight );
             connFootingShp.lineTo( footingConnSlope[0].x, footingConnSlope[0].y );
 
-            const connFootingExtr = addExtr( connFootingShp, 'steelblue', footingConnLength, 0.9 );
+            const connFootingExtr = addExtr( connFootingShp, 'steelblue', footingConnLength );
             connFootingExtr.applyMatrix4( matrix.makeTranslation( 0, 0, mainTunnelLength + stairLength * 3  ) );
             showContainer.push( connFootingExtr );
 
@@ -1493,9 +1504,9 @@
             const verticalAngle = THREE.Math.degToRad( ui.verticalAngle );
             const horizontalAngle = THREE.Math.degToRad( ui.horizontalAngle );
 
-            const psgeInnerExtr = addExtr( psgeInnerShp, 'beige', netReinforceL, 1 ); 
-            const psgeOutterExtr = addExtr( psgeOutterShp, 'gray', netReinforceL, 1 );
-            const psgeScExtr = addExtr( psgeScShp, 'darkgray', netReinforceL, 1 );
+            const psgeInnerExtr = addExtr( psgeInnerShp, 'beige', netReinforceL ); 
+            const psgeOutterExtr = addExtr( psgeOutterShp, 'gray', netReinforceL );
+            const psgeScExtr = addExtr( psgeScShp, 'darkgray', netReinforceL );
 
             function psgePositionGeometry ( mesh ) {
                 mesh.geometry.applyMatrix4( matrix.makeRotationY( Math.PI*3/2 ) ) // 270도 회전
@@ -1522,15 +1533,15 @@
 
 
             // 3.3 연결통로 접속부 헌치 모델링
-            const psgeInnerExtrThin = addExtr( psgeInnerShp, 'crimson', 0.00001, 1 ); // convex하기 위해 얇게 모델링
+            const psgeInnerExtrThin = addExtr( psgeInnerShp, 'crimson', 0.00001 ); // convex하기 위해 얇게 모델링
             psgePositionGeometry( psgeInnerExtrThin );
             // showContainer.push( psgeInnerExtrThin );
 
-            const psgeOutterExtrThin = addExtr( psgeOutterShp, 'crimson', 0.00001, 1 ); // convex하기 위해 얇게 모델링
+            const psgeOutterExtrThin = addExtr( psgeOutterShp, 'crimson', 0.00001 ); // convex하기 위해 얇게 모델링
             psgePositionGeometry( psgeOutterExtrThin );
             // showContainer.push( psgeOutterExtrThin );
 
-            const psgeScExtrThin = addExtr( psgeScShp, 'crimson', 0.00001, 1 ); // convex하기 위해 얇게 모델링
+            const psgeScExtrThin = addExtr( psgeScShp, 'crimson', 0.00001 ); // convex하기 위해 얇게 모델링
             psgePositionGeometry( psgeScExtrThin );
             // showContainer.push( psgeScExtrThin );
             
@@ -1579,15 +1590,15 @@
                 return mesh
             }
 
-            const connInnerExtr = addExtr( connInnerShp, 'coral', 10, 1 );
+            const connInnerExtr = addExtr( connInnerShp, 'coral', 10 );
             connPositionGeometry( connInnerExtr );
             // showContainer.push( connInnerExtr );         
 
-            const connOutterExtr = addExtr( connOutterShp, 'royalblue', 10, 1 );
+            const connOutterExtr = addExtr( connOutterShp, 'royalblue', 10 );
             connPositionGeometry( connOutterExtr );
             // showContainer.push( connOutterExtr );
 
-            const connScExtr = addExtr( connScShp, 'skyblue', 10, 1 );
+            const connScExtr = addExtr( connScShp, 'skyblue', 10 );
             connPositionGeometry( connScExtr );
             // showContainer.push( connScExtr );
 
@@ -1801,7 +1812,7 @@
             coverSlabLtShp.lineTo( - coverLeftB1, 0 );
             coverSlabLtShp.lineTo( 0, 0 );
 
-            const coverSlabLtExtr = addExtr( coverSlabLtShp, 'powderblue', coverT, 0.9 );
+            const coverSlabLtExtr = addExtr( coverSlabLtShp, 'powderblue', coverT );
             coverSlabLtExtr.rotateX( Math.PI/2 )
 
             const coverRightB1 = ( ( coverRightB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
@@ -1821,7 +1832,7 @@
             coverSlabRtShp.lineTo( coverRightB1, 0 );
             coverSlabRtShp.lineTo( 0, 0 );
 
-            const coverSlabRtExtr = addExtr( coverSlabRtShp, 'powderblue', coverT, 0.9 );
+            const coverSlabRtExtr = addExtr( coverSlabRtShp, 'powderblue', coverT );
             coverSlabRtExtr.rotateX( Math.PI/2 )            
 
             // 본선 공동구 뚜껑 배치
@@ -1974,7 +1985,7 @@
                 steelPlateShp.holes.push( plateHole3 );
                 steelPlateShp.holes.push( plateHole4 );
 
-                const steelPlateExtr = addExtr( steelPlateShp, 'coral', 0.030, 0.9 );
+                const steelPlateExtr = addExtr( steelPlateShp, 'coral', 0.030 );
                 steelPlateExtr.rotateX( Math.PI/2 )
 
                 for ( let i=0; i*steelPlateLen<footingConnLength; i++ ) {        
@@ -3118,7 +3129,7 @@
 
                         const rBar1LfArr = addArr( rBar1FullFaceLeft );
                         const rBar1LfPath = addPath( rBar1LfArr );
-                        const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath, 0.9 );
+                        const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath );
 
                         rBar1LfSweep.position.set( 0, 0, i * ui.longSpacing );
                         steelRibGroup.add( rBar1LfSweep );
@@ -3126,7 +3137,7 @@
 
                         const rBar1RhArr = addArr( rBar1FullFaceRight );
                         const rBar1RhPath = addPath( rBar1RhArr );
-                        const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath, 0.9 );
+                        const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath );
                         
                         rBar1RhSweep.position.set( 0, 0, i * ui.longSpacing );
                         steelRibGroup.add( rBar1RhSweep );
@@ -3137,11 +3148,11 @@
                         
                             const rBar2Lf1Arr = addArr( rBar2FullFaceLeft );
                             const rBar2Lf1Path = addPath( rBar2Lf1Arr );
-                            const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path, 0.9 );
+                            const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path );
 
                             const rBar2Rh1Arr = addArr( rBar2FullFaceRight );
                             const rBar2Rh1Path = addPath( rBar2Rh1Arr );
-                            const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path, 0.9 );
+                            const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path );
 
                             const rBar2Lf2Clone = rBar2Lf1Sweep.clone();
                             const rBar2Rh2Clone = rBar2Rh1Sweep.clone();
@@ -3943,12 +3954,12 @@
 
                     const rBar1LfArr = addArr( psgeBar1FullLeftShp );
                     const rBar1LfPath = addPath( rBar1LfArr );
-                    const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath, 0.9 );
+                    const rBar1LfSweep = addSweep( rBar1Shp, 'steelblue', rBar1LfPath );
                     psgeSteelRibGroup.add( rBar1LfSweep );
 
                     const rBar1RhArr = addArr( psgeBar1FullRightShp );
                     const rBar1RhPath = addPath( rBar1RhArr );
-                    const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath, 0.9 );
+                    const rBar1RhSweep = addSweep( rBar1Shp, 'steelblue', rBar1RhPath );
                     psgeSteelRibGroup.add( rBar1RhSweep );
 
                     // H형강은 하나만 모델링, 격자지보는 환봉1, 환봉2 x2 총 3개를 모델링함 
@@ -3956,11 +3967,11 @@
                         
                         const rBar2Lf1Arr = addArr( psgeBar2FullLeftShp );
                         const rBar2Lf1Path = addPath( rBar2Lf1Arr );
-                        const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path, 0.9 );
+                        const rBar2Lf1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Lf1Path );
 
                         const rBar2Rh1Arr = addArr( psgeBar2FullRightShp );
                         const rBar2Rh1Path = addPath( rBar2Rh1Arr );
-                        const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path, 0.9 );
+                        const rBar2Rh1Sweep = addSweep( rBar2Shp, 'darkslateblue', rBar2Rh1Path );
 
                         const rBar2Lf2Clone = rBar2Lf1Sweep.clone();
                         const rBar2Rh2Clone = rBar2Rh1Sweep.clone();
@@ -4381,7 +4392,7 @@
                     .absarc( 0, r1Height, r1Final + liningT0 - ui.coverDepth, Math.PI/2, Math.PI/2 + r1ThetaLt, false )
                     .absarc( r3Origin.x, r3Origin.y, r3Final - ui.coverDepth, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta5, false );
 
-                const mainOutLtExtr = addExtr( mainOutLtPath, 'darkblue', ui.totalLength, 0.9 );
+                const mainOutLtExtr = addExtr( mainOutLtPath, 'darkblue', ui.totalLength );
                 // showContainer.push( mainOutLtExtr )
                 
 
@@ -4398,7 +4409,7 @@
                     .lineTo( footingConnSlope[footingConnSlope.length-1].x - distrCtrLine, footingConnSlope[footingConnSlope.length-1].y )
                     .lineTo( footingConnSlope[footingConnSlope.length-1].x - distrCtrLine, footingConnSlope[0].y - footingHeight )
 
-                const distrInLtExtr = addExtr( distrInLtShp, 'pink', ui.totalLength, 0.5 );
+                const distrInLtExtr = addExtr( distrInLtShp, 'pink', ui.totalLength );
                 // showContainer.push( distrInLtExtr );
 
                 const r3Gamma3 = Math.asin( ( r3Origin.y - ( concreteLt.y - footingHeight ) ) / ( r3Final - distrCtrLine ) );
@@ -4408,7 +4419,7 @@
                     .absarc( 0, r1Height, r1Final + liningT0 - distrCtrLine, Math.PI/2, Math.PI/2 + r1ThetaLt, false )
                     .absarc( r3Origin.x, r3Origin.y, r3Final - distrCtrLine, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta3, false );
 
-                const distrOutLtExtr = addExtr( distrOutLtShp, 'gold', ui.totalLength, 1 );
+                const distrOutLtExtr = addExtr( distrOutLtShp, 'gold', ui.totalLength );
                 // showContainer.push( distrOutLtExtr );
 
 
@@ -4636,7 +4647,7 @@
                     .absarc( r3Origin.x, r3Origin.y, r3Final - distrCtrLine, Math.PI/2 + r1ThetaLt, Math.PI, false )
                     .lineTo( r3Origin.x - r3Final + distrCtrLine, -2 );
 
-                const outterCutExtr = addExtr( outterCutShp, 'ghostwhite', ui.totalLength, 0.9 );
+                const outterCutExtr = addExtr( outterCutShp, 'ghostwhite', ui.totalLength );
                 // showContainer.push( outterCutExtr )
 
                 // 5.1.3 CSG.subtract
@@ -4658,7 +4669,7 @@
                 .absarc( r2Origin.x, r2Origin.y, r2Final + distrCtrLine, Math.PI/2 + r1ThetaLt, Math.PI, false )    
                 .lineTo( r2Origin.x - r2Final - distrCtrLine, - 2)
 
-                const innerCutExtr = addExtr( innerCutShp, 'seagreen', ui.totalLength, 0.9 );
+                const innerCutExtr = addExtr( innerCutShp, 'seagreen', ui.totalLength );
                 // showContainer.push( innerCutExtr )
 
                 // 5.2.3 CSG.subtract
@@ -4764,7 +4775,7 @@
                         if( connMainFinalPts.length != 0 ) {
 
                             const connMainLtPath = addPath( connMainFinalPts )
-                            const connMainLtSweep = addSweep( main1Shp, color, connMainLtPath, 0.9 )
+                            const connMainLtSweep = addSweep( main1Shp, color, connMainLtPath )
                             showContainer.push( connMainLtSweep ) 
 
                         }
@@ -4789,7 +4800,7 @@
 
                     const psgeMainArr = addArr( path );
                     const psgeMainPath = addPath( psgeMainArr );
-                    const psgeMainSweep = addSweep( psgeMain1Shp, color, psgeMainPath, 0.9 );
+                    const psgeMainSweep = addSweep( psgeMain1Shp, color, psgeMainPath );
                     psgePositionSet( psgeMainSweep );
 
                     psgeMainGroup.add( psgeMainSweep );
@@ -5089,7 +5100,7 @@
 
 
                 // 철근교차위치를 찾기 위해 정밀하게 모델링
-                const psgeDistrInExtr = addExtrHD( psgeDistrInShp, 'limegreen', mainTunnelLength, 0.8 );
+                const psgeDistrInExtr = addExtrHD( psgeDistrInShp, 'limegreen', mainTunnelLength );
                 // showContainer.push( psgeDistrInExtr );
 
 
@@ -5420,7 +5431,7 @@
                         const main1Shp = new THREE.Shape()
                             .absarc( 0, 0, ui.psgeDistrDia/2, 0, Math.PI * 2, false );
 
-                        const haunchDistrSweep = addSweep( main1Shp, 0xff6f69, haunchDistrPath, 1 );
+                        const haunchDistrSweep = addSweep( main1Shp, 0xff6f69, haunchDistrPath );
                         showContainer.push( haunchDistrSweep )
 
                     }
@@ -5741,7 +5752,7 @@
                         const main1Shp = new THREE.Shape()
                             .absarc( 0, 0, ui.psgeDistrDia/2, 0, Math.PI * 2, false );
 
-                        const haunchDistrSweep = addSweep( main1Shp, 'navy', haunchDistrPath, 1 );
+                        const haunchDistrSweep = addSweep( main1Shp, 'navy', haunchDistrPath );
                         showContainer.push( haunchDistrSweep )
 
                         // 철근 길이
@@ -5916,7 +5927,7 @@
             return mesh;
         }
         
-        function addExtr( shape, color, length, opacity ) {            
+        function addExtr( shape, color, length ) {            
             const extrudeSettings = {
                 steps : 1,
                 // curveSegments : 12, // 기본값
@@ -5924,12 +5935,12 @@
                 bevelEnabled : false,
             }           
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshStandardMaterial( { color, opacity, transparent: true, side : THREE.DoubleSide, clippingPlanes: [ clippingPlane ] } );
+            const extrudeMat = new THREE.MeshStandardMaterial( { color, transparent: true, side : THREE.DoubleSide, clippingPlanes: [ clippingPlane ] } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
 
-        function addExtrHD( shape, color, length, opacity ) {            
+        function addExtrHD( shape, color, length ) {            
             const extrudeSettings = {
                 steps : 1,
                 curveSegments : 24,
@@ -5937,7 +5948,7 @@
                 bevelEnabled : false,
             }           
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshStandardMaterial( { color, opacity, transparent: true, side : THREE.DoubleSide, clippingPlanes: [ clippingPlane ] } );
+            const extrudeMat = new THREE.MeshStandardMaterial( { color, transparent: true, side : THREE.DoubleSide, clippingPlanes: [ clippingPlane ] } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
@@ -5962,13 +5973,13 @@
             return curvePath
         }
 
-        function addSweep( shape, color, path, opacity ) {
+        function addSweep( shape, color, path ) {
             const extrudeSettings = {
                 steps : 100, 
                 extrudePath : path
             }
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshStandardMaterial( { color, opacity, transparent: true } );
+            const extrudeMat = new THREE.MeshStandardMaterial( { color } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
@@ -6199,15 +6210,52 @@
 
             switch ( event.keyCode ) {
 
-                case 82: /*R*/
-
-                    moveCam( 40, 0, 0, 0, 0, 0 );
-
-                    break;
-
                 case 70: /*F*/
 
                     moveCam( 0, 0, 100, 0, 0, 0 );
+                    break;
+
+                case 66: /*b*/
+
+                    moveCam( 0, 0, -100, 0, 0, 0 );
+                    break;                    
+
+                case 82: /*R*/
+
+                    moveCam( 40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 76: /*L*/
+
+                    moveCam( -40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 84: /*T*/
+
+                    moveCam( 0, 100, 0, 0, 0, 0 );
+                    break;                    
+
+                case 79: /*O*/
+
+                    camera = cameraOrtho;
+                    camera.position.set( 0, 0, 40 );
+
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
+
+                    break;
+
+                case 80: /*P*/
+
+                    camera = cameraPerspective;
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
 
                     break;
 
@@ -6218,8 +6266,8 @@
         function moveCam(eye_x, eye_y, eye_z, target_x, target_y, target_z ) {
             camera.position.set ( eye_x, eye_y, eye_z );
             orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
         }
-        // moveCam( -40, 0, 0, 0, 0, 0 )
 
         
 

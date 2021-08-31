@@ -33,7 +33,11 @@
         #info {
             position: absolute;
             top: 40px;
+            left : 50%;
+            /* top: 40px; */
             padding: 10px;
+            transform : translate( -50% );
+            text-align: center;
             background: rgba( 0, 0, 0, 0 );
             color: black;
             font-size: 12px;
@@ -159,7 +163,11 @@
     
     <canvas id="c"></canvas>
 
-    <div id="info"> <b>R:</b> Right, <b>F:</b> Front </div>
+    <div id="info">
+        <b> Camera : </b><b style="color:#2FA1D6">P </b>Perspective, <b style="color:#2FA1D6">O </b>Orthographic
+        <br>
+        <b> View : </b> <b style="color:#2FA1D6">F </b> Front, <b style="color:#2FA1D6">B </b> Back, <b style="color:#2FA1D6">R </b> Right, <b style="color:#2FA1D6">L </b> Left, <b style="color:#2FA1D6">T </b> Top 
+    </div>
     
     <button id="button" type="button" >Export Model</button>
 
@@ -294,20 +302,20 @@
 
             // Perspective
             cameraPerspective = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            cameraPerspective.position.set( -7, 7, 15 );             
+            cameraPerspective.position.set( -14, 9, 30 );
             
 
             // Orthographic
             cameraOrtho = new THREE.OrthographicCamera( 
-                window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
             ); //left. right, top, bottom, near, far 
             cameraOrtho.position.set( 0, 0, 40 );
+            cameraOrtho.zoom = 30;
             
             camera = cameraPerspective;
 
             // OrbitControl : 뷰 확대 및 회전
             orbitControls = new OrbitControls( camera, canvas );
-            // orbitControls.target.set( 0, 3, 0 );
             orbitControls.target.set( 0, 0, 0 );
             orbitControls.update();
             
@@ -354,6 +362,7 @@
             // const lightHelper = new THREE.SpotLightHelper( light, 10 );
             // scene.add( lightHelper );
 
+            
             // 클리핑
             clippingPlane = new THREE.Plane( new THREE.Vector3( 0, -1, 0 ), 10 )
             
@@ -361,6 +370,7 @@
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
             renderer.shadowMap.enabled = true;  
+
 
             // keydown
             document.addEventListener( 'keydown', onKeyDown );
@@ -881,10 +891,8 @@
                     const rTheta = Math.PI - 2 * rAlpha;
 
                     const result = {
-
                         final : rFinal,
                         theta : rTheta
-
                     }
 
                     return result
@@ -1101,7 +1109,7 @@
                 // showContainer.push( sideRtCutExtr );
 
 
-                // 4. Constructive Solid Geometry
+                // 4. Constructive Solid Geometry ////////////////////////////////////////////////////////////////////////////////////////////////////
                 // 갱문 subtract1
                 const portalSub1 = new CSG();
                 portalSub1.subtract( [ portalMidMesh, portalCutExtr ] );
@@ -1127,7 +1135,7 @@
                 showContainer.push( wallRtSubMesh );
 
 
-                // 5. 갱문기초, foot
+                // 5. 갱문기초, foot ////////////////////////////////////////////////////////////////////////////////////////////////////
                 const footLtShp = new THREE.Shape()
                     .moveTo( 0, 0 )
                     .lineTo( -wallBackLtWidthFinal - 0.300, 0 )
@@ -1156,7 +1164,17 @@
                 footRtExtr.position.set( footingRtSlope[0].x + wallRtPosX, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength );
                 showContainer.push( footRtExtr );
 
-            } 
+
+                // 6. 체적 ///////////////////////////////////////////////////////////////////////////////////////////////////
+                const portalVol = getVolume( portalSideLtExtr.geometry ) + getVolume( portalSideRtExtr.geometry ) + getVolume( portalSub1Mesh.geometry ) + getVolume( portalSub2Mesh.geometry );
+
+                console.log( '// 아치면벽 체적 //' );
+                console.log( '개착터널', getVolume( cutCoverExtr.geometry ) );
+                console.log( '갱문', portalVol );
+                console.log( '좌측옹벽', getVolume( wallLtSubMesh.geometry ) );
+                console.log( '우측옹벽', getVolume( wallRtSubMesh.geometry ) );
+
+            }
             
             else if ( ui.portalType == '벨마우스변형') {
 
@@ -1363,8 +1381,8 @@
                 for ( let i=0; i < innerPts.length; i++) {
                     innerOffsetPts.push( new THREE.Vector3 (  
                         innerPts[i].x + 0, 
-                        innerPts[i].y + ui.slopeHeight*1.5, 
-                        innerPts[i].z + ui.slopeWidth*1.5 
+                        innerPts[i].y + ui.slopeHeight*3, 
+                        innerPts[i].z + ui.slopeWidth*3 
                     ) );
                 };
                 
@@ -1388,21 +1406,27 @@
                 
                 // 3. 개착터널 절단 ////////////////////////////////////////////////////////////////////////////////////////////////////
                 // 외측절단면6
-                const cut3Geo = new THREE.BoxBufferGeometry( 40, 40, 40 );
+                const cut3Geo = new THREE.BoxBufferGeometry( 20, 20, 20 );
                 const cut3Mat = new THREE.MeshBasicMaterial( {color: 'orange'} );
                 const cut3Mesh = new THREE.Mesh( cut3Geo, cut3Mat );
                 
-                cut3Mesh.position.z = 40/2
+                cut3Mesh.position.z = 20/2
                 cut3Mesh.applyMatrix4( matrix.makeRotationX( -( Math.atan( ( ui.collarL + deltaL ) /  ( r1Final + r1Height - ui.collarH1 + ui.liningT3 ) ) ) ) );
                 cut3Mesh.applyMatrix4( matrix.makeTranslation( 0.000, ui.collarH1, ui.totalLength ) );
                 // showContainer.push( cut3Mesh );
-                
+
                 // 내측으로 개착터널 절단Subtract
                 const sectionSubCsg = new CSG();
                 sectionSubCsg.subtract( [ cutCoverExtr, innerConvexMesh, cut3Mesh ] );
                 const sectionSubMesh = sectionSubCsg.toMesh();
                 
-                showContainer.push( sectionSubMesh ); 
+                showContainer.push( sectionSubMesh );
+
+
+                // 4. 체적 ////////////////////////////////////////////////////////////////////////////////////////////////////
+                console.log( '// 벨마우스변형 체적 //' );
+                console.log( '개착터널', getVolume( sectionSubMesh.geometry ) );
+                console.log( '마우스칼라부', getVolume( collarFinalMesh.geometry ) );
 
             } 
             
@@ -1569,7 +1593,7 @@
                 const collarSubFinalCsg = new CSG();
                 collarSubFinalCsg.subtract( [ collarConvexMesh, innerExtr, cutMesh1 ] );
                 const collarSubFinalMesh = collarSubFinalCsg.toMesh();
-                showContainer.push( collarSubFinalMesh ); 
+                showContainer.push( collarSubFinalMesh );
 
 
                 // 3. 개착터널 절단 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1601,6 +1625,12 @@
                 corverSub1Csg.subtract( [ cutCoverExtr, cutMesh2, cutLine1Extr  ] );
                 const corverSub1Mesh = corverSub1Csg.toMesh();
                 showContainer.push( corverSub1Mesh );
+
+                
+                // 4. 체적 ////////////////////////////////////////////////////////////////////////////////////////////////////
+                console.log( '// 버드빅 체적 //' );
+                console.log( '개착터널', getVolume( corverSub1Mesh.geometry ) );
+                console.log( '마우스칼라부', getVolume( collarSubFinalMesh.geometry ) );
 
 
             }
@@ -1639,7 +1669,44 @@
             // wallLtGeo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(uvs), 2));
 
 
-            console.log( 'opacity 수정')
+            // 체적계산
+            function getVolume(geometry) {
+                if (!geometry.isBufferGeometry) {
+                    console.log("'geometry' must be an indexed or non-indexed buffer geometry");
+                    return 0;
+                }
+                var isIndexed = geometry.index !== null;
+                let position = geometry.attributes.position;
+                let sum = 0;
+                let p1 = new THREE.Vector3(),
+                p2 = new THREE.Vector3(),
+                p3 = new THREE.Vector3();
+                if (!isIndexed) {
+                    let faces = position.count / 3;
+                    for (let i = 0; i < faces; i++) {
+                        p1.fromBufferAttribute(position, i * 3 + 0);
+                        p2.fromBufferAttribute(position, i * 3 + 1);
+                        p3.fromBufferAttribute(position, i * 3 + 2);
+                        sum += signedVolumeOfTriangle(p1, p2, p3);
+                    }
+                }
+                else {
+                    let index = geometry.index;
+                    let faces = index.count / 3;
+                    for (let i = 0; i < faces; i++){
+                        p1.fromBufferAttribute(position, index.array[i * 3 + 0]);
+                        p2.fromBufferAttribute(position, index.array[i * 3 + 1]);
+                        p3.fromBufferAttribute(position, index.array[i * 3 + 2]);
+                        sum += signedVolumeOfTriangle(p1, p2, p3);
+                    }
+                }
+                return sum;
+            }
+
+            function signedVolumeOfTriangle(p1, p2, p3) {
+                return p1.dot(p2.cross(p3)) / 6.0;
+            }
+
 
             // scene 생성
             showContainer.forEach( mesh => { scene.add( mesh ) });
@@ -1648,7 +1715,7 @@
             sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
 
             // 시간측정
-            console.log( '연산시간: ' + ((new Date()).getTime() - start_time) + 'ms' );
+            console.log( '* 연산시간: ' + ((new Date()).getTime() - start_time) + 'ms' );
             //
 
             // 로딩스피너 숨기기
@@ -1721,8 +1788,8 @@
             
             wallFolder.hide();
             portalFolder.hide();
-            bellCollarFolder.hide();
-            birdCollarFolder.show();
+            bellCollarFolder.show();
+            birdCollarFolder.hide();
 
             function portalDetail() {
 
@@ -1791,7 +1858,7 @@
             }           
 
             const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-            const extrudeMat = new THREE.MeshStandardMaterial( { color, transparent: true } );
+            const extrudeMat = new THREE.MeshStandardMaterial( { color, transparent: true, /*wireframe: true*/ } );
             const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
             return mesh;
         }
@@ -1852,42 +1919,53 @@
 
             switch ( event.keyCode ) {
 
+                case 70: /*F*/
+
+                    moveCam( 0, 0, 100, 0, 0, 0 );
+                    break;
+
+                case 66: /*b*/
+
+                    moveCam( 0, 0, -100, 0, 0, 0 );
+                    break;                    
+
                 case 82: /*R*/
 
                     moveCam( 40, 0, 0, 0, 0, 0 );
                     break;
 
-                case 70: /*F*/
+                case 76: /*L*/
 
-                    moveCam( 0, 0, 100, 0, 0, 0 );
+                    moveCam( -40, 0, 0, 0, 0, 0 );
                     break;
+
+                case 84: /*T*/
+
+                    moveCam( 0, 100, 0, 0, 0, 0 );
+                    break;                    
 
                 case 79: /*O*/
 
                     camera = cameraOrtho;
                     camera.position.set( 0, 0, 40 );
 
-                    orbitControls = new OrbitControls( cameraOrtho, canvas );
+                    orbitControls.object = camera
                     orbitControls.target.set( 0, 0, 0 );
                     orbitControls.update();
 
-                    cameraOrtho.updateProjectionMatrix();
-                    console.log( 'camera', camera )
-                    console.log( 'control', orbitControls )
+                    camera.updateProjectionMatrix();
 
                     break;
 
                 case 80: /*P*/
 
                     camera = cameraPerspective;
-                    orbitControls = new OrbitControls( cameraPerspective, canvas );
+                    orbitControls.object = camera
                     orbitControls.target.set( 0, 0, 0 );
                     orbitControls.update();
 
-                    cameraPerspective.updateProjectionMatrix();
-                    
-                    console.log( 'camera', camera )
-                    console.log( 'control', orbitControls )
+                    camera.updateProjectionMatrix();
+
                     break;
 
             }
@@ -1897,8 +1975,8 @@
         function moveCam(eye_x, eye_y, eye_z, target_x, target_y, target_z ) {
             camera.position.set ( eye_x, eye_y, eye_z );
             orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
         }
-        // moveCam( -40, 0, 0, 0, 0, 0 )
         
 
         function resizeRendererToDisplaySize(renderer) {

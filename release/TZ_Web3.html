@@ -110,28 +110,28 @@
         const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
         const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
 
-        const liningT0 = JSON.parse( sessionStorage.getItem('라이닝두께') );
-        const liningT1 = JSON.parse( sessionStorage.getItem('공동구측벽두께1') );
-        const liningT2 = JSON.parse( sessionStorage.getItem('공동구측벽두께2') );
+        const liningT0 = JSON.parse( sessionStorage.getItem( '라이닝두께') );
+        const liningT1 = JSON.parse( sessionStorage.getItem( '공동구측벽두께1') );
+        const liningT2 = JSON.parse( sessionStorage.getItem( '공동구측벽두께2') );
 
-        const roadCenterDistance = JSON.parse( sessionStorage.getItem('이격거리(최종)' ) );
+        const roadCenterDistance = JSON.parse( sessionStorage.getItem( '이격거리(최종)' ) );
 
-        const r1ThetaLt= JSON.parse( sessionStorage.getItem('중심각좌측' ) );
-        const r1ThetaRt = JSON.parse( sessionStorage.getItem('중심각우측' ) );
-        const r1Height = JSON.parse( sessionStorage.getItem('r1중심고' ) );
-        const r1Final = JSON.parse( sessionStorage.getItem('r1반지름' ) );
+        const r1ThetaLt= JSON.parse( sessionStorage.getItem ('중심각좌측' ) );
+        const r1ThetaRt = JSON.parse( sessionStorage.getItem ('중심각우측' ) );
+        const r1Height = JSON.parse( sessionStorage.getItem( 'r1중심고' ) );
+        const r1Final = JSON.parse( sessionStorage.getItem( 'r1반지름' ) );
 
-        const footingType = JSON.parse( sessionStorage.getItem('공동구타입' ) );
-        const footingHeight = JSON.parse( sessionStorage.getItem('공동구높이' ) );
-        const footingLtType = JSON.parse( sessionStorage.getItem('좌측공동구' ) );
-        const footingRtType = JSON.parse( sessionStorage.getItem('우측공동구' ) );
+        const footingType = JSON.parse( sessionStorage.getItem( '공동구타입' ) );
+        const footingHeight = JSON.parse( sessionStorage.getItem( '공동구높이' ) );
+        const footingLtType = JSON.parse( sessionStorage.getItem( '좌측공동구' ) );
+        const footingRtType = JSON.parse( sessionStorage.getItem( '우측공동구' ) );
 
-        const marginLeft = JSON.parse( sessionStorage.getItem('좌측측대(최종)' ) );
-        const marginRight = JSON.parse( sessionStorage.getItem('우측측대(최종)' ) );
+        const marginLeft = JSON.parse( sessionStorage.getItem( '좌측측대(최종)' ) );
+        const marginRight = JSON.parse( sessionStorage.getItem( '우측측대(최종)' ) );
 
-        const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
+        const crossSlopeStandard = JSON.parse( sessionStorage.getItem( '적용편경사' ) );
 
-        const ventilation = JSON.parse( sessionStorage.getItem('환기타입' ) );
+        const ventilation = JSON.parse( sessionStorage.getItem( '환기타입' ) );
 
         const bracketCase = JSON.parse( sessionStorage.getItem( '브라켓케이스' ) );
         const bracketLtPts = JSON.parse( sessionStorage.getItem( '브라켓좌측점' ) );
@@ -272,7 +272,7 @@
 
         function designTunnel() {
             
-            console.log( '!브라켓형상이 편경사에 따라 변경이 안됨!')
+            console.log( '!bracket Shp Connect!')
 
             // 이전 메쉬 삭제
             showContainer.forEach( i => scene.remove( i ) )
