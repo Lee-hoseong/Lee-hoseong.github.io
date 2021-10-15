@@ -15,6 +15,19 @@
             display: block;
         }
 
+        #info {
+            position: absolute;
+            top: 40px;
+            left : 50%;
+            /* top: 40px; */
+            padding: 10px;
+            transform : translate( -50% );
+            text-align: center;
+            background: rgba( 0, 0, 0, 0 );
+            color: black;
+            font-size: 12px;
+        }         
+
         /* Add a black background color to the top navigation */
         .topnav {
             position: absolute;
@@ -42,7 +55,7 @@
         .topnav a.active {
             background-color: #2FA1D6;
             color: white;
-        }     
+        }
                 
     </style>
 </head>
@@ -58,6 +71,7 @@
         <a href='TZ_Web7.html'>7. 연결통로</a>
         <a href='TZ_Web8.html'>8. 갱문형식</a>
         <a href='TZ_Web9.html'>9. 부대시설</a>
+        <a href='TZ_Web10.html'>2. 환기배수</a>
     </div>
     
     <canvas id="c"></canvas>
@@ -68,13 +82,18 @@
         import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
 
+        import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js'; 
+
 
         // Matrix 선언
         const matrix = new THREE.Matrix4();
 
+        // GLTF Loader 선언
+        let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );   
 
         // 메쉬컨테이너
         let showContainer = [];
+        let dimensionText = [];
 
 
         // Three js 기본변수
@@ -84,20 +103,25 @@
         const ui = {
 
             // 도로폭
-            roadWidth : 7.200,
-            shoulderLeft : 1.000,
-            shoulderRight : 2.500,
+            lane1 : 3.6,
+            lane2 : 3.6,
+            lane3 : 0.0,
+            lane4 : 0.0,
+
+            roadWidth : 7.2,
+            shoulderLeft : 1.0,
+            shoulderRight : 2.5,
             
             // 편경사
-            crossSlopeMin : -2.000,
-            crossSlopeMax :  3.000,
+            crossSlopeMin : -2.0,
+            crossSlopeMax : -2.0,
             
             // 시설한계
-            clearanceHeight : 4.800,
-            cornerLeftWidth : 1.000,
-            cornerLeftHeight : 0.800,
-            cornerRightWidth : 1.000,
-            cornerRightHeight : 0.800,
+            clearanceHeight : 4.8,
+            cornerLeftWidth : 1.0,
+            cornerLeftHeight : 0.8,
+            cornerRightWidth : 1.0,
+            cornerRightHeight : 0.8,
             limitMargin : 0.050,
             
             // 포장두께
@@ -120,77 +144,144 @@
             const canvas = document.querySelector('#c'); 
             
             // camera(필수)
-            
 
             // Perspective
-            camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            camera.position.set( -7, 7, 15 );             
-            
+            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            // camera.position.set( -10, 3, 25 );
+            // camera.position.set( 0, 7, 15 );
 
             // Orthographic
-            // camera = new THREE.OrthographicCamera( 
-            //     window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
-            // ); //left. right, top, bottom, near, far 
-            // camera.position.set( 0, 0, 20 ); 
+            camera = new THREE.OrthographicCamera( 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
+            ); //left. right, top, bottom, near, far 
+            camera.position.set( 0, 3, 20 ); 
+            camera.zoom = 60;
             
-
             // OrbitControl : 뷰 확대 및 회전
             const controls = new OrbitControls( camera, canvas );
+            // controls.target.set( 5, 3, 0 );
             controls.target.set( 0, 3, 0 );
             controls.update();
             
-
             // Scene(필수) : 컨테이너
             scene = new THREE.Scene();               
             scene.background = new THREE.Color( 0xf0f0f0 );
             
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
 
-            // 바닥면 : 그림자를 받기 위함
-            const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
-            planeGeometry.rotateX( - Math.PI/2 );
-            const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
-            const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-            plane.position.y = -1.999;
-            // plane.receiveShadow = true;
-            scene.add( plane );
-            
-
-            // 바닥 그리드
-            const size = 30;
-            const divisions = 30;
-            const gridHelper = new THREE.GridHelper( size, divisions );
-            gridHelper.position.y = - 2;
-            gridHelper.material.opacity = 0.4;
-            gridHelper.material.transparent = true;
-            scene.add(gridHelper);
-            
+            // // 바닥 그리드
+            // const size = 30;
+            // const divisions = 30;
+            // const gridHelper = new THREE.GridHelper( size, divisions );
+            // gridHelper.position.y = - 2;
+            // gridHelper.material.opacity = 0.4;
+            // gridHelper.material.transparent = true;
+            // scene.add(gridHelper);
 
             // 좌표축 생성, x축:red, y축:green, z축:blue
             const axes = new THREE.AxesHelper( 1 ); 
             scene.add(axes);
             
-
             // light(필수) : AmbientLight는 그림자와 상관없음     
-            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+            scene.add( new THREE.AmbientLight( 0xf0f0f0, 1 ) );
             
-            const light = new THREE.SpotLight( 0xffffff, 1 );
-            light.position.set( 0, 15, 5 );
-            light.angle = THREE.Math.degToRad( 30 )
-            // light.castShadow = true;
-            scene.add(light);
-            
+            // const light = new THREE.SpotLight( 0xffffff, 1 );
+            // light.position.set( 0, 15, 5 );
+            // light.angle = THREE.Math.degToRad( 30 )
+            // scene.add(light);
+
+            const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            directionalLight.position.set( 3, 40, 0 );
+            directionalLight.target.position.set( 0, 0, 0);
+            // directionalLight.castShadow = true;
+            scene.add( directionalLight );
+            scene.add( directionalLight.target );
 
             // light helper
             // const lightHelper = new THREE.SpotLightHelper( light, 10 );
             // scene.add( lightHelper );            
-            
 
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
+            // renderer.domElement.addEventListener( "dblclick", onclick, false );
+            document.addEventListener( "dblclick", onclick, false );
             renderer.shadowMap.enabled = true;
             
         }
         
+
+
+        {
+            // 선형테스트
+            const x0 = 0;
+            const y0 = 0;
+            const a0 = 0;
+
+            // straight
+            const l1 = 60
+
+            const x1 = x0 + l1 * Math.cos( a0 );
+            const y1 = y0 + l1 * Math.sin( a0 );
+            const a1 = a0 + 0;
+
+            // R(+)
+            const l2 = 120;
+            const r2 = 500;
+            const ar2 = l2/r2;
+
+            const arc2Shp = new THREE.Shape();
+            arc2Shp.absarc( x1 + r2*Math.sin( a1 ), y1 - r2*Math.cos( a1 ), r2, Math.PI/2 - a1, Math.PI/2 -a1 -ar2, true );
+
+            const x2 = arc2Shp.getPoint(1).x;
+            const y2 = arc2Shp.getPoint(1).y;
+            const a2 = a1 + ar2;
+
+            // straight
+            const l3 = 50
+            
+            const x3 = x2 + l3 * Math.cos( a2 );
+            const y3 = y2 - l3 * Math.sin( a2 );
+            const a3 = a2 + 0;
+
+            // R(-)
+            const l4 = 150;
+            const r4 = -600;
+            const ar4 = l4/r4;
+
+            const arc4Shp = new THREE.Shape();
+            arc4Shp.absarc( x3 - r4*Math.sin( a3 ), y3 - r4*Math.cos( a3 ), -r4, - Math.PI/2 - a3, - Math.PI/2 -a3 -ar4, false );
+
+            const x4 = arc4Shp.getPoint(1).x;
+            const y4 = arc4Shp.getPoint(1).y;
+            const a4 = a3 + ar4;
+
+            // straight
+            const l5 = 70
+            
+            const x5 = x4 + l5 * Math.cos( a4 );
+            const y5 = y4 - l5 * Math.sin( a4 );
+            const a5 = a4 + 0;
+
+
+            // draw
+            const alignmentShp3  = new THREE.Shape()
+                .lineTo( x1, y1 )
+                .absarc( x1 + r2*Math.sin( a1 ), y1 - r2*Math.cos( a1 ), r2, Math.PI/2 - a1, Math.PI/2 -a1 -ar2, true )
+                .lineTo( x3, y3 )
+                .absarc( x3 - r4*Math.sin( a3 ), y3 - r4*Math.cos( a3 ), -r4, - Math.PI/2 - a3, - Math.PI/2 -a3 -ar4, false )
+                .lineTo( x5, y5 );
+
+
+            const alignmentLine3 = addLine(alignmentShp3, 'red')
+            // scene.add( alignmentLine3)
+        }
 
 
         function designTunnel() {
@@ -205,24 +296,28 @@
 
             // 배열초기화
             showContainer = [];
+            dimensionText = [];
 
+            const totalLength = 14; // extrude length
 
             // 도로중심선
-            const clearanceCenterDistance = ( ui.shoulderLeft + ui.roadWidth + ui.shoulderRight ) / 2;
+            const roadWidth = ui.lane1 + ui.lane2 + ui.lane3 + ui.lane4
+            const clearanceCenterDistance = ( ui.shoulderLeft + roadWidth + ui.shoulderRight ) / 2;
             const roadCenterDistance = clearanceCenterDistance - ui.shoulderLeft
             const roadCenterPoints = [];
             roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, - 2 ) );
-            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, ui.clearanceHeight + 1 ) );
+            roadCenterPoints.push( new THREE.Vector2 ( -roadCenterDistance, ui.clearanceHeight + 2 ) );
 
             const roadCenterShape = new THREE.Shape( roadCenterPoints );
             
             const roadCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            roadCenterDashLine.position.set( 0, 0, totalLength );
             showContainer.push( roadCenterDashLine );
 
 
             // 터널중심선
             const tunnelCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
-            tunnelCenterDashLine.position.set( roadCenterDistance, 0, 0);
+            tunnelCenterDashLine.position.set( roadCenterDistance, 0, totalLength );
             showContainer.push( tunnelCenterDashLine );
 
 
@@ -231,53 +326,480 @@
             const marginInitRt = ui.shoulderRight - 0.75;
 
 
+            // vehicle
+            const vehicleGroup = new THREE.Group();
 
-            /**************************************************************************************
-            *** 치수넣기
-            **************************************************************************************/  
+            {
+                gltfLoader.load( 'containerTruck.glb', function ( gltf ) {
+
+                    gltf.scene.traverse( function( node ) {
+                        if ( node instanceof THREE.Mesh ) {
+                            // node.castShadow = true;
+                            // node.receiveShadow = true;
+                            // node.geometry.center();
+                        }
+                    } );
+
+                    const mesh11 = gltf.scene.children[ 0 ]
+                    
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        roughness : 0.5,
+                        color : 0xa1a1a1
+                        // opacity : 0.1, 
+                        // transparent: true,
+                    });
+
+                    mesh11.traverse((o) => {
+                        if ( o.isMesh ) o.material = newMaterial;
+                    });
+
+                    mesh11.rotation.y = Math.PI;
+                    mesh11.scale.set( 1.4, 1.4, 1.4 ); // 폭이 2.5m가 안되도록 scale조정
+
+                    if( ui.lane1 != 0 ) {
+                        const meshClone1 = mesh11.clone();
+                        meshClone1.position.set( ui.lane1/2, 0.3, 0 );
+                        vehicleGroup.add( meshClone1 )
+                    }
+
+                    if( ui.lane2 !=0 ) {
+                        const meshClone2 = mesh11.clone();
+                        meshClone2.position.set( ui.lane1 + ui.lane2/2, 0.3, 0 );
+                        vehicleGroup.add( meshClone2 )
+                    }
+
+                    if( ui.lane3 !=0 ) {
+                        const meshClone3 = mesh11.clone();
+                        meshClone3.position.set( ui.lane1 + ui.lane2 + ui.lane3/2, 0.3, 0 );
+                        vehicleGroup.add( meshClone3 )
+                    }
+
+                    if( ui.lane4 != 0 ) {
+                        const meshClone4 = mesh11.clone();
+                        meshClone4.position.set( ui.lane1 + ui.lane2 + ui.lane3 + ui.lane4/2, 0.3, 0 );
+                        vehicleGroup.add( meshClone4 )
+                    }
+
+
+                } )
+
+            }
+
+            vehicleGroup.position.set( -roadCenterDistance, 0, totalLength/2 );
+            showContainer.push( vehicleGroup )
+
+     
+            
+            // 최소편경사, 최대편경사별로 시설한계 그리기
+            drawCrossSlope( ui.crossSlopeMin, 0xfa8072 );
+            drawCrossSlope( ui.crossSlopeMax, 0x2FA1D6 );
+
+            
+            function drawCrossSlope ( slopeValue, color ) {
+
+                // 콘크리트포장과 시멘트필터층
+                const concreteLt = new THREE.Vector3( - roadCenterDistance - marginInitLt, ( - roadCenterDistance - marginInitLt ) * slopeValue / 100 );
+                const concreteRt = new THREE.Vector3( roadWidth - roadCenterDistance + marginInitRt, ( roadWidth - roadCenterDistance + marginInitRt ) * slopeValue / 100 );
+
+                const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - ui.concrete );
+                const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - ui.concrete );
+
+                const concreteShp = new THREE.Shape();
+                concreteShp.moveTo( concreteLt.x, concreteLt.y );
+                concreteShp.lineTo( concreteRt.x, concreteRt.y );
+                concreteShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+                concreteShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+                concreteShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+                const concreteLine = addLine( concreteShp, color );
+                concreteLine.position.set( 0, 0, totalLength );
+                showContainer.push( concreteLine );
+
+                // const conreteSurf = addSurf( concreteShp, color );
+                // showContainer.push( conreteSurf );
+
+                const concreteExtr = addExtr( concreteShp, color, totalLength );
+                concreteExtr.material.transparent = true;
+                concreteExtr.material.opacity = 0.1;
+                showContainer.push( concreteExtr );
+
+                const concreteEdges = new THREE.EdgesGeometry( concreteExtr.geometry, 20);
+                const concreteEdgesline = new THREE.LineSegments( concreteEdges, new THREE.LineBasicMaterial({color}));
+                showContainer.push( concreteEdgesline );
+
+
+                const cementeFilterShp = new THREE.Shape();
+                cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - ui.cementeFilter );
+                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - ui.cementeFilter );
+                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+                
+                const cementeFilterLine = addLine( cementeFilterShp, color );
+                cementeFilterLine.position.set( 0, 0, totalLength );
+                showContainer.push( cementeFilterLine );
+
+                // const cementeFilterSurf = addSurf( cementeFilterShp, color );
+                // showContainer.push( cementeFilterSurf );
+
+                const cementeFilterExtr = addExtr( cementeFilterShp, color, totalLength );
+                cementeFilterExtr.material.transparent = true;
+                cementeFilterExtr.material.opacity = 0.1;
+                showContainer.push( cementeFilterExtr );
+
+                const cementeFilteEdges = new THREE.EdgesGeometry( cementeFilterExtr.geometry, 20);
+                const cementeFilteEdgesline = new THREE.LineSegments( cementeFilteEdges, new THREE.LineBasicMaterial({color}));
+                showContainer.push( cementeFilteEdgesline );
+                
+                // 시설한계
+                const clearancePts = [];
+
+                const a1 = new THREE.Vector3 ( -clearanceCenterDistance,  0 );
+                const a2 = new THREE.Vector3 ( -clearanceCenterDistance,  ui.clearanceHeight - ui.cornerLeftHeight );
+                const a3 = new THREE.Vector3 ( -clearanceCenterDistance + ui.cornerLeftWidth,  ui.clearanceHeight );
+                const a4 = new THREE.Vector3 ( clearanceCenterDistance - ui.cornerRightWidth,  ui.clearanceHeight );
+                const a5 = new THREE.Vector3 ( clearanceCenterDistance,  ui.clearanceHeight - ui.cornerRightHeight );
+                const a6 = new THREE.Vector3 ( clearanceCenterDistance,  0 );
+                const a7 = new THREE.Vector3 ( -clearanceCenterDistance,  0 ); //close Path
+
+                clearancePts.push( a1 );
+                clearancePts.push( a2 );
+                clearancePts.push( a3 );
+                clearancePts.push( a4 );
+                clearancePts.push( a5 );
+                clearancePts.push( a6 );
+                clearancePts.push( a7 );
+
+                const clearanceShape = new THREE.Shape( clearancePts );
+                
+                const clearanceDashLine = addDashLine( clearanceShape, color );
+                
+                // const clearanceSurf = addSurf( clearanceShape, color );
+                const clearanceExtr = addExtr( clearanceShape, color, totalLength );
+                clearanceExtr.material.transparent = true;
+                clearanceExtr.material.opacity = 0.1;
+                clearanceExtr.position.set( 0, 0, -totalLength );
+
+                const clearanceEdges = new THREE.EdgesGeometry( clearanceExtr.geometry, 20);
+                const clearanceEdgesline = new THREE.LineSegments( clearanceEdges, new THREE.LineBasicMaterial({color}));
+                clearanceEdgesline.position.set( 0, 0, -totalLength );
+                // showContainer.push( clearanceEdgesline );
+
+                
+                // 시설한계 여유폭
+                const maginCircleShape = new THREE.Shape()
+                maginCircleShape.absarc( 0, 0, ui.limitMargin, 0, Math.PI * 2, false );
+                
+                const maginCircleDashLine = addDashLine( maginCircleShape, color );
+                
+                const circle1 = maginCircleDashLine.clone()
+                circle1.position.set( clearancePts[1].x, clearancePts[1].y );
+
+                const circle2 = maginCircleDashLine.clone()
+                circle2.position.set( clearancePts[2].x, clearancePts[2].y );            
+
+                const circle3 = maginCircleDashLine.clone()
+                circle3.position.set( clearancePts[3].x, clearancePts[3].y );              
+
+                const circle4 = maginCircleDashLine.clone()
+                circle4.position.set( clearancePts[4].x, clearancePts[4].y );
+
+
+                // 시설한계 그룹 후 회전
+                const clearanceGroup = new THREE.Group();
+                // clearanceGroup.add( clearanceSurf );
+                clearanceGroup.add( clearanceEdgesline );
+                clearanceGroup.add( clearanceExtr );
+                clearanceGroup.add( clearanceDashLine );
+                clearanceGroup.add( circle1 );
+                clearanceGroup.add( circle2 );
+                clearanceGroup.add( circle3 );
+                clearanceGroup.add( circle4 );
+                
+                clearanceGroup.applyMatrix4( matrix.makeTranslation( roadCenterDistance, 0, 0 ) );
+                clearanceGroup.applyMatrix4( matrix.makeRotationZ( Math.atan( slopeValue / 100 ) ) );
+                clearanceGroup.applyMatrix4( matrix.makeTranslation( -roadCenterDistance, -roadCenterDistance * slopeValue / 100, totalLength ) );
+                
+                showContainer.push( clearanceGroup );
+
+
+            }
+
+            
+            // 치수넣기 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // 치수선 기준점
-            const dimPts = [];
+            // a) 도로치수선( horizontal Road Dim )
+            const hRoadDimPts = [];
+            const road_p1 = new THREE.Vector3 ( -clearanceCenterDistance,  3, totalLength );
+            const road_p2 = new THREE.Vector3 ( -clearanceCenterDistance + ui.shoulderLeft,  3, totalLength );
+            const road_p3 = new THREE.Vector3 (  clearanceCenterDistance - ui.shoulderRight, 3, totalLength );
+            const road_p4 = new THREE.Vector3 (  clearanceCenterDistance,  3, totalLength );
 
-            const p1 = new THREE.Vector3 ( -clearanceCenterDistance,  2 );
-            const p2 = new THREE.Vector3 ( -clearanceCenterDistance + ui.shoulderLeft,  2 );
-            const p3 = new THREE.Vector3 (  clearanceCenterDistance - ui.shoulderRight, 2 );
-            const p4 = new THREE.Vector3 (  clearanceCenterDistance,  2 );
+            hRoadDimPts.push( road_p1 );
+            hRoadDimPts.push( road_p2 );
+            hRoadDimPts.push( road_p3 );
+            hRoadDimPts.push( road_p4 );
 
-            dimPts.push( p1 );
-            dimPts.push( p2 );
-            dimPts.push( p3 );
-            dimPts.push( p4 );
+            // b) 시설한계 높이 치수선( vertical clearnace Dim )
+            const vClearancePts = [];
+            const clearH_p1 = new THREE.Vector3 ( -clearanceCenterDistance -2, ui.clearanceHeight, totalLength );
+            const clearH_p2 = new THREE.Vector3 ( -clearanceCenterDistance -2, 0, totalLength );
+
+            vClearancePts.push( clearH_p1 );
+            vClearancePts.push( clearH_p2 );
+
+            // c) 시설한계 좌측 코너 폭
+            const hCornerLtWDimPts = [];
+            const hCornerLtW_p1 = new THREE.Vector3 ( -clearanceCenterDistance, ui.clearanceHeight +1, totalLength );
+            const hCornerLtW_p2 = new THREE.Vector3 ( -clearanceCenterDistance + ui.cornerLeftWidth, ui.clearanceHeight +1, totalLength );
+            
+            hCornerLtWDimPts.push( hCornerLtW_p1 );
+            hCornerLtWDimPts.push( hCornerLtW_p2 );
+
+            // d) 시설한계 좌측 코너 높이
+            const vCornerLtDimPts = [];
+            const vCornerLtDimPts_p1 = new THREE.Vector3 ( -clearanceCenterDistance -1, ui.clearanceHeight, totalLength );
+            const vCornerLtDimPts_p2 = new THREE.Vector3 ( -clearanceCenterDistance -1, ui.clearanceHeight -ui.cornerLeftHeight, totalLength );
+
+            vCornerLtDimPts.push( vCornerLtDimPts_p1 );
+            vCornerLtDimPts.push( vCornerLtDimPts_p2 );
+
+            // e) 시설한계 우측 코너 폭
+            const hCornerRtWDimPts = [];
+            const hCornerRtW_p1 = new THREE.Vector3 ( clearanceCenterDistance, ui.clearanceHeight +1, totalLength );
+            const hCornerRtW_p2 = new THREE.Vector3 ( clearanceCenterDistance -ui.cornerRightWidth, ui.clearanceHeight +1, totalLength );
+            
+            hCornerRtWDimPts.push( hCornerRtW_p1 );
+            hCornerRtWDimPts.push( hCornerRtW_p2 );           
+
+            // f) 시설한계 우측 코너 높이
+            const vCornerRtDimPts = [];
+            const vCornerRtDimPts_p1 = new THREE.Vector3 ( clearanceCenterDistance -ui.cornerRightWidth -1, ui.clearanceHeight, totalLength );
+            const vCornerRtDimPts_p2 = new THREE.Vector3 ( clearanceCenterDistance -ui.cornerRightWidth -1, ui.clearanceHeight -ui.cornerRightHeight, totalLength );
+
+            vCornerRtDimPts.push( vCornerRtDimPts_p1 );
+            vCornerRtDimPts.push( vCornerRtDimPts_p2 );
+            
+            // g) 포장콘크리트 두께
+            const vConcreteDimPts = [];
+            const vConcreteDimPts_p1 =  new THREE.Vector3 ( -clearanceCenterDistance -2, 0, totalLength );
+            const vConcreteDimPts_p2 =  new THREE.Vector3 ( -clearanceCenterDistance -2, -ui.concrete, totalLength );
+
+            vConcreteDimPts.push( vConcreteDimPts_p1 );
+            vConcreteDimPts.push( vConcreteDimPts_p2 );
+
+            // h) 시멘트필터층 두께
+            const vCementeFilterDimPts = [];
+            const vCementeFilterDimPts_p1 = new THREE.Vector3 ( -clearanceCenterDistance -2, -ui.concrete, totalLength );
+            const vCementeFilterDimPts_p2 = new THREE.Vector3 ( -clearanceCenterDistance -2, -ui.concrete - ui.cementeFilter, totalLength );
+
+            vCementeFilterDimPts.push( vCementeFilterDimPts_p1 );
+            vCementeFilterDimPts.push( vCementeFilterDimPts_p2 );
 
 
-            // 치수선
-            const dimHorizontalShp = new THREE.Shape( dimPts );
-            const dimHorizontalLine = addLine( dimHorizontalShp, 'black' );
-            showContainer.push( dimHorizontalLine );            
+            // 치수선 일반라인 ( horizonDim, verticalDim )
+            const horizonDim = [ hRoadDimPts, hCornerLtWDimPts, hCornerRtWDimPts ];
 
-            const dimGroup = new THREE.Group();
+            for ( const arr of horizonDim ) {
+                const hDimShp = new THREE.Shape( arr );
+                const hDimLine = addLine( hDimShp, 'black' );
+                hDimLine.position.set( 0, 0, totalLength );
+                showContainer.push( hDimLine );
+            }
+ 
+            const verticalDim = [ vClearancePts, vCornerLtDimPts, vCornerRtDimPts, vConcreteDimPts, vCementeFilterDimPts ];
+
+            for ( const arr of verticalDim ) {
+                const vDimShp = new THREE.Shape( arr );
+                const vDimLine = addLine( vDimShp, 'black' );
+                vDimLine.position.set( 0, 0, totalLength );
+                showContainer.push( vDimLine );
+            }
+
+
+            // 치수선 수평선 그룹( 점, 수직선 )
+            const hDimGroup = new THREE.Group();
 
             const dimArrowGeo = new THREE.SphereBufferGeometry( 0.045 );
             const dimMat = new THREE.MeshBasicMaterial( { color: 'black' } );
             const dimArrowMesh = new THREE.Mesh( dimArrowGeo, dimMat );
-            dimGroup.add( dimArrowMesh );
+            hDimGroup.add( dimArrowMesh );
 
-            const dimVerticalShp = new THREE.Shape();
-            dimVerticalShp.moveTo( 0.0,  0.0 );
-            dimVerticalShp.lineTo( 0.0, -0.5 );
+            const dimVerticalShp = new THREE.Shape()
+                .moveTo( 0.0,  0.0 )
+                .lineTo( 0.0, -0.5 );
             const dimVerticalLine = addLine( dimVerticalShp, 'black' );
-            dimGroup.add( dimVerticalLine );
-
-            for ( const point of dimPts ) {
-
-                const dimGroupClone = dimGroup.clone();
-                dimGroupClone.position.copy( point );
-                showContainer.push( dimGroupClone );
-
-            };
+            hDimGroup.add( dimVerticalLine );
 
 
-            // 치수문자 : 방법1) TextGeometry
+            // 치수선 수직선 그룹( 점, 수직선 )
+            const vDimGroup = new THREE.Group();
+
+            vDimGroup.add( dimArrowMesh.clone() );
+
+            const dimHorizonShp = new THREE.Shape()
+                .moveTo( 0.0, 0.0 )
+                .lineTo( 0.5, 0.0 );
+            const dimHorizonLine = addLine( dimHorizonShp, 'black' );
+            vDimGroup.add( dimHorizonLine );
+
+            
+            // 치수선 그룹 배치
+            for ( const arr of horizonDim ) { 
+                for ( const point of arr ) {
+                    const hDimGroupClone = hDimGroup.clone();
+                    hDimGroupClone.position.copy( point );
+                    showContainer.push( hDimGroupClone );
+                }
+            }
+
+            for ( const arr of verticalDim ) { 
+                for ( const point of arr ) {
+                    const vDimGroupClone = vDimGroup.clone();
+                    vDimGroupClone.position.copy( point );
+                    showContainer.push( vDimGroupClone );
+                }
+            }
+
+
+            // 치수문자 : 방법1) 2D 캔버스
+            const labelGeometry = new THREE.PlaneGeometry(1, 1);
+
+            function makeLabelCanvas( size, name, color ) {
+
+                const borderSize = 2;
+                const ctx = document.createElement('canvas').getContext('2d');
+                const font =  `${ size }px bold sans-serif`;
+                ctx.font = font;
+
+                // 이름의 길이를 예측합니다.
+                const doubleBorderSize = borderSize * 2;
+                const width = ctx.measureText(name).width + doubleBorderSize;
+                const height = size + doubleBorderSize;
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+                
+                // 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
+                ctx.font = font;
+                ctx.textBaseline = 'top';
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = color
+                ctx.fillText(name, borderSize, borderSize);
+                
+                return ctx.canvas;
+
+            }
+
+            function addLabel( color, name, string ) {
+
+                const textCanvas = makeLabelCanvas( 50, name, color );
+                const texture = new THREE.CanvasTexture( textCanvas );
+
+                // 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
+                texture.minFilter = THREE.LinearFilter;
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+
+                const labelMaterial = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                } );
+
+                // 라벨의 크기를 조정 : 해상도를 높임
+                const label = new THREE.Mesh( labelGeometry, labelMaterial );
+                label.value = +name; // 숫자
+                label.key = string; // 변수명
+                const labelBaseScale = 0.005;
+                label.scale.x = textCanvas.width  * labelBaseScale;
+                label.scale.y = textCanvas.height * labelBaseScale;
+
+                return label
+
+            }
+
+            const labelShoulderLeft = addLabel( 'red', ui.shoulderLeft.toFixed(3), 'ui.shoulderLeft' );
+            labelShoulderLeft.position.set( -clearanceCenterDistance + ui.shoulderLeft/2, 3 + 0.15, totalLength + 0.1 );
+            showContainer.push( labelShoulderLeft );
+            dimensionText.push( labelShoulderLeft );
+
+            const labelRoadWidth = addLabel( 'black', roadWidth.toFixed(3)  );
+            labelRoadWidth.position.set( -clearanceCenterDistance + ui.shoulderLeft + roadWidth/2 , 3 + 0.15, totalLength + 0.1 );
+            showContainer.push( labelRoadWidth );
+
+            const labelShoulderRight = addLabel( 'red', ui.shoulderRight.toFixed(3), 'ui.shoulderRight' );
+            labelShoulderRight.position.set( clearanceCenterDistance - ui.shoulderRight/2, 3 + 0.15, totalLength + 0.1 );
+            showContainer.push( labelShoulderRight );
+            dimensionText.push( labelShoulderRight );
+
+            const labelCrossSlopeRange = addLabel( 'black', `min :         %  ~  max :         %` );
+            labelCrossSlopeRange.position.set(  0, 0.15, totalLength + 0.1 );
+            showContainer.push( labelCrossSlopeRange );
+
+            const labelCrossSlopeMin = addLabel( 'red', ui.crossSlopeMin.toFixed(2), 'ui.crossSlopeMin' );
+            labelCrossSlopeMin.position.set( -0.9, 0.15, totalLength + 0.1 );
+            showContainer.push( labelCrossSlopeMin );
+            dimensionText.push( labelCrossSlopeMin );
+
+            const labelCrossSlopeMax = addLabel( 'red', ui.crossSlopeMax.toFixed(2), 'ui.crossSlopeMax' );
+            labelCrossSlopeMax.position.set( 1.3, 0.15, totalLength + 0.1 );
+            showContainer.push( labelCrossSlopeMax );
+            dimensionText.push( labelCrossSlopeMax );
+
+
+            const labelClearance = addLabel( 'red', ui.clearanceHeight.toFixed(3), 'ui.clearanceHeight' );
+            labelClearance.position.set( -clearanceCenterDistance -2 - 0.15, ui.clearanceHeight/2, totalLength + 0.1  );
+            labelClearance.rotation.z = Math.PI /2;
+            showContainer.push( labelClearance );
+            dimensionText.push( labelClearance );
+
+            const labelCornerLtWidth = addLabel( 'red', ui.cornerLeftWidth.toFixed(3), 'ui.cornerLeftWidth' );
+            labelCornerLtWidth.position.set( -clearanceCenterDistance + ui.cornerLeftWidth/2, ui.clearanceHeight +1 + 0.15, totalLength + 0.1  );
+            showContainer.push( labelCornerLtWidth );
+            dimensionText.push( labelCornerLtWidth );
+
+            const labelCornerLtHeight = addLabel( 'red', ui.cornerLeftHeight.toFixed(3), 'ui.cornerLeftHeight' );
+            labelCornerLtHeight.position.set( -clearanceCenterDistance -1 - 0.15, ui.clearanceHeight-ui.cornerLeftHeight/2, totalLength + 0.1  );
+            labelCornerLtHeight.rotation.z = Math.PI /2;
+            showContainer.push( labelCornerLtHeight );
+            dimensionText.push( labelCornerLtHeight );
+
+            const labelCornerRtWidth = addLabel( 'red', ui.cornerRightWidth.toFixed(3), 'ui.cornerRightWidth' );
+            labelCornerRtWidth.position.set( clearanceCenterDistance - ui.cornerRightWidth/2, ui.clearanceHeight +1 + 0.15, totalLength + 0.1  );
+            showContainer.push( labelCornerRtWidth );
+            dimensionText.push( labelCornerRtWidth );
+
+            const labelCornerRtHeight = addLabel( 'red', ui.cornerRightHeight.toFixed(3), 'ui.cornerRightHeight' );
+            labelCornerRtHeight.position.set( clearanceCenterDistance -ui.cornerRightWidth -1 -0.15, ui.clearanceHeight -ui.cornerRightHeight/2, totalLength + 0.1  );
+            labelCornerRtHeight.rotation.z = Math.PI /2;
+            showContainer.push( labelCornerRtHeight );
+            dimensionText.push( labelCornerRtHeight );
+
+            const labelConcrete = addLabel( 'red', ui.concrete.toFixed(3), 'ui.concrete' );
+            labelConcrete.position.set( -clearanceCenterDistance -2 - 0.15, -ui.concrete/2, totalLength + 0.1  );
+            labelConcrete.rotation.z = Math.PI /2;
+            showContainer.push( labelConcrete );
+            dimensionText.push( labelConcrete );
+            
+            const labelFilter = addLabel( 'red', ui.cementeFilter.toFixed(3), 'ui.cementeFilter' );
+            labelFilter.position.set( -clearanceCenterDistance -2 + 0.2, -ui.concrete -ui.cementeFilter/2, totalLength + 0.1  );
+            labelFilter.rotation.z = Math.PI /2;
+            showContainer.push( labelFilter );
+            dimensionText.push( labelFilter );
+
+            const labelRoadCenterline = addLabel( 'black', 'Road Centerline' );
+            labelRoadCenterline.position.set( -roadCenterDistance, ui.clearanceHeight + 2 + 0.15, totalLength + 0.1 );
+            showContainer.push( labelRoadCenterline );
+
+            const labelTunnelCenterline = addLabel( 'black', 'Tunnel Centerline' );
+            labelTunnelCenterline.position.set( 0, ui.clearanceHeight + 2 + 0.15, totalLength + 0.1  );
+            showContainer.push( labelTunnelCenterline );
+
+
+            // 치수문자 : 방법2) TextGeometry
 
             // const textGroup = new THREE.Group();
             
@@ -287,7 +809,7 @@
             //     setTimeout(function() {
 
             //         addLabel( ` ${ ui.shoulderLeft.toFixed(3) }`, -clearanceCenterDistance + ui.shoulderLeft/2, 2.1, 0 );
-            //         addLabel( ` ${ ui.roadWidth.toFixed(3) }`, -clearanceCenterDistance + ui.shoulderLeft + ui.roadWidth/2 , 2.1, 0 );
+            //         addLabel( ` ${ roadWidth.toFixed(3) }`, -clearanceCenterDistance + ui.shoulderLeft + roadWidth/2 , 2.1, 0 );
             //         addLabel( ` ${ ui.shoulderRight.toFixed(3) }`, clearanceCenterDistance - ui.shoulderRight/2, 2.1, 0 );
             //         addLabel( `min : ${ ui.crossSlopeMin.toFixed(2) }%  ~  max : ${ ui.crossSlopeMax.toFixed(2) }%`, 0, ui.clearanceHeight + 0.1, 0 );
 
@@ -321,203 +843,14 @@
 
             // } );
 
-            // showContainer.push( textGroup );
-
-            
-
-
-            // 치수문자 : 방법2) 2D 캔버스
-            const labelGeometry = new THREE.PlaneGeometry(1, 1);
-
-            function makeLabelCanvas( size, name ) {
-
-                const borderSize = 2;
-                const ctx = document.createElement('canvas').getContext('2d');
-                const font =  `${ size }px bold sans-serif`;
-                ctx.font = font;
-
-                // 이름의 길이를 예측합니다.
-                const doubleBorderSize = borderSize * 2;
-                const width = ctx.measureText(name).width + doubleBorderSize;
-                const height = size + doubleBorderSize;
-                ctx.canvas.width = width;
-                ctx.canvas.height = height;
-                
-                // 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
-                ctx.font = font;
-                ctx.textBaseline = 'top';
-                
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
-                ctx.fillRect(0, 0, width, height);
-                ctx.fillStyle = 'black';
-                ctx.fillText(name, borderSize, borderSize);
-                
-                return ctx.canvas;
-
-            }
-
-            function addLabel( name ) {
-
-                const textCanvas = makeLabelCanvas( 50, name );
-                const texture = new THREE.CanvasTexture( textCanvas );
-
-                // 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
-                texture.minFilter = THREE.LinearFilter;
-                texture.wrapS = THREE.ClampToEdgeWrapping;
-                texture.wrapT = THREE.ClampToEdgeWrapping;
-
-                const labelMaterial = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                } );
-
-                // 라벨의 크기를 조정 : 해상도를 높임
-                const label = new THREE.Mesh( labelGeometry, labelMaterial );
-                const labelBaseScale = 0.005;
-                label.scale.x = textCanvas.width  * labelBaseScale;
-                label.scale.y = textCanvas.height * labelBaseScale;
-
-                return label
-
-            }
-
-            const labelShoulderLeft = addLabel( ui.shoulderLeft.toFixed(3) );
-            labelShoulderLeft.position.set( -clearanceCenterDistance + ui.shoulderLeft/2, 2 + 0.15, 0.1 );
-            showContainer.push( labelShoulderLeft );
-
-            const labelRoadWidth = addLabel( ui.roadWidth.toFixed(3) );
-            labelRoadWidth.position.set( -clearanceCenterDistance + ui.shoulderLeft + ui.roadWidth/2 , 2 + 0.15, 0.1 );
-            showContainer.push( labelRoadWidth );
-
-            const labelShoulderRight = addLabel( ui.shoulderRight.toFixed(3) );
-            labelShoulderRight.position.set( clearanceCenterDistance - ui.shoulderRight/2, 2 + 0.15, 0.1 );
-            showContainer.push( labelShoulderRight );
-
-            const labelCrossSlopeRange = addLabel(  `min : ${ ui.crossSlopeMin.toFixed(2) }%  ~  max : ${ ui.crossSlopeMax.toFixed(2) }%` );
-            labelCrossSlopeRange.position.set(  0, 0.15, 0.1 );
-            showContainer.push( labelCrossSlopeRange );
-
-            const labelRoadCenterline = addLabel( 'Road Centerline' );
-            labelRoadCenterline.position.set( -roadCenterDistance, ui.clearanceHeight + 1 + 0.15, 0.1 );
-            showContainer.push( labelRoadCenterline );
-
-            const labelTunnelCenterline = addLabel( 'Tunnel Centerline' );
-            labelTunnelCenterline.position.set( 0, ui.clearanceHeight + 1 + 0.15, 0 );
-            showContainer.push( labelTunnelCenterline );
-
-
-            
-            // 최소편경사, 최대편경사별로 시설한계 그리기
-            drawCrossSlope( ui.crossSlopeMin, 0xfa8072 );
-            drawCrossSlope( ui.crossSlopeMax, 0x2FA1D6 );
-
-            
-            function drawCrossSlope ( slopeValue, color ) {
-
-                // 콘크리트포장과 시멘트필터층
-                const concreteLt = new THREE.Vector3( - roadCenterDistance - marginInitLt, ( - roadCenterDistance - marginInitLt ) * slopeValue / 100 );
-                const concreteRt = new THREE.Vector3( ui.roadWidth - roadCenterDistance + marginInitRt, ( ui.roadWidth - roadCenterDistance + marginInitRt ) * slopeValue / 100 );
-
-                const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - ui.concrete );
-                const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - ui.concrete );
-
-                const concreteShp = new THREE.Shape();
-                concreteShp.moveTo( concreteLt.x, concreteLt.y );
-                concreteShp.lineTo( concreteRt.x, concreteRt.y );
-                concreteShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
-                concreteShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
-                concreteShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
-
-                const concreteLine = addLine( concreteShp, color );
-                showContainer.push( concreteLine );
-
-                const conreteSurf = addSurf( concreteShp, color );
-                showContainer.push( conreteSurf );
-
-                const cementeFilterShp = new THREE.Shape();
-                cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
-                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
-                cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - ui.cementeFilter );
-                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - ui.cementeFilter );
-                cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
-                
-                const cementeFilterLine = addLine( cementeFilterShp, color );
-                showContainer.push( cementeFilterLine );
-
-                const cementeFilterSurf = addSurf( cementeFilterShp, color );
-                showContainer.push( cementeFilterSurf );
-
-                
-                // 시설한계
-                const clearancePts = [];
-
-                const a1 = new THREE.Vector3 ( -clearanceCenterDistance,  0 );
-                const a2 = new THREE.Vector3 ( -clearanceCenterDistance,  ui.clearanceHeight - ui.cornerLeftHeight );
-                const a3 = new THREE.Vector3 ( -clearanceCenterDistance + ui.cornerLeftWidth,  ui.clearanceHeight );
-                const a4 = new THREE.Vector3 ( clearanceCenterDistance - ui.cornerRightWidth,  ui.clearanceHeight );
-                const a5 = new THREE.Vector3 ( clearanceCenterDistance,  ui.clearanceHeight - ui.cornerRightHeight );
-                const a6 = new THREE.Vector3 ( clearanceCenterDistance,  0 );
-                const a7 = new THREE.Vector3 ( -clearanceCenterDistance,  0 ); //close Path
-
-                clearancePts.push( a1 );
-                clearancePts.push( a2 );
-                clearancePts.push( a3 );
-                clearancePts.push( a4 );
-                clearancePts.push( a5 );
-                clearancePts.push( a6 );
-                clearancePts.push( a7 );
-
-                const clearanceShape = new THREE.Shape( clearancePts );
-                
-                const clearanceDashLine = addDashLine( clearanceShape, color );
-                
-                const clearanceSurf = addSurf( clearanceShape, color );
-
-                
-                // 시설한계 여유폭
-                const maginCircleShape = new THREE.Shape()
-                maginCircleShape.absarc( 0, 0, ui.limitMargin, 0, Math.PI * 2, false );
-                
-                const maginCircleDashLine = addDashLine( maginCircleShape, color );
-                
-                const circle1 = maginCircleDashLine.clone()
-                circle1.position.set( clearancePts[1].x, clearancePts[1].y );
-
-                const circle2 = maginCircleDashLine.clone()
-                circle2.position.set( clearancePts[2].x, clearancePts[2].y );            
-
-                const circle3 = maginCircleDashLine.clone()
-                circle3.position.set( clearancePts[3].x, clearancePts[3].y );              
-
-                const circle4 = maginCircleDashLine.clone()
-                circle4.position.set( clearancePts[4].x, clearancePts[4].y );
-
-
-                // 시설한계 그룹 후 회전
-                const clearanceGroup = new THREE.Group();
-                clearanceGroup.add( clearanceSurf );
-                clearanceGroup.add( clearanceDashLine );
-                clearanceGroup.add( circle1 );
-                clearanceGroup.add( circle2 );
-                clearanceGroup.add( circle3 );
-                clearanceGroup.add( circle4 );
-                
-                clearanceGroup.applyMatrix4( matrix.makeTranslation( roadCenterDistance, 0, 0 ) );
-                clearanceGroup.applyMatrix4( matrix.makeRotationZ( Math.atan( slopeValue / 100 ) ) );
-                clearanceGroup.applyMatrix4( matrix.makeTranslation( -roadCenterDistance, -roadCenterDistance * slopeValue / 100, 0 ) );
-                
-                showContainer.push( clearanceGroup );
-
-
-            }
+            // showContainer.push( textGroup );           
 
             // scene 생성
             showContainer.forEach( obj => { scene.add( obj ) });
 
             
             // 결과값 저장
-            sessionStorage.setItem('도로폭', JSON.stringify( ui.roadWidth ) );
+            sessionStorage.setItem('도로폭', JSON.stringify( roadWidth ) );
             sessionStorage.setItem('좌측길어깨폭', JSON.stringify( ui.shoulderLeft ) );
             sessionStorage.setItem('우측길어깨폭', JSON.stringify( ui.shoulderRight ) );
             
@@ -548,23 +881,26 @@
             const gui = new GUI();
             
             const roadFolder = gui.addFolder( '도로' );
-            roadFolder.add( ui, 'roadWidth', 3.500, 20.000, 0.050 ).name( '도로폭' ).onChange( designTunnel );
-            roadFolder.add( ui, 'shoulderLeft', 0.750, 1.500, 0.050 ).name( '좌측길어깨폭' ).onChange( designTunnel );
-            roadFolder.add( ui, 'shoulderRight', 0.750, 5.000, 0.050 ).name( '우측길어깨폭' ).onChange( designTunnel );
-            roadFolder.add( ui, 'crossSlopeMin', -10.000, 10.000, 0.010 ).name( '최소편경사(%)' ).onChange( designTunnel );
-            roadFolder.add( ui, 'crossSlopeMax', -10.000, 10.000, 0.010 ).name( '최대편경사(%)' ).onChange( designTunnel );
+            roadFolder.add( ui, 'lane1', 0, 4, 0.050 ).name( '1차로' ).onChange( designTunnel );
+            roadFolder.add( ui, 'lane2', 0, 4, 0.050 ).name( '2차로' ).onChange( designTunnel );
+            roadFolder.add( ui, 'lane3', 0, 4, 0.050 ).name( '3차로' ).onChange( designTunnel );
+            roadFolder.add( ui, 'lane4', 0, 4, 0.050 ).name( '4차로' ).onChange( designTunnel );
+            // roadFolder.add( ui, 'shoulderLeft', 0.750, 1.500, 0.050 ).name( '좌측길어깨폭' ).onChange( designTunnel );
+            // roadFolder.add( ui, 'shoulderRight', 0.750, 5.000, 0.050 ).name( '우측길어깨폭' ).onChange( designTunnel );
+            // roadFolder.add( ui, 'crossSlopeMin', -10.000, 10.000, 0.010 ).name( '최소편경사(%)' ).onChange( designTunnel );
+            // roadFolder.add( ui, 'crossSlopeMax', -10.000, 10.000, 0.010 ).name( '최대편경사(%)' ).onChange( designTunnel );
             roadFolder.open();
             
-            const pavementFolder = gui.addFolder( '포장' );
-            pavementFolder.add( ui, 'concrete').name( '콘크리트두께' ).onFinishChange( designTunnel );
-            pavementFolder.add( ui, 'cementeFilter').name( '필터층두께' ).onFinishChange( designTunnel );
+            // const pavementFolder = gui.addFolder( '포장' );
+            // pavementFolder.add( ui, 'concrete').name( '콘크리트두께' ).onFinishChange( designTunnel );
+            // pavementFolder.add( ui, 'cementeFilter').name( '필터층두께' ).onFinishChange( designTunnel );
             
             const clearanceFolder = gui.addFolder( '시설한계' );
-            clearanceFolder.add( ui, 'clearanceHeight', 3.000, 10.000, 0.010 ).name( '시설한계높이' ).onChange( designTunnel );
-            clearanceFolder.add( ui, 'cornerLeftWidth', 0.000, 1.000, 0.010 ).name( '좌측모서리폭' ).onChange( designTunnel );
-            clearanceFolder.add( ui, 'cornerLeftHeight', 0.000, 1.000, 0.010 ).name( '좌측모서리높이' ).onChange( designTunnel );
-            clearanceFolder.add( ui, 'cornerRightWidth', 0.000, 1.000, 0.010 ).name( '우측모서리폭' ).onChange( designTunnel );
-            clearanceFolder.add( ui, 'cornerRightHeight', 0.000, 1.000, 0.010 ).name( '우측모서리높이' ).onChange( designTunnel );
+            // clearanceFolder.add( ui, 'clearanceHeight', 3.000, 10.000, 0.010 ).name( '시설한계높이' ).onChange( designTunnel );
+            // clearanceFolder.add( ui, 'cornerLeftWidth', 0.000, 1.000, 0.010 ).name( '좌측모서리폭' ).onChange( designTunnel );
+            // clearanceFolder.add( ui, 'cornerLeftHeight', 0.000, 1.000, 0.010 ).name( '좌측모서리높이' ).onChange( designTunnel );
+            // clearanceFolder.add( ui, 'cornerRightWidth', 0.000, 1.000, 0.010 ).name( '우측모서리폭' ).onChange( designTunnel );
+            // clearanceFolder.add( ui, 'cornerRightHeight', 0.000, 1.000, 0.010 ).name( '우측모서리높이' ).onChange( designTunnel );
             clearanceFolder.add( ui, 'limitMargin', 0.001, 0.400, 0.001 ).name( '여유폭' ).onChange( designTunnel );
             
         }
@@ -596,6 +932,71 @@
             const surfMat = new THREE.MeshBasicMaterial( { color, opacity: 0.05, transparent: true, side: THREE.DoubleSide } );
             const mesh = new THREE.Mesh( surfGeo, surfMat );
             return mesh;
+        }
+        
+        function addExtr( shape, color, length ) {            
+            const extrudeSettings = {
+                steps : 1,
+                // curveSegments : 12, // 기본값
+                depth : length,
+                bevelEnabled : false,
+            }           
+
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color, /*wireframe: true*/ } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+
+        // let keyValue = {
+
+        //     labelShoulderLeft : 'ui.shoulderLeft',
+        //     labelShoulderRight : 'ui.shoulderRight',
+
+        // }
+        // // prompt( ui.shoulderLeft )
+        // console.log( keyValue.labelShoulderRight )
+
+
+        // function testName ( name ) {
+        //     this.name = name
+        //     return this.name
+        // }
+        // const b =123
+        // const a = new testName( b )
+        // console.log( a )
+
+
+        // double Click event
+        const mouse = new THREE.Vector2();
+
+        function onclick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(dimensionText, true);
+
+            if (intersects.length > 0) {
+                // 첫번째 객체선택
+                const selectedObject = intersects[0].object;
+
+                // prompt창 생성
+                const revValue = prompt( '수정할 값을 입력하세요', selectedObject.value );
+
+                // 값이 없을때 빠져나옴
+                if (revValue === null) {
+                    return; //break out of the function early
+                }
+
+                // prompt값 반영
+                eval( selectedObject.key + " =" + revValue );
+
+                // 함수실행
+                designTunnel();
+            }
         }
         
 

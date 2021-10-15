@@ -5807,9 +5807,9 @@
             crossPsgeTypeFolder.add( ui, 'category', [ '일반도', '보강도', '구조도' ] ).name( '카테고리' ).onFinishChange( categoryDetail );
             crossPsgeTypeFolder.open();
             
-            // const crossPassageFolder = gui.addFolder( '접속각도' )
-            // crossPassageFolder.add( ui, 'verticalAngle', -9, 9, 0.05 ).name( '연직각도' ).onFinishChange( designTunnel );
-            // crossPassageFolder.add( ui, 'horizontalAngle', -9, 9, 0.05 ).name( '수평각도' ).onFinishChange( designTunnel );
+            const crossPassageFolder = gui.addFolder( '접속각도' )
+            crossPassageFolder.add( ui, 'verticalAngle', -9, 9, 0.05 ).name( '연직각도' ).onFinishChange( designTunnel );
+            crossPassageFolder.add( ui, 'horizontalAngle', -9, 9, 0.05 ).name( '수평각도' ).onFinishChange( designTunnel );
 
             const clippingFolder = gui.addFolder( '절단면' )
             const props = { 
@@ -6251,6 +6251,7 @@
                 case 80: /*P*/
 
                     camera = cameraPerspective;
+                    
                     orbitControls.object = camera
                     orbitControls.target.set( 0, 0, 0 );
                     orbitControls.update();

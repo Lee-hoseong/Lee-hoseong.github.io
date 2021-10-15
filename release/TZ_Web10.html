@@ -1,0 +1,3232 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TunnelZainer_Web</title>
+    <style>
+        html, body {
+            margin : 0;
+            height : 100%
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #debug {
+            position: absolute;
+            top: 50px;
+            padding: 10px;
+            background: rgba( 0, 0, 0, 0.0 );
+            color: black;
+            font-size: 12px;
+        }
+
+        #button {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            padding: 10px;
+            background: #11ffee00;
+            color: #2FA1D6;
+            border: #11ffee00;
+            cursor: pointer;
+        }
+        
+        #button:hover {
+            background: #444;
+        }
+
+        #info {
+            position: absolute;
+            top: 40px;
+            left : 50%;
+            /* top: 40px; */
+            padding: 10px;
+            transform : translate( -50% );
+            text-align: center;
+            background: rgba( 0, 0, 0, 0 );
+            color: black;
+            font-size: 12px;
+        }        
+
+        /* Add a black background color to the top navigation */
+        .topnav {
+            position: absolute;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        /* Change the color of links on hover */
+        .topnav a hover {
+            background-color: #ddd;
+            color: black;
+        }
+        
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: #2FA1D6;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href='TZ_Web1.html'>1. 도로횡단</a>
+        <a class="active" href='TZ_Web10.html'>2. 환기배수</a>
+        <a href='TZ_Web2.html'>2. 터널단면</a>
+        <a href='TZ_Web3.html'>3. 지보패턴</a>
+        <a href='TZ_Web4.html'>4. 강지보공</a>
+        <a href='TZ_Web5.html'>5. 본선배근</a>
+        <a href='TZ_Web6.html'>6. 배수계획</a>
+        <a href='TZ_Web7.html'>7. 연결통로</a>
+        <a href='TZ_Web8.html'>8. 갱문형식</a>
+        <a href='TZ_Web9.html'>9. 부대시설</a>
+
+    </div>
+    
+    <canvas id="c"></canvas>
+
+    <div id="info">
+        <b> Camera : </b><b style="color:#2FA1D6">P </b>Perspective, <b style="color:#2FA1D6">O </b>Orthographic
+        <br>
+        <b> View : </b> <b style="color:#2FA1D6">F </b> Front, <b style="color:#2FA1D6">B </b> Back, <b style="color:#2FA1D6">R </b> Right, <b style="color:#2FA1D6">L </b> Left, <b style="color:#2FA1D6">T </b> Top 
+    </div>    
+
+    <button id="button" type="button" >Export Model</button>
+
+    <script type="module">
+
+        import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
+
+        import { STLExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/STLExporter.js';
+        // import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee/csg.module.js';//looeee
+        import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee_NPM/CSG.js';//looeee
+        
+        import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';
+        import { RGBELoader } from 'https://Lee-hoseong.github.io/jsm/loaders/RGBELoader.js';
+
+
+        // Matrix 선언
+        const matrix = new THREE.Matrix4();
+
+
+        // GLTF Loader 선언
+        let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );
+        // let gltfLoader = new GLTFLoader().setPath( 'model/' );
+
+
+        // 메쉬컨테이너
+        let showContainer = [];
+        let dimensionText = [];
+        let jetfanWingContainer = [];
+
+
+        let particles, pointGeometry, pointMaterial
+
+        // Three js 기본변수
+        let canvas, camera, scene, renderer, orbitControls
+        let cameraPerspective, cameraOrtho
+
+
+        // 계산값 불러오기
+        const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
+        const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
+        const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
+        const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
+        const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
+        const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
+        const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
+        const clearanceHeight = JSON.parse( sessionStorage.getItem( '시설한계높이' ) );
+        const cornerLeftWidth = JSON.parse( sessionStorage.getItem( '좌측모서리폭' ) );
+        const cornerLeftHeight= JSON.parse( sessionStorage.getItem( '좌측모서리높이' ) );
+        const cornerRightWidth= JSON.parse( sessionStorage.getItem( '우측모서리폭' ) );
+        const cornerRightHeight= JSON.parse( sessionStorage.getItem( '우측모서리높이' ) );
+
+        const roadDistance = JSON.parse( sessionStorage.getItem( '이격거리' ) );
+        const marginInitLt = JSON.parse( sessionStorage.getItem( '좌측측대' ) );
+        const marginInitRt = JSON.parse( sessionStorage.getItem( '우측측대' ) );
+
+        
+        // 파라메트릭 값
+        const ui = {
+
+            //편경사
+            crossSlopeStandard : ( crossSlopeMin + crossSlopeMax )/2,
+
+            // 적용 연장
+            totalLength : 6,
+
+            // 공동구타입
+            footingType : '기계환기',
+            marginLeft : marginInitLt,
+            marginRight : marginInitRt,
+            footingHeight : 0.500,
+            
+            // 환기타입
+            ventilation : '제트팬',
+
+
+            // 제트팬
+            jetfanInnerDiameter : 1.250,
+            jetfanDistance : 1.000,
+            jetfanNum : 2,
+
+
+            // 브라켓 제원
+            bracketB1 : 0.200,
+            bracketB2 : 0.300,
+
+            bracketH1 : 0.800,
+            bracketH2 : 0.300,
+            bracketH3 : 0.400,
+
+            // 덕트슬래브 위치
+            ductSlabThickness : 0.250,
+            ductSlabDistance : 0.800, // 시설한계와 슬래브 간의 거리
+
+            // 덕트면적(m2)
+            ductArea : 15,
+
+            // 측벽유공관 직경
+            wallPipeInD : 0.100,
+
+            // 하부유공관 직경
+            bottomPipeOutD : 0.300,
+
+        };
+
+
+            
+        // Run        
+        initGraphic();
+        // designTunnel(); // selectFootingType 에다가 넣어줬음
+        createUI();
+        
+
+        function initGraphic() {
+            
+            canvas = document.querySelector('#c'); 
+            
+            // camera(필수)
+            
+            // Perspective
+            cameraPerspective = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            cameraPerspective.position.set( -14, 9, 40 );
+            
+
+            // Orthographic
+            cameraOrtho = new THREE.OrthographicCamera( 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
+            ); //left. right, top, bottom, near, far 
+            cameraOrtho.position.set( 0, 0, 40 );
+            cameraOrtho.zoom = 30;
+            
+            camera = cameraOrtho;
+
+            // OrbitControl : 뷰 확대 및 회전
+            orbitControls = new OrbitControls( camera, canvas );
+            orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
+            
+
+            // Scene(필수) : 컨테이너
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0xf0f0f0 );
+
+            // // 바닥면 : 그림자를 받기 위함
+            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
+            // planeGeometry.rotateX( - Math.PI/2 );
+            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
+            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+            // plane.position.y = -1.999;
+            // // plane.receiveShadow = true;
+            // scene.add( plane );
+            
+
+            // // 바닥 그리드
+            // const size = 30;
+            // const divisions = 30;
+            // const gridHelper = new THREE.GridHelper( size, divisions );
+            // gridHelper.position.y = - 2;
+            // gridHelper.material.opacity = 0.4;
+            // gridHelper.material.transparent = true;
+            // scene.add(gridHelper);
+            
+
+            // 좌표축 생성, x축:red, y축:green, z축:blue
+            const axes = new THREE.AxesHelper(1); 
+            scene.add(axes);
+            
+
+            // light(필수) : AmbientLight는 그림자와 상관없음     
+            scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+
+            const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.1 );
+            directionalLight.position.set( 3, 40, 0 );
+            directionalLight.target.position.set( 0, 0, 0);
+            // directionalLight.castShadow = true;
+            scene.add( directionalLight );
+            scene.add( directionalLight.target );
+
+            // const spotlight1 = new THREE.SpotLight( 0xffffff, 0.2 );
+            // spotlight1.position.set( -10, 15, 5 );
+            // spotlight1.angle = THREE.Math.degToRad( 30 )
+            // scene.add(spotlight1);
+
+            // const spotlight2 = new THREE.SpotLight( 0xffffff, 0.2 );
+            // spotlight2.position.set( 10, 15, 5 );
+            // spotlight2.angle = THREE.Math.degToRad( 30 )
+            // scene.add(spotlight2);
+
+            // light helper
+            // const lightHelper = new THREE.SpotLightHelper( spotlight2, 10 );
+            // scene.add( lightHelper );            
+            
+            new RGBELoader()
+                .setDataType( THREE.FloatType )
+                .setPath( 'https://Lee-hoseong.github.io/texture/' )
+                // .load( 'reinforced_concrete_02_4k.hdr', function ( texture ) {
+                .load( 'short_tunnel_1k.hdr', function ( texture ) {
+
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    scene.environment = texture;
+
+                } );
+
+            // Render
+            renderer = new THREE.WebGLRenderer( { canvas } );
+            // renderer.domElement.addEventListener( "dblclick", onclick, false );
+            document.addEventListener( "dblclick", onclick, false );
+            renderer.shadowMap.enabled = true;
+            // renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            // renderer.toneMappingExposure = 1;
+            // renderer.outputEncoding = THREE.sRGBEncoding;
+
+            // keydown
+            document.addEventListener( 'keydown', onKeyDown );
+            
+        }
+        
+        // 공동구
+        let lx01, lx02, lx03, lx04, lx05, lx06, lx07, lx08, lx09, lx10, lx11, lx12, lx13, lx14;
+        let ly01, ly02, ly03, ly04, ly05, ly06;
+
+        let rx01, rx02, rx03, rx04, rx05, rx06, rx07, rx08, rx09, rx10, rx11, rx12, rx13, rx14;
+        let ry01, ry02, ry03, ry04, ry05, ry06;
+        
+        selectFootingType();
+
+        function selectFootingType() {
+
+            if( ui.footingType=='자연환기' ) {
+
+                // 자연환기
+                lx01 = 0.050;
+                lx02 = 0.075;
+                lx03 = 0.300;
+                lx04 = 0.075;
+                lx05 = 0.150;
+                lx06 = 0.100;
+                lx07 = 0.120;
+                lx08 = 0.036;
+                lx09 = 0.144;
+                lx10 = 0.050;
+                lx11 = 0.300; // 공동구 상단
+                lx12 = 0.300; // 공동구 하단
+                lx13 = 0.050;
+                lx14 = 0.050;
+
+                ly01 = 0.150;
+                ly02 = 0.125;
+                ly03 = 0.175;
+                ly04 = 0.360;
+
+                ly05 = 0.060; // 덮개 두께
+                ly06 = 0.300; // 공동구 깊이
+
+            } else if ( ui.footingType=='기계환기' || ui.footingType=='기계환기(물분무)' ) {
+
+                // 기계환기
+                lx01 = 0.050;
+                lx02 = 0.075;
+                lx03 = 0.300;
+                lx04 = 0.075;
+                lx05 = 0.150;
+                lx06 = 0.100;
+                lx07 = 0.120;
+                lx08 = 0.036;
+                lx09 = 0.144;
+                lx10 = 0.050;
+                lx11 = 0.500; // 공동구 상단
+                lx12 = 0.400; // 공동구 하단
+                lx13 = 0.050;
+                lx14 = 0.050;
+
+                ly01 = 0.150;
+                ly02 = 0.125;
+                ly03 = 0.175;
+                ly04 = 0.360;
+
+                ly05 = 0.060; // 덮개 두께
+                ly06 = 0.600; // 공동구 깊이
+
+            }
+
+            if( ui.footingType=='자연환기') {
+
+                // 자연환기 공동구 우측
+                rx01 = 0.050;
+                rx02 = 0.075;
+                rx03 = 0.300;
+                rx04 = 0.075;
+                rx05 = 0.150;
+                rx06 = 0.100;
+                rx07 = 0.120;
+                rx08 = 0.036;
+                rx09 = 0.144;
+                rx10 = 0.050;
+                rx11 = 0.300; // 공동구 상단
+                rx12 = 0.300; // 공동구 하단
+                rx13 = 0.050;
+                rx14 = 0.050; 
+
+                ry01 = 0.150;
+                ry02 = 0.125;
+                ry03 = 0.175;
+                ry04 = 0.360;
+
+                ry05 = 0.060; // 덮개 두께
+                ry06 = 0.300; // 공동구 깊이
+
+            } else if( ui.footingType=='기계환기') {
+
+                // 기계환기 공동구 우측
+                rx01 = 0.050;
+                rx02 = 0.075;
+                rx03 = 0.300;
+                rx04 = 0.075;
+                rx05 = 0.150;
+                rx06 = 0.100;
+                rx07 = 0.120;
+                rx08 = 0.070;
+                rx09 = 0.160;
+                rx10 = 0.050;
+                rx11 = 0.650; // 공동구 상단
+                rx12 = 0.550; // 공동구 하단
+                rx13 = 0.050;
+                rx14 = 0.050;
+
+                ry01 = 0.150;
+                ry02 = 0.125;
+                ry03 = 0.175;
+                ry04 = 0.700;
+
+                ry05 = 0.060; // 덮개 두께
+                ry06 = 0.940; // 공동구 깊이
+
+            } else if( ui.footingType=='기계환기(물분무)') {
+ 
+                // 기계환기(물분무) 공동구 우측
+                rx01 = 0.050;
+                rx02 = 0.075;
+                rx03 = 0.300;
+                rx04 = 0.075;
+                rx05 = 0.150;
+                rx06 = 0.100;
+                rx07 = 0.120;
+                rx08 = 0.070;
+                rx09 = 0.160;
+                rx10 = 0.050;
+                rx11 = 0.770; // 공동구 상단
+                rx12 = 0.670; // 공동구 하단
+                rx13 = 0.050;
+                rx14 = 0.050;
+
+                ry01 = 0.150;
+                ry02 = 0.125;
+                ry03 = 0.175;
+                ry04 = 0.700;
+
+                ry05 = 0.060; // 덮개 두께
+                ry06 = 0.940; // 공동구 깊이
+
+            }
+
+            designTunnel();
+
+        }
+
+        function designTunnel() {
+            
+            // 이전 메쉬 삭제
+            showContainer.forEach( i => scene.remove( i ) )
+            jetfanWingContainer.forEach( i => scene.remove( i ) )
+
+            // 배열초기화
+            showContainer = [];
+            dimensionText = [];
+            jetfanWingContainer = [];
+
+            // 도로중심선
+            const roadCenterPoints = [];
+            roadCenterPoints.push( new THREE.Vector2 ( -roadDistance, -1 ) );
+            roadCenterPoints.push( new THREE.Vector2 ( -roadDistance, clearanceHeight +2.5 ) );
+
+            const roadCenterShape = new THREE.Shape( roadCenterPoints );
+            
+            const roadCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            roadCenterDashLine.position.set( 0, 0, 0 );
+            showContainer.push( roadCenterDashLine );
+
+
+            // 터널중심선
+            const tunnelCenterDashLine = addDashLine( roadCenterShape, 'dimgray' );
+            tunnelCenterDashLine.position.set( roadDistance, 0, 0 );
+            showContainer.push( tunnelCenterDashLine );
+
+            // 차선마킹
+            const laneShp = new THREE.Shape()
+                .moveTo( -0.060, 0.000 )
+                .lineTo( -0.060, 0.01 )
+                .lineTo(  0.060, 0.01 )
+                .lineTo(  0.060, 0.000 )
+
+            const laneLtExtr = addExtr( laneShp, 'white', ui.totalLength );
+            laneLtExtr.rotation.z = ui.crossSlopeStandard/100;
+            laneLtExtr.material.transparent = true;
+            laneLtExtr.material.opacity = 0.9;
+
+            laneLtExtr.position.set( -roadDistance, -roadDistance*ui.crossSlopeStandard/100 );
+            showContainer.push( laneLtExtr );
+
+            const laneRtExtr = laneLtExtr.clone();
+            laneRtExtr.position.set( roadWidth-roadDistance, (roadWidth-roadDistance)*ui.crossSlopeStandard/100 );
+            showContainer.push( laneRtExtr );
+
+
+            // 콘크리트포장과 시멘트필터층
+            const concreteLt = new THREE.Vector3( - roadDistance - ui.marginLeft, ( - roadDistance - ui.marginLeft ) * ui.crossSlopeStandard / 100 );
+            const concreteRt = new THREE.Vector3( roadWidth - roadDistance + ui.marginRight, ( roadWidth - roadDistance + ui.marginRight ) * ui.crossSlopeStandard / 100 );
+
+            const cementeFilterLt = new THREE.Vector3( concreteLt.x, concreteLt.y - concrete );
+            const cementeFilterRt = new THREE.Vector3( concreteRt.x, concreteRt.y - concrete );
+
+            const concretePavementShp = new THREE.Shape();
+            concretePavementShp.moveTo( concreteLt.x, concreteLt.y );
+            concretePavementShp.lineTo( concreteRt.x, concreteRt.y );
+            concretePavementShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            concretePavementShp.lineTo( cementeFilterLt.x, cementeFilterLt.y );
+            concretePavementShp.lineTo( concreteLt.x, concreteLt.y ); //close Path
+
+            const concretePavementLine1 = addLine( concretePavementShp, 'black' );
+            showContainer.push( concretePavementLine1 );
+
+            const concretePavementLine2 = addLine( concretePavementShp, 'black' );
+            concretePavementLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( concretePavementLine2 );
+
+            const concretePavementExtr = addExtr( concretePavementShp, 0x333333, ui.totalLength );
+            concretePavementExtr.material.transparent = true;
+            concretePavementExtr.material.opacity = 0.9;
+            showContainer.push( concretePavementExtr ); 
+
+           
+            const cementeFilterShp = new THREE.Shape();
+            cementeFilterShp.moveTo( cementeFilterLt.x, cementeFilterLt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y );
+            cementeFilterShp.lineTo( cementeFilterRt.x, cementeFilterRt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y - cementeFilter );
+            cementeFilterShp.lineTo( cementeFilterLt.x, cementeFilterLt.y ); //close Path
+            
+            const cementeFilterLine1 = addLine( cementeFilterShp, 'black' );
+            showContainer.push( cementeFilterLine1 );
+
+            const cementeFilterLine2 = addLine( cementeFilterShp, 'black' );
+            cementeFilterLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( cementeFilterLine2 );
+
+            const cementeFilterExtr = addExtr( cementeFilterShp, 'gray', ui.totalLength );
+            cementeFilterExtr.material.transparent = true;
+            cementeFilterExtr.material.opacity = 0.9;
+            showContainer.push( cementeFilterExtr );
+
+
+            // 공동구 arr 생성
+            const footingLtType = [];
+
+            footingLtType.push( new THREE.Vector2( 0, 0 ) );
+            footingLtType.push( new THREE.Vector2( -lx01, lx01*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02), (lx01+lx02)*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03), (lx01+lx02+lx03)*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04), (lx01+lx02+lx03+lx04)*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05), (lx01+lx02+lx03+lx04+lx05)*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 -ly01 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 -ly01 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05-ly06 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx12), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05-ly06 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04-ly05 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04 ) );
+            footingLtType.push( new THREE.Vector2( -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13+lx14), (lx01+lx02+lx03+lx04+lx05+lx06)*-0.02 + ly02+ly03+ly04 ) );
+
+            const footingRtType = [];
+
+            if( ui.footingType=='자연환기' || ui.footingType=='기계환기') {
+
+                footingRtType.push( new THREE.Vector2( 0, 0 ) );
+                footingRtType.push( new THREE.Vector2( rx01, rx01*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02, (rx01+rx02)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03, (rx01+rx02+rx03)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04, (rx01+rx02+rx03+rx04)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05, (rx01+rx02+rx03+rx04+rx05)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 -ry01 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 -ry01 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05-ry06 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx12, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05-ry06 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13+rx14, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+
+            } else if( ui.footingType=='기계환기(물분무)') {
+ 
+                footingRtType.push( new THREE.Vector2( 0, 0 ) );
+                footingRtType.push( new THREE.Vector2( rx01, rx01*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02, (rx01+rx02)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03, (rx01+rx02+rx03)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04, (rx01+rx02+rx03+rx04)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05, (rx01+rx02+rx03+rx04+rx05)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 -ry01 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 -ry01 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05-ry06 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx12, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05-ry06 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx12+0.1, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05-ry06+0.1 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04-ry05 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+                footingRtType.push( new THREE.Vector2( rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13+rx14, (rx01+rx02+rx03+rx04+rx05+rx06)*-0.02 + ry02+ry03+ry04 ) );
+
+            }
+            
+
+            // 시설한계
+            const clearancePts = [];
+
+            const a1 = new THREE.Vector3 ( -roadDistance - shoulderLeft                               ,  0 );
+            const a2 = new THREE.Vector3 ( -roadDistance - shoulderLeft                               ,  clearanceHeight - cornerLeftHeight );
+            const a3 = new THREE.Vector3 ( -roadDistance - shoulderLeft + cornerLeftWidth             ,  clearanceHeight );
+            const a4 = new THREE.Vector3 ( roadWidth + shoulderRight - roadDistance - cornerRightWidth,  clearanceHeight );
+            const a5 = new THREE.Vector3 ( roadWidth + shoulderRight - roadDistance                   ,  clearanceHeight - cornerRightHeight );
+            const a6 = new THREE.Vector3 ( roadWidth + shoulderRight - roadDistance                   ,  0 );
+            // const a7 = new THREE.Vector3 ( -roadDistance - shoulderLeft                               ,  0 );
+
+            clearancePts.push( a1 );
+            clearancePts.push( a2 );
+            clearancePts.push( a3 );
+            clearancePts.push( a4 );
+            clearancePts.push( a5 );
+            clearancePts.push( a6 );
+            // clearancePts.push( a7 );
+
+            const clearanceShape = new THREE.Shape( clearancePts );
+            
+            const clearanceLine = addLine( clearanceShape, 'black' );
+
+            const clearanceSurf = addSurf( clearanceShape, 'black' );
+            clearanceSurf.material.transparent = true;
+            clearanceSurf.material.opacity = 0.05;
+
+
+            // 시설한계 그룹 후 회전
+            const clearanceGroup = new THREE.Group();
+            clearanceGroup.add( clearanceSurf );
+            // clearanceGroup.add( clearanceExtr );
+            clearanceGroup.add( clearanceLine );
+            
+            clearanceGroup.applyMatrix4( matrix.makeTranslation( roadDistance, 0, 0 ) );
+            clearanceGroup.applyMatrix4( matrix.makeRotationZ( Math.atan( ui.crossSlopeStandard/100 ) ) );
+            clearanceGroup.applyMatrix4( matrix.makeTranslation( -roadDistance, -roadDistance * ui.crossSlopeStandard/100, 0 ) );
+            
+            showContainer.push( clearanceGroup );
+
+
+            // 횡류식 기준점이 될 시설한계 최대높이 
+            const clearanceMaxHeight = [];
+
+            // 횡류식 기준점이 될 시설한계 최대높이 
+            a3.applyMatrix4( matrix.makeRotationZ( Math.atan( ui.crossSlopeStandard / 100 ) ) );
+            clearanceMaxHeight.push( a3.y );
+
+            a4.applyMatrix4( matrix.makeRotationZ( Math.atan( ui.crossSlopeStandard / 100 ) ) );
+            clearanceMaxHeight.push( a4.y );
+
+
+
+            // 편경사변화에 따른 공동구 위치 계산 
+            const footingLtSlope = footingLtType.map( i => new THREE.Vector2 ( i.x + concreteLt.x, i.y + concreteLt.y ) );
+            const footingRtSlope = footingRtType.map( i => new THREE.Vector2 ( i.x + concreteRt.x, i.y + concreteRt.y ) );
+
+
+            // 터널제원 계산
+            const liningT1 = 0.450; // 가정값 측면라이닝두께
+
+            // 좌측공동구
+            const r3Radius = footingLtType[footingLtType.length-1].x - liningT1;
+
+            const r3Theta = Math.asin( (footingLtType[footingLtType.length-1].y+ui.footingHeight) / -r3Radius );
+
+            const footingLtShp = new THREE.Shape( footingLtSlope )
+                .absarc( concreteLt.x, footingLtType[footingLtType.length-1].y + concreteLt.y, -r3Radius, Math.PI, Math.PI+r3Theta, false )
+                .lineTo( concreteLt.x, concreteLt.y-ui.footingHeight );
+
+            const footingLtExtr = addExtr( footingLtShp, 'silver', ui.totalLength );
+            footingLtExtr.material.transparent = true;
+            footingLtExtr.material.opacity = 0.5;
+            // showContainer.push( footingLtExtr );
+
+            const footingLtEdges = new THREE.EdgesGeometry(footingLtExtr.geometry, 20);
+            const footingLtline = new THREE.LineSegments( footingLtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            showContainer.push( footingLtline );
+
+
+            // R5
+            const r5Radius = footingRtType[footingRtType.length-1].x + liningT1;
+
+            const r5Theta = Math.asin( (footingRtType[footingRtType.length-1].y+ui.footingHeight) / r5Radius );
+
+            const footingRtShp = new THREE.Shape( footingRtSlope )
+                .absarc( concreteRt.x, footingRtType[footingRtType.length-1].y+concreteRt.y, r5Radius, 0, 0-r5Theta, true )
+                .lineTo( concreteRt.x, concreteRt.y-ui.footingHeight );
+
+            const footingRtExtr = addExtr( footingRtShp, 'silver', ui.totalLength );
+            footingRtExtr.material.transparent = true;
+            footingRtExtr.material.opacity = 0.5;
+            // showContainer.push( footingRtExtr );
+
+            const footingRtEdges = new THREE.EdgesGeometry( footingRtExtr.geometry, 20);
+            const footingRtline = new THREE.LineSegments( footingRtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            showContainer.push( footingRtline );
+
+
+            /*
+                공동구 뚜껑 생성
+                집수정 하부 생성
+                집수정 하부 CSG( 집수정 : 집수정외측 - 내측 )
+                하부 유공관 생성
+                맹암거 생성
+                측벽 유공관 생성
+                횡배수관(하부유공관)
+                횡배수관(집수정)
+                횡배수관(디치)
+            */
+
+            // 공동구 뚜껑 생성
+            let coverLeftB0, coverRightB0, coverL, coverS;
+            const coverT = 0.060;
+
+            switch ( ui.footingType ) {
+
+                case '자연환기' :
+
+                    coverLeftB0 = -( footingLtType[19].x - footingLtType[12].x );
+                    coverRightB0 = ( footingRtType[19].x - footingRtType[12].x );
+
+                    coverL = 0.480;
+                    coverS = 0.500; // spacing
+
+                    break;
+
+                case '기계환기' :
+
+                    coverLeftB0 = -( footingLtType[19].x - footingLtType[12].x );
+                    coverRightB0 = ( footingRtType[19].x - footingRtType[12].x );
+              
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+                case '기계환기(물분무)' :
+
+                    coverLeftB0 = -( footingLtType[19].x - footingLtType[12].x );
+                    coverRightB0 = ( footingRtType[20].x - footingRtType[12].x );
+
+                    coverL = 0.250;
+                    coverS = 0.250; // spacing
+
+                    break;
+
+            }
+
+            const coverLeftB1 = ( ( coverLeftB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabLtShp = new THREE.Shape();
+            coverSlabLtShp.moveTo( 0, 0 );
+            coverSlabLtShp.lineTo( 0, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, coverL -0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, coverL );
+            coverSlabLtShp.lineTo( - coverLeftB0 + 0.020, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150 - 0.025, 0 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025 - 0.150, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1 - 0.025, 0.025 );
+            coverSlabLtShp.lineTo( - coverLeftB1, 0 );
+            coverSlabLtShp.lineTo( 0, 0 );
+
+            const coverSlabLtExtr = addExtr( coverSlabLtShp, 'silver', coverT );
+            coverSlabLtExtr.rotateX( Math.PI/2 )
+
+
+            const coverRightB1 = ( ( coverRightB0 - 0.020 ) - ( 0.025 + 0.150 +0.025 ) ) / 2;
+
+            const coverSlabRtShp = new THREE.Shape();
+            coverSlabRtShp.moveTo( 0, 0 );
+            coverSlabRtShp.lineTo( 0, coverL );
+            coverSlabRtShp.lineTo( coverRightB1, coverL );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, coverL -0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, coverL );
+            coverSlabRtShp.lineTo( coverRightB0 - 0.020, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150 + 0.025, 0 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025 + 0.150, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1 + 0.025, 0.025 );
+            coverSlabRtShp.lineTo( coverRightB1, 0 );
+            coverSlabRtShp.lineTo( 0, 0 );
+
+            const coverSlabRtExtr = addExtr( coverSlabRtShp, 'silver', coverT );
+            coverSlabRtExtr.rotateX( Math.PI/2 )            
+
+
+            for ( let i=0; i*coverS < ui.totalLength; i++ ) {
+
+                const covercloneLt = coverSlabLtExtr.clone();
+                covercloneLt.position.set( footingLtType[12].x + concreteLt.x - 0.010, footingLtType[12].y + concreteLt.y, i*coverS );
+                showContainer.push( covercloneLt );
+
+                const covercloneRt = coverSlabRtExtr.clone();
+                covercloneRt.position.set( footingRtType[12].x + concreteRt.x + 0.010, footingRtType[12].y + concreteRt.y, i*coverS );
+                showContainer.push( covercloneRt );
+
+            }
+
+
+            /*  
+                집수정
+                집수정의 폭과 길이는 그레이팅(grating)에 따라 결정됨
+                집수정의 깊이는 하부 유공관의 직경에 따라 결정됨
+            */ 
+
+            // 그레이팅 제원
+            // const gratingWidth = 0.450;
+            const gratingLtWidth = lx02 + lx03 + lx04;
+            const gratingRtWidth = rx02 + rx03 + rx04;
+
+            const gratingLength = 1.000;
+            const gratingHeight = 0.075;
+
+            const bottomPipeOutD = +ui.bottomPipeOutD;
+            const bottomPipeInD = bottomPipeOutD-0.02;
+
+
+            // 집수정 제원
+            const wellBottomThickness = 0.075;
+            const wellSideThickness = 0.050;
+
+            const wellLtDist = -footingLtType[1].x -wellSideThickness; // 횡방향 이격
+            const wellRtDist = footingRtType[1].x -wellSideThickness; // 횡방향 이격
+            const wellSpacing = 4.5; // 종방향 이격
+
+            // const wellDifference = ( gratingWidth - bottomPipeOutD )/2
+            const wellDifference = lx02;
+
+            const wellLength = gratingLength + 2*wellSideThickness;
+
+            const wellLtWidth = gratingLtWidth + 2*wellSideThickness;
+            const wellRtWidth = gratingRtWidth + 2*wellSideThickness;
+
+            const wellDepth = 0.05 + bottomPipeOutD + 0.05 + wellBottomThickness;
+
+
+            // 집수정 하부 외측
+            const wellOutLtShp = new THREE.Shape();
+            wellOutLtShp.moveTo( 0, -ui.footingHeight );
+            wellOutLtShp.lineTo( 0, -ui.footingHeight - wellDepth );
+            wellOutLtShp.lineTo( -wellLtWidth, -ui.footingHeight - wellDepth );
+            wellOutLtShp.lineTo( -wellLtWidth, -ui.footingHeight );
+            wellOutLtShp.lineTo( 0, -ui.footingHeight );        
+
+            const wellOutLtExtr = addExtr( wellOutLtShp, 0xcdc5bf, wellLength );
+            wellOutLtExtr.material.transparent = true;
+            wellOutLtExtr.material.opacity = 0.9;
+            wellOutLtExtr.position.set( concreteLt.x - wellLtDist, concreteLt.y + wellLtDist * -0.02, wellSpacing );
+            // showContainer.push( wellOutLtExtr )
+
+            const wellOutRtShp = new THREE.Shape();
+            wellOutRtShp.moveTo( 0, -ui.footingHeight );
+            wellOutRtShp.lineTo( 0, -ui.footingHeight - wellDepth );
+            wellOutRtShp.lineTo( wellRtWidth, -ui.footingHeight - wellDepth );
+            wellOutRtShp.lineTo( wellRtWidth, -ui.footingHeight );
+            wellOutRtShp.lineTo( 0, -ui.footingHeight );        
+
+            const wellOutRtExtr = addExtr( wellOutRtShp, 0xABB2B9, wellLength );
+            wellOutRtExtr.material.transparent = true;
+            wellOutRtExtr.material.opacity = 0.9;
+            wellOutRtExtr.position.set( concreteRt.x + wellRtDist, concreteRt.y + wellRtDist * -0.02, wellSpacing );
+            // showContainer.push( wellOutRtExtr );
+
+
+            // 집수정 내측
+            const wellInLtShp = new THREE.Shape();
+            wellInLtShp.moveTo( -wellSideThickness - lx02, -( -wellSideThickness - lx02 ) * -0.02 - gratingHeight );
+            wellInLtShp.lineTo( -wellSideThickness - lx02, -ui.footingHeight - wellDepth + wellBottomThickness );
+            wellInLtShp.lineTo( -wellSideThickness - lx02 - lx03, -ui.footingHeight - wellDepth + wellBottomThickness );
+            wellInLtShp.lineTo( -wellSideThickness - lx02 - lx03, -( -wellSideThickness - lx02 - lx03 ) * -0.02 - gratingHeight );
+            wellInLtShp.lineTo( -wellSideThickness - lx02, -( -wellSideThickness - lx02 ) * -0.02 - gratingHeight );
+
+            const wellInLtExtr = addExtr( wellInLtShp, 'red', gratingLength-lx02-lx04);
+            wellInLtExtr.position.set( concreteLt.x - wellLtDist, concreteLt.y + wellLtDist * -0.02, wellSpacing + wellSideThickness + lx02 );
+            // showContainer.push( wellInLtExtr );
+
+            const wellInLtEdges = new THREE.EdgesGeometry(wellInLtExtr.geometry);
+            const wellInLtOutline = new THREE.LineSegments( wellInLtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            wellInLtOutline.position.set( concreteLt.x - wellLtDist, concreteLt.y + wellLtDist * -0.02, wellSpacing + wellSideThickness + lx02 );
+            showContainer.push( wellInLtOutline );
+
+            const wellInRtShp = new THREE.Shape();
+            wellInRtShp.moveTo( wellSideThickness + rx02, ( wellSideThickness + rx02 ) * -0.02 - gratingHeight );
+            wellInRtShp.lineTo( wellSideThickness + rx02, -ui.footingHeight - wellDepth + wellBottomThickness );
+            wellInRtShp.lineTo( wellSideThickness + rx02 + rx03, -ui.footingHeight - wellDepth + wellBottomThickness );
+            wellInRtShp.lineTo( wellSideThickness + rx02 + rx03, ( wellSideThickness + rx02 + rx03 ) * -0.02 - gratingHeight );
+            wellInRtShp.lineTo( wellSideThickness + rx02, ( wellSideThickness + rx02 ) * -0.02 - gratingHeight );
+
+            const wellInRtExtr = addExtr( wellInRtShp, 'red', gratingLength-rx02-rx04);
+            wellInRtExtr.position.set( concreteRt.x + wellRtDist, concreteRt.y + wellRtDist * -0.02, wellSpacing + wellSideThickness + rx02 );
+            // showContainer.push( wellInRtExtr );
+
+            const wellInRtEdges = new THREE.EdgesGeometry(wellInRtExtr.geometry);
+            const wellInRtOutline = new THREE.LineSegments( wellInRtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            wellInRtOutline.position.set( concreteRt.x + wellRtDist, concreteRt.y + wellRtDist * -0.02, wellSpacing + wellSideThickness + rx02 );
+            showContainer.push( wellInRtOutline );
+
+
+            // 집수정 뚜껑
+            const wellGratingLtShp = new THREE.Shape();
+            wellGratingLtShp.moveTo( -wellSideThickness, wellSideThickness * -0.02 );
+            wellGratingLtShp.lineTo( -wellSideThickness, wellSideThickness * -0.02 - gratingHeight );
+            wellGratingLtShp.lineTo( -wellSideThickness - gratingLtWidth, -(-wellSideThickness - gratingLtWidth)*-0.02 - gratingHeight );
+            wellGratingLtShp.lineTo( -wellSideThickness - gratingLtWidth, -(-wellSideThickness - gratingLtWidth)*-0.02 );
+            wellGratingLtShp.lineTo( -wellSideThickness, wellSideThickness * -0.02 );
+
+            const wellGratingLtExtr = addExtr( wellGratingLtShp, 'darkslategray', gratingLength );
+            wellGratingLtExtr.position.set( concreteLt.x - wellLtDist, concreteLt.y + wellLtDist * -0.02, wellSpacing + wellSideThickness );
+            // showContainer.push( wellGratingLtExtr )
+
+            const wellGratingLtEdges = new THREE.EdgesGeometry(wellGratingLtExtr.geometry);
+            const wellGratingLtOutline = new THREE.LineSegments( wellGratingLtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            wellGratingLtOutline.position.set( concreteLt.x - wellLtDist, concreteLt.y + wellLtDist * -0.02, wellSpacing + wellSideThickness );
+            showContainer.push( wellGratingLtOutline );
+
+            const wellGratingRtShp = new THREE.Shape();
+            wellGratingRtShp.moveTo( wellSideThickness, wellSideThickness * -0.02 );
+            wellGratingRtShp.lineTo( wellSideThickness, wellSideThickness * -0.02 - gratingHeight );
+            wellGratingRtShp.lineTo( wellSideThickness + gratingRtWidth, ( wellSideThickness + gratingRtWidth )*-0.02 - gratingHeight );
+            wellGratingRtShp.lineTo( wellSideThickness + gratingRtWidth, ( wellSideThickness + gratingRtWidth )*-0.02 );
+            wellGratingRtShp.lineTo( wellSideThickness, wellSideThickness * -0.02 );
+
+            const wellGratingRtExtr = addExtr( wellGratingRtShp, 'darkslategray', gratingLength );
+            wellGratingRtExtr.position.set( concreteRt.x + wellRtDist, concreteRt.y + wellRtDist * -0.02, wellSpacing + wellSideThickness );
+            // showContainer.push( wellGratingRtExtr );
+
+            const wellGratingRtEdges = new THREE.EdgesGeometry(wellGratingRtExtr.geometry);
+            const wellGratingRtOutline = new THREE.LineSegments( wellGratingRtEdges, new THREE.LineBasicMaterial({color: 'black'}));
+            wellGratingRtOutline.position.set( concreteRt.x + wellRtDist, concreteRt.y + wellRtDist * -0.02, wellSpacing + wellSideThickness );
+            showContainer.push( wellGratingRtOutline );
+
+
+            // 집수정 하부 생성
+            const wellSubLtCsg = new CSG();
+            wellSubLtCsg.subtract( [ wellOutLtExtr, wellInLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const wellLtMesh = wellSubLtCsg.toMesh();
+            // showContainer.push( wellLtMesh );
+
+            const wellSubRtCsg = new CSG();
+            wellSubRtCsg.subtract( [ wellOutRtExtr, wellInRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            const wellRtMesh = wellSubRtCsg.toMesh();
+            // showContainer.push( wellRtMesh );
+
+
+
+            // // 그레이팅 덮개
+            // const gratingCoverShp = new THREE.Shape();
+            // gratingCoverShp.moveTo(  0,                       0 );
+            // gratingCoverShp.lineTo(  (gratingWidth-0.020)/2,  0 );
+            // gratingCoverShp.lineTo(  (gratingWidth-0.020)/2, -(gratingLength-0.016)/2 );
+            // gratingCoverShp.lineTo( -(gratingWidth-0.020)/2, -(gratingLength-0.016)/2 );
+            // gratingCoverShp.lineTo( -(gratingWidth-0.020)/2,  0 );
+            // gratingCoverShp.lineTo(  0,                       0 );
+
+            // const gratingCoverHole1 = new THREE.Path();
+            // gratingCoverHole1.moveTo(  0,     - 0.085 );
+            // gratingCoverHole1.lineTo(  0.050, - 0.085 );
+            // gratingCoverHole1.absarc(  0.050, - 0.100, 0.015, Math.PI/2, -Math.PI/2, true );
+            // gratingCoverHole1.lineTo( -0.050, - 0.115 );
+            // gratingCoverHole1.absarc( -0.050, - 0.100, 0.015, -Math.PI/2, Math.PI/2, true );
+            // gratingCoverHole1.lineTo(  0,     - 0.085 );
+
+            // const gratingCoverHole2 = new THREE.Path();
+            // gratingCoverHole2.moveTo(  0,     -(gratingLength-0.016)/2 + 0.085 );
+            // gratingCoverHole2.lineTo(  0.050, -(gratingLength-0.016)/2 + 0.085 );
+            // gratingCoverHole2.absarc(  0.050, -(gratingLength-0.016)/2 + 0.100, 0.015, -Math.PI/2, Math.PI/2, false );
+            // gratingCoverHole2.lineTo( -0.050, -(gratingLength-0.016)/2 + 0.115 );
+            // gratingCoverHole2.absarc( -0.050, -(gratingLength-0.016)/2 + 0.100, 0.015, Math.PI/2, -Math.PI/2, false );
+            // gratingCoverHole2.lineTo(  0,     -(gratingLength-0.016)/2 + 0.085 );
+
+            // gratingCoverShp.holes.push( gratingCoverHole1 );
+            // gratingCoverShp.holes.push( gratingCoverHole2 );
+            // const gratingCoverExtr1 = addExtr( gratingCoverShp, 0x1a1a1a, 0.0045, 0.9 );
+            // gratingCoverExtr1.rotation.x = -Math.PI/2;
+            // gratingCoverExtr1.position.set( concreteLt.x - wellLtDist - wellWidth/2, concreteLt.y + (wellLtDist +wellWidth/2) * -0.02, wellSpacing )
+            // // showContainer.push( gratingCoverExtr1 );
+
+            // const gratingCoverExtr2 = addExtr( gratingCoverShp, 0x1a1a1a, 0.0045, 0.9 );
+            // gratingCoverExtr2.rotation.x = -Math.PI/2;
+            // gratingCoverExtr2.position.set( concreteLt.x - wellLtDist - wellWidth/2, concreteLt.y + (wellLtDist +wellWidth/2) * -0.02, wellSpacing + (gratingLength)/2 )
+            // // showContainer.push( gratingCoverExtr2 );
+            
+
+
+            // 하부 유공관
+
+            //// 1.1 자르기 위한 하부유공관
+            const bottomPipeOutGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, ui.totalLength, 20 );
+            bottomPipeOutGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutGeo.translate( 0, 0, ui.totalLength/2 );
+
+            const bottomPipeInGeo = new THREE.CylinderBufferGeometry( bottomPipeInD/2, bottomPipeInD/2, ui.totalLength, 20 );
+            bottomPipeInGeo.rotateX( - Math.PI/2 );
+            bottomPipeInGeo.translate( 0, 0, ui.totalLength/2 );
+
+            const bottomPipeMat = new THREE.MeshPhongMaterial( {color: 'seagreen' } );
+
+            const bottomPipeOutMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            const bottomPipeInMesh = new THREE.Mesh( bottomPipeInGeo, bottomPipeMat );
+
+            const bottomPipeOutLtMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            bottomPipeOutLtMesh.position.set( -wellLtWidth/2 + concreteLt.x - wellLtDist, concreteLt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            // showContainer.push( bottomPipeOutLtMesh );
+
+            const bottomPipeOutRtMesh = new THREE.Mesh( bottomPipeOutGeo, bottomPipeMat );
+            bottomPipeOutRtMesh.position.set( +wellRtWidth/2 + concreteRt.x + wellRtDist, concreteRt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            // showContainer.push( bottomPipeOutRtMesh );
+
+
+            //// 1.2 하부 유공관 뒤쪽
+            const bottomPipeOutBackGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, wellSpacing, 20 );
+            bottomPipeOutBackGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutBackGeo.translate( 0, 0, wellSpacing/2 );
+
+            const bottomPipeOutBackMesh = new THREE.Mesh( bottomPipeOutBackGeo, bottomPipeMat );
+
+            const bottomPipeBackCsg = new CSG();
+            bottomPipeBackCsg.subtract( [ bottomPipeOutBackMesh, bottomPipeInMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+
+            const bottomPipeBackLtMesh = bottomPipeBackCsg.toMesh();
+            bottomPipeBackLtMesh.position.set( -wellLtWidth/2 + concreteLt.x - wellLtDist, concreteLt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            showContainer.push( bottomPipeBackLtMesh );
+
+            const bottomPipeBackRtMesh = bottomPipeBackLtMesh.clone();
+            bottomPipeBackRtMesh.position.set( +wellRtWidth/2 + concreteRt.x + wellRtDist, concreteRt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0 );
+            showContainer.push( bottomPipeBackRtMesh );
+
+
+            //// 1.3 하부 유공관 앞쪽
+            const bottomPipeOutFrontGeo = new THREE.CylinderBufferGeometry( bottomPipeOutD/2, bottomPipeOutD/2, ui.totalLength - wellSpacing - wellLength, 20 );
+            bottomPipeOutFrontGeo.rotateX( - Math.PI/2 );
+            bottomPipeOutFrontGeo.translate( 0, 0, (ui.totalLength - wellSpacing - wellLength)/2 );
+
+            const bottomPipeOutFrontMesh = new THREE.Mesh( bottomPipeOutFrontGeo, bottomPipeMat );
+
+            const bottomPipeFrontCsg = new CSG();
+            bottomPipeFrontCsg.subtract( [ bottomPipeOutFrontMesh, bottomPipeInMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+
+            const bottomPipeFrontLtMesh = bottomPipeFrontCsg.toMesh();
+            bottomPipeFrontLtMesh.position.set( -wellLtWidth/2 + concreteLt.x - wellLtDist, concreteLt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, wellSpacing + wellLength );
+            showContainer.push( bottomPipeFrontLtMesh );
+
+            const bottomPipeFrontRtMesh = bottomPipeFrontLtMesh.clone();
+            bottomPipeFrontRtMesh.position.set( +wellRtWidth/2 + concreteRt.x + wellRtDist, concreteRt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, wellSpacing + wellLength );
+            showContainer.push( bottomPipeFrontRtMesh );
+
+
+
+            // 맹암거 그리기
+            const moleDrainageHeight = 0.05 + bottomPipeOutD + 0.05;
+
+            const moleW1 = 0.125;
+            // const moleW2 = 0.300; // lx03과 rx03으로 대체
+            const moleW3 = 0.300;
+
+            const moleDrainageLtShp = new THREE.Shape();
+            moleDrainageLtShp.moveTo( concreteLt.x, concreteLt.y - ui.footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellLtDist - wellLtWidth + moleW1 + lx03 + moleW3, ( concreteLt.x - wellLtDist - wellLtWidth + moleW1 + lx03 + moleW3 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellLtDist - wellLtWidth + moleW1 + lx03, concreteLt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellLtDist - wellLtWidth + moleW1, concreteLt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x - wellLtDist - wellLtWidth, concreteLt.y - ui.footingHeight );
+            moleDrainageLtShp.lineTo( concreteLt.x, concreteLt.y - ui.footingHeight );
+
+            const moleDrainageLtLine1 = addLine( moleDrainageLtShp, 'slategray' );
+            showContainer.push( moleDrainageLtLine1 );
+
+            const moleDrainageLtLine2 = moleDrainageLtLine1.clone();
+            moleDrainageLtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( moleDrainageLtLine2 );
+
+            const moleDrainageLtExtr1 = addExtr( moleDrainageLtShp, 'slategray', wellSpacing );
+            moleDrainageLtExtr1.material.transparent = true;
+            moleDrainageLtExtr1.material.opacity = 0.9;
+            // showContainer.push( moleDrainageLtExtr1 );
+
+            const moleDrainageLtExtr2 = addExtr( moleDrainageLtShp, 'slategray', ui.totalLength - wellSpacing - wellLength );
+            moleDrainageLtExtr2.material.transparent = true;
+            moleDrainageLtExtr2.material.opacity = 0.9;
+            moleDrainageLtExtr2.position.set( 0, 0, wellSpacing + wellLength )
+            // showContainer.push( moleDrainageLtExtr2 );
+        
+
+            const moleDrainageRtShp = new THREE.Shape();
+            moleDrainageRtShp.moveTo( concreteRt.x, concreteRt.y - ui.footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellRtDist + wellRtWidth - moleW1 - rx03 - moleW3, ( concreteRt.x + wellRtDist + wellRtWidth - moleW1 - rx03 - moleW3 ) * ui.crossSlopeStandard / 100 - concrete - cementeFilter );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellRtDist + wellRtWidth - moleW1 - rx03, concreteRt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellRtDist + wellRtWidth - moleW1, concreteRt.y - ui.footingHeight - moleDrainageHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x + wellRtDist + wellRtWidth, concreteRt.y - ui.footingHeight );
+            moleDrainageRtShp.lineTo( concreteRt.x, concreteRt.y - ui.footingHeight );
+
+            const moleDrainageRtLine1 = addLine( moleDrainageRtShp, 'slategray' );
+            showContainer.push( moleDrainageRtLine1 );
+
+            const moleDrainageRtLine2 = moleDrainageRtLine1.clone();
+            moleDrainageRtLine2.position.set( 0, 0, ui.totalLength );
+            showContainer.push( moleDrainageRtLine2 );
+
+            const moleDrainageRtExtr1 = addExtr( moleDrainageRtShp, 'slategray', wellSpacing );
+            moleDrainageRtExtr1.material.transparent = true;
+            moleDrainageRtExtr1.material.opacity = 0.9;
+            // showContainer.push( moleDrainageRtExtr1 );
+
+            const moleDrainageRtExtr2 = addExtr( moleDrainageRtShp, 'slategray', ui.totalLength - wellSpacing - wellLength );
+            moleDrainageRtExtr2.material.transparent = true;
+            moleDrainageRtExtr2.material.opacity = 0.9;
+            moleDrainageRtExtr2.position.set( 0, 0, wellSpacing + wellLength)
+            // showContainer.push( moleDrainageRtExtr2 );
+            
+
+            // 측벽배수관 변수
+            let wallPipeOutD = +ui.wallPipeInD+0.014;
+           
+            // if ( ui.wallPipeInD == 0.100 ) {
+                
+            //     wallPipeOutD = 0.114;
+                
+            // } else if( ui.wallPipeInD == 0.150 ) {
+                
+            //     // wallPipeOutD = 0.165;
+            //     wallPipeOutD = 0.164;
+                
+            // } else if( ui.wallPipeInD == 0.200 ) {
+                
+            //     // wallPipeOutD = 0.216;
+            //     wallPipeOutD = 0.214;
+                
+            // } 
+                
+            const crossTSpacing = 1; // 횡배수관T형 종방향간격
+
+            const crossDitchOutD = 0.06;
+            const crossDitchInD = 0.05;
+
+            const crossDitchSpacing = 3; // 횡배수관Ditch 종방향
+            
+
+            let x1ValueLt, yValueLt, x1ValueRt, yValueRt // 측벽배수관 위치
+
+            // 측벽유공관-좌측
+            {
+                // y = mx + d, 횡배수관 중심선
+                const mValue = -4/100; // -4%
+                const dValue = concreteLt.y -ui.footingHeight +wallPipeOutD/2 -mValue*( concreteLt.x - wellLtDist - wellLtWidth  + wallPipeOutD/2 );
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                // const aValue = r3Origin.x;
+                // const bValue = r3Origin.y;
+                // const rValue = r3Final - wallPipeOutD/2;
+                const aValue = footingLtSlope[0].x;
+                const bValue = footingLtSlope[footingLtSlope.length-1].y;
+                const rValue = r3Radius + wallPipeOutD/2;
+
+                // difference = r^2(1+m^2) - (b-ma-d)^2
+                const difference = rValue*rValue*(1+mValue*mValue) - (bValue-mValue*aValue-dValue)*(bValue-mValue*aValue-dValue);
+
+                // x1 = [ a + b*m - d*m + sqrt(difference) ] / [ 1 + m^2 ]
+                // x2 = [ a + b*m - d*m - sqrt(difference) ] / [ 1 + m^2 ]
+                const x1Value = ( aValue+bValue*mValue - dValue*mValue + Math.sqrt(difference) ) / ( 1+mValue*mValue);
+                const x2Value = ( aValue+bValue*mValue - dValue*mValue - Math.sqrt(difference) ) / ( 1+mValue*mValue);
+
+                // 결과
+                x1ValueLt = Math.min( x1Value, x2Value ); // min값
+                yValueLt = mValue*x1ValueLt + dValue;
+                
+                // 측벽유공관
+                const wallPipeShp = new THREE.Shape();
+                wallPipeShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2, false );
+
+                const wallPipeHole = new THREE.Path();
+                wallPipeHole.absarc( 0, 0, ui.wallPipeInD/2, 0, Math.PI*2, false );
+
+                wallPipeShp.holes.push( wallPipeHole );
+
+                // const wallPipeLtExtr = addExtr( wallPipeShp, 'crimson', ui.totalLength );
+                const wallPipeLtExtr = addExtr( wallPipeShp, 'midnightblue', ui.totalLength );
+                wallPipeLtExtr.position.set( x1ValueLt, yValueLt, 0 );
+                showContainer.push( wallPipeLtExtr );
+
+                const wallPipeOutShp = new THREE.Shape();
+                wallPipeOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false );
+
+                const wallPipeOutExtr = addExtr( wallPipeOutShp, 'firebrick', ui.totalLength );
+                wallPipeOutExtr.position.set( x1ValueLt, yValueLt, 0 );
+                // showContainer.push( wallPipeOutExtr ); // 자르기 위해
+
+
+                // 횡배수관T형(하부 유공관에 연결)
+                const crossTOutShp = new THREE.Shape();
+                crossTOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossTInShp = new THREE.Path();
+                crossTInShp.absarc( 0, 0, ui.wallPipeInD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌                
+
+                crossTOutShp.holes.push( crossTInShp );
+
+                const crossTLtPathArr = [];
+                crossTLtPathArr.push( new THREE.Vector3( -wellLtWidth/2 + concreteLt.x - wellLtDist, concreteLt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0) )
+                crossTLtPathArr.push( new THREE.Vector3( concreteLt.x - wellLtDist - wellLtWidth + wallPipeOutD/2, concreteLt.y -ui.footingHeight + wallPipeOutD/2, 0 ) );
+                crossTLtPathArr.push( new THREE.Vector3( x1ValueLt, yValueLt, 0 ) );
+
+                const crossLtPath = addPath( crossTLtPathArr )
+
+                const crossTOutLtSweep = addSweep( crossTOutShp, 'mediumaquamarine', crossLtPath );
+                crossTOutLtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTOutLtSweep );
+
+
+                // 횡배수관Y형(집수정에 연결)
+                const crossYLtPath1 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( x1ValueLt, yValueLt, -0.5 );
+                    const p2 = new THREE.Vector3( concreteLt.x - wellLtDist - wellLtWidth + wallPipeOutD/2, concreteLt.y -ui.footingHeight + wallPipeOutD/2, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossYLtPath1.add( L1 );
+                }
+
+
+                const crossYOutLtSweep1 = addSweep( crossTOutShp, 'mediumaquamarine', crossYLtPath1 );
+                crossYOutLtSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYOutLtSweep1 );
+ 
+                const crossPipeLtPath2 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( x1ValueLt, yValueLt, 0.5 );
+                    const p2 = new THREE.Vector3( concreteLt.x - wellLtDist - wellLtWidth + wallPipeOutD/2, concreteLt.y -ui.footingHeight + wallPipeOutD/2, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossPipeLtPath2.add( L1 );
+                }
+
+                const crossYOutLtSweep2 = addSweep( crossTOutShp, 'mediumaquamarine', crossPipeLtPath2, 0.9 );
+                crossYOutLtSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYOutLtSweep2 );
+
+
+                // 횡배수관(Ditch에 연결)
+                const result = tangentPointPath( footingLtSlope[8].x, footingLtSlope[8].y, footingLtSlope[15].x, footingLtSlope[15].y, crossDitchOutD )
+
+                const crossPipeShp = new THREE.Shape();
+                crossPipeShp.absarc( 0, crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2, false );
+
+                const crossPipeShpHole = new THREE.Path();
+                crossPipeShpHole.absarc( 0, crossDitchOutD/2, crossDitchInD/2, 0, Math.PI*2, false );
+
+                crossPipeShp.holes.push( crossPipeShpHole );
+
+
+                const crossDitchLtPath = new THREE.CurvePath();
+
+                if ( ui.footingType == '자연환기' ) {
+
+                    const p1 = new THREE.Vector3( footingLtSlope[8].x, footingLtSlope[8].y );
+                    const p2 = new THREE.Vector3( footingLtSlope[15].x, footingLtSlope[8].y );
+                    const p3 = new THREE.Vector3( footingLtSlope[15].x, footingLtSlope[15].y );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+
+                    crossDitchLtPath.add( L1 );
+                    crossDitchLtPath.add( L2 );
+
+                } else {
+
+                    const p1 = new THREE.Vector3( footingLtSlope[6].x, result[0]*footingLtSlope[6].x+result[1] );
+                    const p2 = new THREE.Vector3( (footingLtSlope[15].x+footingLtSlope[16].x)/2, result[0]*(footingLtSlope[15].x+footingLtSlope[16].x)/2+result[1] );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossDitchLtPath.add( L1 );
+
+                }
+
+                const crossDitchLtSweep = addSweep( crossPipeShp, 'teal', crossDitchLtPath );
+                crossDitchLtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchLtSweep );
+
+
+                // 집수정 Final CSG
+                const WellLtFinalCsg = new CSG();
+                WellLtFinalCsg.subtract( [ wellLtMesh, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const WellLtFinalMesh = WellLtFinalCsg.toMesh();
+                showContainer.push( WellLtFinalMesh );
+
+
+                // 맹암거 Final CSG
+                const moleDrainageLtCsg1 = new CSG();
+                moleDrainageLtCsg1.subtract( [ moleDrainageLtExtr1, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageLtMesh1 = moleDrainageLtCsg1.toMesh();
+                showContainer.push( moleDrainageLtMesh1 );
+
+                const moleDrainageLtCsg2 = new CSG();
+                moleDrainageLtCsg2.subtract( [ moleDrainageLtExtr2, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageLtMesh2 = moleDrainageLtCsg2.toMesh();
+                showContainer.push( moleDrainageLtMesh2 );
+
+
+                // 횡배수관T형 Final Csg
+                const crossTLtFinalCsg = new CSG();
+                crossTLtFinalCsg.subtract( [ crossTOutLtSweep, wallPipeOutExtr, bottomPipeOutLtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossTLtFinalMesh = crossTLtFinalCsg.toMesh();
+                showContainer.push( crossTLtFinalMesh );
+
+
+                // 횡배수관Y형 Final CSG
+                const crossYLtFinalCsg1 = new CSG();
+                crossYLtFinalCsg1.subtract( [ crossYOutLtSweep1, wallPipeOutExtr, wellInLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYLtFinalMesh1 = crossYLtFinalCsg1.toMesh();
+                showContainer.push( crossYLtFinalMesh1 );
+                
+                const crossYLtFinalCsg2 = new CSG();
+                crossYLtFinalCsg2.subtract( [ crossYOutLtSweep2, wallPipeOutExtr, wellInLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYLtFinalMesh2 = crossYLtFinalCsg2.toMesh();
+                showContainer.push( crossYLtFinalMesh2 );
+                
+                
+                // 횡배수관Ditch Final CSG
+                const crossDitchLtCsg = new CSG();
+                crossDitchLtCsg.intersect( [ crossDitchLtSweep, footingLtExtr ] );
+                const crossDitchLtMesh = crossDitchLtCsg.toMesh();
+                showContainer.push( crossDitchLtMesh );
+
+
+                // 좌측 공동구 Final CSG
+                //// 좌측 공동구 : 집수정 subtract
+                const footingLtSubCsg1 = new CSG();
+                footingLtSubCsg1.subtract( [ footingLtExtr, wellInLtExtr, wellGratingLtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingLtMesh1 = footingLtSubCsg1.toMesh();
+                // showContainer.push( footingLtMesh1 );
+
+
+                //// 좌측 공동구 : 측벽배수관 subtract
+                const footingLtSubCsg2 = new CSG();
+                footingLtSubCsg2.subtract( [ footingLtMesh1, wallPipeOutExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingLtMesh2 = footingLtSubCsg2.toMesh();
+                showContainer.push( footingLtMesh2 );
+
+
+                //// 좌측 공동구 : 횡배수관T형, 횡배수관Y형 subtract // 원래 50m간격으로 짤라야 하기 때문에 의미가 없음
+                // const footingLtSubCsg3 = new CSG();
+                // footingLtSubCsg3.subtract( [ footingLtMesh2, crossTOutLtSweep, crossYOutLtSweep1, crossYOutLtSweep2 ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                // const footingLtMesh3 = footingLtSubCsg3.toMesh();
+                // showContainer.push( footingLtMesh3 );
+
+            }
+
+
+            // 측벽유공관-우측
+            {
+                // y = mx + d, 횡배수관 중심선
+                const mValue = 4/100; // -4%
+                const dValue = concreteRt.y -ui.footingHeight +wallPipeOutD/2 -mValue*( concreteRt.x + wellRtDist + wellRtWidth - wallPipeOutD/2 );
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                const aValue = footingRtSlope[0].x;
+                const bValue = footingRtSlope[footingRtSlope.length-1].y;
+                const rValue = r5Radius - wallPipeOutD/2;
+
+                // difference = r^2(1+m^2) - (b-m*a-d)^2
+                const difference = rValue*rValue*(1+mValue*mValue) - (bValue-mValue*aValue-dValue)*(bValue-mValue*aValue-dValue);
+
+                // x1 = [ a + b*m - d*m + sqrt(difference) ] / [ 1 + m^2 ]
+                // x2 = [ a + b*m - d*m - sqrt(difference) ] / [ 1 + m^2 ]
+                const x1Value = ( aValue+bValue*mValue - dValue*mValue + Math.sqrt(difference) ) / ( 1+mValue*mValue);
+                const x2Value = ( aValue+bValue*mValue - dValue*mValue - Math.sqrt(difference) ) / ( 1+mValue*mValue);
+
+
+                // 결과
+                x1ValueRt = Math.max( x1Value, x2Value ); // max값
+                yValueRt = mValue*x1ValueRt + dValue;
+
+
+                // 측벽유공관 생성
+                const wallPipeShp = new THREE.Shape();
+                wallPipeShp.absarc( 0, 0, -wallPipeOutD/2, 0, Math.PI*2, false );
+
+                const wallPipeHole = new THREE.Path();
+                wallPipeHole.absarc( 0, 0, -ui.wallPipeInD/2, 0, Math.PI*2, false );
+
+                wallPipeShp.holes.push( wallPipeHole );
+
+                const wallPipeLtExtr = addExtr( wallPipeShp, 'midnightblue', ui.totalLength );
+                wallPipeLtExtr.position.set( x1ValueRt, yValueRt, 0 );
+                showContainer.push( wallPipeLtExtr );
+
+                const wallPipeOutShp = new THREE.Shape();
+                wallPipeOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false );
+
+                const wallPipeOutExtr = addExtr( wallPipeOutShp, 'firebrick', ui.totalLength );
+                wallPipeOutExtr.position.set( x1ValueRt, yValueRt, 0 );
+                // showContainer.push( wallPipeOutExtr ); // 자르기 위해
+
+
+                // 횡배수관T형(하부 유공관에 연결)
+                const crossTOutShp = new THREE.Shape();
+                crossTOutShp.absarc( 0, 0, wallPipeOutD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌
+
+                const crossTInShp = new THREE.Path();
+                crossTInShp.absarc( 0, 0, ui.wallPipeInD/2, 0, Math.PI*2*0.999, false ); // 원이 CSG로 subtract되지 않아 0.99곱해줌                
+
+                crossTOutShp.holes.push( crossTInShp );
+
+                const crossTRtPathArr = [];
+                crossTRtPathArr.push( new THREE.Vector3( +wellRtWidth/2 + concreteRt.x + wellRtDist, concreteRt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, 0) )
+                crossTRtPathArr.push( new THREE.Vector3( concreteRt.x + wellRtDist + wellRtWidth - wallPipeOutD/2, concreteRt.y -ui.footingHeight + wallPipeOutD/2, 0 ) );
+                crossTRtPathArr.push( new THREE.Vector3( x1ValueRt, yValueRt, 0 ) );
+
+                const crossRtPath = addPath( crossTRtPathArr )
+
+                const crossTOutRtSweep = addSweep( crossTOutShp, 'mediumaquamarine', crossRtPath );
+                crossTOutRtSweep.position.set( 0, 0, crossTSpacing );
+                // showContainer.push( crossTOutRtSweep )
+
+                // 횡배수관Y형(집수정에 연결)
+                const crossYRtPath1 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( x1ValueRt, yValueRt, -0.5 );
+                    const p2 = new THREE.Vector3( concreteRt.x + wellLtDist + wellRtWidth - wallPipeOutD/2, concreteRt.y -ui.footingHeight + wallPipeOutD/2, 0 );
+
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossYRtPath1.add( L1 );
+                }
+
+                const crossYOutRtSweep1 = addSweep( crossTOutShp, 'mediumaquamarine', crossYRtPath1 );
+                crossYOutRtSweep1.position.set( 0, 0, wellSpacing + wellLength/2 - wallPipeOutD );
+                // showContainer.push( crossYOutRtSweep1 );
+
+                const crossPipeRtPath2 = new THREE.CurvePath();
+                {
+                    const p1 = new THREE.Vector3( x1ValueRt, yValueRt, 0.5 );
+                    const p2 = new THREE.Vector3( concreteRt.x + wellLtDist + wellRtWidth - wallPipeOutD/2, concreteRt.y -ui.footingHeight + wallPipeOutD/2, 0 );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossPipeRtPath2.add( L1 );
+                }
+
+                const crossYOutRtSweep2 = addSweep( crossTOutShp, 'mediumaquamarine', crossPipeRtPath2, 0.9 );
+                crossYOutRtSweep2.position.set( 0, 0, wellSpacing + wellLength/2 + wallPipeOutD );
+                // showContainer.push( crossYOutRtSweep2 );
+
+
+                // 횡배수관(Ditch에 연결)
+                const result = tangentPointPath( footingRtSlope[8].x, footingRtSlope[8].y, footingRtSlope[15].x, footingRtSlope[15].y, crossDitchOutD )
+
+                const crossPipeShp = new THREE.Shape();
+                crossPipeShp.absarc( 0, -crossDitchOutD/2, crossDitchOutD/2, 0, Math.PI*2, false );
+
+                const crossPipeShpHole = new THREE.Path();
+                crossPipeShpHole.absarc( 0, -crossDitchOutD/2, crossDitchInD/2, 0, Math.PI*2, false );
+
+                crossPipeShp.holes.push( crossPipeShpHole );
+
+                const crossDitchRtPath = new THREE.CurvePath();
+
+                if ( ui.footingType == '자연환기' ) {
+
+                    const p1 = new THREE.Vector3( footingRtSlope[8].x, footingRtSlope[8].y );
+                    const p2 = new THREE.Vector3( footingRtSlope[15].x, footingRtSlope[8].y );
+                    const p3 = new THREE.Vector3( footingRtSlope[15].x, footingRtSlope[15].y );
+
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    const L2 = new THREE.LineCurve3( p2, p3 );
+
+                    crossDitchRtPath.add( L1 );
+                    crossDitchRtPath.add( L2 );
+
+                } else {
+
+                    const p1 = new THREE.Vector3( footingRtSlope[6].x, result[0]*footingRtSlope[6].x+result[1] );
+                    const p2 = new THREE.Vector3( (footingRtSlope[15].x+footingRtSlope[16].x)/2, result[0]*(footingRtSlope[15].x+footingRtSlope[16].x)/2+result[1] );
+                    
+                    const L1 = new THREE.LineCurve3( p1, p2 );
+                    
+                    crossDitchRtPath.add( L1 );
+
+                }
+
+                const crossDitchRtSweep = addSweep( crossPipeShp, 'teal', crossDitchRtPath, 0.9 );
+                crossDitchRtSweep.position.set( 0, 0, crossDitchSpacing );
+                // showContainer.push( crossDitchRtSweep );
+
+
+                // 횡배수관Ditch Final CSG
+                const crossDitchRtCsg = new CSG();
+                crossDitchRtCsg.intersect( [ crossDitchRtSweep, footingRtExtr ] );
+                const crossDitchRtMesh = crossDitchRtCsg.toMesh();
+                showContainer.push( crossDitchRtMesh );
+
+
+                // 집수정 Final CSG
+                const WellRtFinalCsg = new CSG();
+                WellRtFinalCsg.subtract( [ wellRtMesh, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const WellRtFinalMesh = WellRtFinalCsg.toMesh();
+                showContainer.push( WellRtFinalMesh );
+
+
+                // 맹암거 Final CSG
+                const moleDrainageRtCsg1 = new CSG();
+                moleDrainageRtCsg1.subtract( [ moleDrainageRtExtr1, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageRtMesh1 = moleDrainageRtCsg1.toMesh();
+                showContainer.push( moleDrainageRtMesh1 );
+
+                const moleDrainageRtCsg2 = new CSG();
+                moleDrainageRtCsg2.subtract( [ moleDrainageRtExtr2, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const moleDrainageRtMesh2 = moleDrainageRtCsg2.toMesh();
+                showContainer.push( moleDrainageRtMesh2 );
+
+
+                // 횡배수관T형 Final Csg
+                const crossTRtFinalCsg = new CSG();
+                crossTRtFinalCsg.subtract( [ crossTOutRtSweep, wallPipeOutExtr, bottomPipeOutRtMesh ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossTRtFinalMesh = crossTRtFinalCsg.toMesh();
+                showContainer.push( crossTRtFinalMesh );
+
+
+                // 횡배수관Y형 Final CSG
+                const crossYRtFinalCsg1 = new CSG();
+                crossYRtFinalCsg1.subtract( [ crossYOutRtSweep1, wallPipeOutExtr, wellInRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYRtFinalMesh1 = crossYRtFinalCsg1.toMesh();
+                showContainer.push( crossYRtFinalMesh1 );
+                
+                const crossYRtFinalCsg2 = new CSG();
+                crossYRtFinalCsg2.subtract( [ crossYOutRtSweep2, wallPipeOutExtr, wellInRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const crossYRtFinalMesh2 = crossYRtFinalCsg2.toMesh();
+                showContainer.push( crossYRtFinalMesh2 );                   
+
+
+                // 우측 공동구 Final CSG
+                //// 우측 공동구 : 집수정 subtract
+                const footingRtSubCsg1 = new CSG();
+                footingRtSubCsg1.subtract( [ footingRtExtr, wellInRtExtr, wellGratingRtExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingRtMesh1 = footingRtSubCsg1.toMesh();
+                // showContainer.push( footingRtMesh1 );
+
+                //// 우측 공동구 : 측벽배수관 subtract
+                const footingRtSubCsg2 = new CSG();
+                footingRtSubCsg2.subtract( [ footingRtMesh1, wallPipeOutExtr ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+                const footingRtMesh2 = footingRtSubCsg2.toMesh();
+                showContainer.push( footingRtMesh2 );
+
+            //     //// 우측 공동구 : 횡배수관T형, 횡배수관Y형 subtract
+            //     // const footingRtSubCsg3 = new CSG();
+            //     // footingRtSubCsg3.subtract( [ footingRtMesh2, crossTOutRtSweep, crossYOutRtSweep1, crossYOutRtSweep2 ] );//맨 앞에 메쉬를 자름, 다음에 오는 메쉬를 사용도구
+            //     // const footingRtMesh3 = footingRtSubCsg3.toMesh();
+            //     // showContainer.push( footingRtMesh3 );
+
+            }
+
+
+            // 횡배수관(하부 유공관)
+            function tangentPointPath( xx, yy, aa, bb, rr ) {
+
+                // Point(x, y)
+                const x = xx;
+                const y = yy;
+
+                // (x-a)^2 + (y-b)^2 = r^2
+                const a = aa;
+                const b = bb;
+                const r = rr;
+
+                // value of sqrt
+                const vs = Math.sqrt( (x-a)*(x-a) + (y-b)*(y-b) - r*r );
+
+                // 계산된 값
+                const x1 = ( r*r * ( x-a ) + r * ( y-b ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + a;
+                const y1 = ( r*r * ( y-b ) - r * ( x-a ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + b;
+                
+                const x2 = ( r*r * ( x-a ) - r * ( y-b ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + a;
+                const y2 = ( r*r * ( y-b ) + r * ( x-a ) * vs ) / ( ( x-a )*( x-a ) + ( y-b )*( y-b ) ) + b;
+
+                // y = m*x + d
+                const yValue = Math.max( y1, y2 ); // max값
+
+                let xValue
+
+                if ( yValue == y1 ) { xValue = x1 } else { xValue = x2 }
+
+                const m = ( y - yValue ) / ( x - xValue );
+
+                const d = yValue - m * xValue
+
+                return [ m, d ]
+
+            }
+
+
+            // 환기방식 ////////////////////////////////////////////////////////////////////////////////
+            let jetfanDistance
+            let jetfanY
+
+            if ( ui.ventilation == '제트팬') {
+                
+                // 제트팬 외측 직경 결정
+                let jetfanOutterDiameter
+                
+                if ( ui.jetfanInnerDiameter == 1.250) {
+                    
+                    jetfanOutterDiameter = 1.450;
+                    
+                } else if( ui.jetfanInnerDiameter == 1.400 ) {
+                    
+                    jetfanOutterDiameter = 1.600;
+                    
+                } else if( ui.jetfanInnerDiameter == 1.530 ) {
+                    
+                    jetfanOutterDiameter = 1.750;
+                    
+                } else if(  ui.jetfanInnerDiameter == 1.030 ) {
+
+                    jetfanOutterDiameter = 1.230;
+
+                };
+                
+
+                // 편경사 최대절대값
+                let absoluteMax
+                
+                if ( crossSlopeMin + crossSlopeMax > 0) {
+                    
+                    absoluteMax = crossSlopeMax;
+                    
+                } else {
+                    
+                    absoluteMax = crossSlopeMin;
+                    
+                };
+                
+                const crossSlopeabsoluteMax = Math.abs( absoluteMax );
+                
+
+                // 제트팬 위치 계산
+                const jetfanMargin = 0.200
+                
+                const jetfanSlope = Math.atan( crossSlopeabsoluteMax/100 );
+                
+                const jetfanX = 0.3 * ui.jetfanInnerDiameter + jetfanOutterDiameter/2;
+
+
+
+                ui.jetfanNum = Math.max( ui.jetfanNum, 1 )
+                ui.jetfanNum = Math.min( ui.jetfanNum, 3 )
+
+                
+                if ( ui.jetfanNum == 1 ) {
+
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + jetfanMargin + jetfanOutterDiameter/2;
+                    
+                } else if( ui.jetfanNum == 2 ) {
+
+                    jetfanDistance = Math.max( ui.jetfanDistance, jetfanX );
+                    ui.jetfanDistance = Math.max( ui.jetfanDistance, jetfanX ); //ui에 최소값을 적용
+
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + jetfanDistance*crossSlopeabsoluteMax/100 + jetfanMargin + jetfanOutterDiameter/2;
+                    
+                } else if( ui.jetfanNum == 3 ) {
+
+                    jetfanDistance = Math.max( ui.jetfanDistance, jetfanX );
+                    jetfanY = clearanceHeight / Math.cos( jetfanSlope ) + 2*jetfanDistance*crossSlopeabsoluteMax/100 + jetfanMargin + jetfanOutterDiameter/2;
+
+                };
+
+
+                // 제트팬 이격거리 라인
+                const jetfanDistanceShp = new THREE.Shape();
+                jetfanDistanceShp.absarc( 0, 0, jetfanX, 0, Math.PI * 2, false );
+                
+                const jetfanDistanceLine = addDashLine( jetfanDistanceShp, 'gray' );
+                
+
+                // 제트팬 외경, 내경
+                const jetfanOutterDiameterShp = new THREE.Shape();
+                jetfanOutterDiameterShp.absarc( 0, 0, jetfanOutterDiameter/2, 0, Math.PI*2, false );
+                
+                const jetfanInnerDiameterShp = new THREE.Path();
+                jetfanInnerDiameterShp.absarc( 0, 0, ui.jetfanInnerDiameter/2, 0, Math.PI * 2, false );
+                
+                jetfanOutterDiameterShp.holes.push( jetfanInnerDiameterShp );
+
+                const jetfanOutterDiameterSurf = addSurf( jetfanOutterDiameterShp, 'silver' );
+                
+
+                // 제트팬 여유폭
+                const jetfanMarginShp = new THREE.Shape();
+                jetfanMarginShp.absarc( 0, 0, jetfanMargin/2, 0, Math.PI * 2, false );
+                
+                const jetfanMarginDashLine = addDashLine( jetfanMarginShp, 'gray' );
+                jetfanMarginDashLine.position.set(0, -jetfanOutterDiameter/2 - jetfanMargin/2);
+                
+
+                // 제트팬 그룹
+                const jetfanGroup = new THREE.Group();
+                jetfanGroup.add( jetfanDistanceLine );
+                jetfanGroup.add( jetfanOutterDiameterSurf );
+                jetfanGroup.add( jetfanMarginDashLine );
+
+                if ( ui.jetfanNum == 1 ) {
+
+                    const jetfanCenter = jetfanGroup.clone();
+                    jetfanCenter.position.set( 0, jetfanY );
+                    showContainer.push( jetfanCenter );
+
+                } else if( ui.jetfanNum == 2 ) {
+
+                    const jetfanLeft = jetfanGroup.clone();
+                    jetfanLeft.position.set( -jetfanDistance, jetfanY );
+                    showContainer.push( jetfanLeft );
+
+                    const jetfanRight = jetfanGroup.clone();
+                    jetfanRight.position.set( jetfanDistance, jetfanY );
+                    showContainer.push( jetfanRight );
+
+                } else if( ui.jetfanNum ==3 ) {
+
+                    const jetfanLeft = jetfanGroup.clone();
+                    jetfanLeft.position.set( -2*jetfanDistance, jetfanY );
+                    showContainer.push( jetfanLeft );
+
+                    const jetfanRight = jetfanGroup.clone();
+                    jetfanRight.position.set( 2*jetfanDistance, jetfanY );
+                    showContainer.push( jetfanRight );
+
+                    const jetfanCenter = jetfanGroup.clone();
+                    jetfanCenter.position.set( 0, jetfanY );
+                    showContainer.push( jetfanCenter );
+
+                };
+
+
+                // jetfan 본체 배치
+                const jetfanMainGroup = new THREE.Group();
+                
+                if ( ui.jetfanInnerDiameter == 1.250) {
+                    
+                    installjetfanMain( '1250_main.glb' )
+                    
+                } else if( ui.jetfanInnerDiameter == 1.400 ) {
+                    
+                    installjetfanMain( '1400_main.glb' )
+                    
+                } else if( ui.jetfanInnerDiameter == 1.530 ) {
+                    
+                    installjetfanMain( '1530_main.glb' )
+                    
+                } else if(  ui.jetfanInnerDiameter == 1.030 ) {
+
+                    installjetfanMain( '1030_main.glb' )
+
+                };
+
+                function installjetfanMain (ulr) {
+
+                    gltfLoader.load( ulr, function ( gltf ) {
+
+                        gltf.scene.traverse( function( child ) {
+                            if ( child instanceof THREE.Mesh ) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        } );
+
+                        const mesh11 = gltf.scene.children[ 0 ]
+
+                        const newMaterial = new THREE.MeshStandardMaterial({
+                        
+                            // color : 'silver', 
+                            roughness: 0.0,
+                            metalness: 0.6,
+
+                        });
+
+                        mesh11.traverse((o) => {
+                            if ( o.isMesh ) o.material = newMaterial;
+                        });
+
+
+                        if ( ui.jetfanNum == 1 ) {
+
+                            const jetfanCenter = mesh11.clone();
+                            jetfanCenter.position.set( 0, jetfanY );
+                            jetfanMainGroup.add( jetfanCenter );
+
+                        } else if( ui.jetfanNum == 2 ) {
+
+                            const jetfanLeft = mesh11.clone();
+                            jetfanLeft.position.set( -jetfanDistance, jetfanY );
+                            jetfanMainGroup.add( jetfanLeft );
+
+                            const jetfanRight = mesh11.clone();
+                            jetfanRight.position.set( jetfanDistance, jetfanY );
+                            jetfanMainGroup.add( jetfanRight );
+
+                        } else if( ui.jetfanNum ==3 ) {
+
+                            const jetfanLeft = mesh11.clone();
+                            jetfanLeft.position.set( -2*jetfanDistance, jetfanY );
+                            jetfanMainGroup.add( jetfanLeft );
+
+                            const jetfanRight = mesh11.clone();
+                            jetfanRight.position.set( 2*jetfanDistance, jetfanY );
+                            jetfanMainGroup.add( jetfanRight );
+
+                            const jetfanCenter = mesh11.clone();
+                            jetfanCenter.position.set( 0, jetfanY );
+                            jetfanMainGroup.add( jetfanCenter );
+
+                        };
+
+                    } )
+
+                }
+
+                jetfanMainGroup.position.set( 0, 0, ui.totalLength );
+                showContainer.push( jetfanMainGroup )
+
+
+                // jetfan 날개 배치
+                const jetfanWingGroup1 = new THREE.Group();
+                const jetfanWingGroup2 = new THREE.Group();
+                const jetfanWingGroup3 = new THREE.Group();
+
+                if ( ui.jetfanInnerDiameter == 1.250) {
+                    
+                    installjetfanWing( '1250_fan.glb' )
+                    
+                } else if( ui.jetfanInnerDiameter == 1.400 ) {
+                    
+                    installjetfanWing( '1400_fan.glb' )
+                    
+                } else if( ui.jetfanInnerDiameter == 1.530 ) {
+                    
+                    installjetfanWing( '1530_fan.glb' )
+                    
+                } else if(  ui.jetfanInnerDiameter == 1.030 ) {
+
+                    installjetfanWing( '1030_fan.glb' )
+
+                };
+
+                function installjetfanWing (ulr) {
+
+                    gltfLoader.load( ulr, function ( gltf ) {
+
+                        gltf.scene.traverse( function( child ) {
+                            if ( child instanceof THREE.Mesh ) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        } );
+
+                        const mesh11 = gltf.scene.children[ 0 ]
+
+                        const newMaterial = new THREE.MeshStandardMaterial({
+                        
+                            // color : 'silver', 
+                            roughness: 0.0,
+                            metalness: 0.8,
+
+                        });
+
+                        mesh11.traverse((o) => {
+                            if ( o.isMesh ) o.material = newMaterial;
+                        });
+
+
+                        if ( ui.jetfanNum == 1 ) {
+
+                            const jetfanCenter = mesh11.clone();
+                            jetfanWingGroup1.add( jetfanCenter );
+                            jetfanWingGroup1.position.set( 0, jetfanY, ui.totalLength );
+
+                        } else if( ui.jetfanNum == 2 ) {
+
+                            const jetfanLeft = mesh11.clone();
+                            jetfanWingGroup1.add( jetfanLeft );
+                            jetfanWingGroup1.position.set( -jetfanDistance, jetfanY, ui.totalLength );
+
+                            const jetfanRight = mesh11.clone();
+                            jetfanWingGroup2.add( jetfanRight );
+                            jetfanWingGroup2.position.set( jetfanDistance, jetfanY, ui.totalLength );
+
+                        } else if( ui.jetfanNum ==3 ) {
+
+                            const jetfanLeft = mesh11.clone();
+                            jetfanWingGroup1.add( jetfanLeft );
+                            jetfanWingGroup1.position.set( -2*jetfanDistance, jetfanY, ui.totalLength );
+
+
+                            const jetfanRight = mesh11.clone();
+                            jetfanWingGroup2.add( jetfanRight );
+                            jetfanWingGroup2.position.set( 2*jetfanDistance, jetfanY, ui.totalLength );
+
+                            const jetfanCenter = mesh11.clone();
+                            jetfanWingGroup3.add( jetfanCenter );
+                            jetfanWingGroup3.position.set( 0, jetfanY, ui.totalLength );
+
+                        };
+
+                    } )
+
+                }
+
+                jetfanWingContainer.push( jetfanWingGroup1 );
+                jetfanWingContainer.push( jetfanWingGroup2 );
+                jetfanWingContainer.push( jetfanWingGroup3 );
+
+            } else if ( ui.ventilation == '횡류식') {
+
+                const w1 = (ui.bracketB1+ui.bracketB2)+0.3;
+                const h1 = ui.bracketH1+ui.bracketH2;
+                const r1 = Math.sqrt( w1**2+h1**2 ); // r값 계산
+                const a1 = Math.asin( w1/r1 ); // 각도 계산
+                const a2 = Math.asin( ui.bracketH3/r1 ); // 각도 계산
+
+                // 횡류식 시설한계 기준점
+                const transverseBaseY = Math.max.apply( null, clearanceMaxHeight );
+
+                const totalRoad = ( roadWidth+shoulderLeft+shoulderRight );
+
+                const bracketLtShp = new THREE.Shape()
+                    .moveTo( -totalRoad/2-ui.bracketB1-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.bracketH1 )
+                    .lineTo( -totalRoad/2-ui.bracketB1-ui.bracketB2, transverseBaseY+ui.ductSlabDistance )
+                    .lineTo( -totalRoad/2, transverseBaseY+ui.ductSlabDistance )
+                    .lineTo( -totalRoad/2, transverseBaseY+ui.ductSlabDistance-ui.bracketH2 )
+                    .lineTo( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5, transverseBaseY+ui.ductSlabDistance-ui.bracketH2-ui.bracketH3 )
+                    // .lineTo( -totalRoad/2, transverseBaseY-ui.bracketH2-ui.bracketH3 )
+                    // .absarc( -totalRoad/2, transverseBaseY+ui.ductSlabDistance-ui.bracketH2, r1, Math.PI+a2, Math.PI/2+a1, true )
+                    // .lineTo( -totalRoad/2-ui.bracketB1-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.bracketH1 );
+
+                const bracketLtLine = addLine( bracketLtShp, 'black' );
+                showContainer.push( bracketLtLine );
+
+                const bracketRtShp = new THREE.Shape()
+                    .moveTo( totalRoad/2+ui.bracketB1+ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.bracketH1 )
+                    .lineTo( totalRoad/2+ui.bracketB1+ui.bracketB2, transverseBaseY+ui.ductSlabDistance )
+                    .lineTo( totalRoad/2, transverseBaseY+ui.ductSlabDistance )
+                    .lineTo( totalRoad/2, transverseBaseY+ui.ductSlabDistance-ui.bracketH2 )
+                    .lineTo( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5, transverseBaseY+ui.ductSlabDistance-ui.bracketH2-ui.bracketH3 )
+                    // .lineTo( -totalRoad/2, transverseBaseY-ui.bracketH2-ui.bracketH3 )
+                    // .absarc( -totalRoad/2, transverseBaseY+ui.ductSlabDistance-ui.bracketH2, r1, Math.PI+a2, Math.PI/2+a1, true )
+                    // .lineTo( -totalRoad/2-ui.bracketB1-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.bracketH1 );
+
+                const bracketRtLine = addLine( bracketRtShp, 'black' );
+                showContainer.push( bracketRtLine );
+
+                const slabShp = new THREE.Shape()
+                    .moveTo( -totalRoad/2-ui.bracketB2, transverseBaseY+ui.ductSlabDistance )
+                    .lineTo( -totalRoad/2-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness )
+                    .lineTo( totalRoad/2+ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness )
+                    .lineTo( totalRoad/2+ui.bracketB2, transverseBaseY+ui.ductSlabDistance );
+
+                const slabExtr = addExtr( slabShp, 'silver', ui.totalLength );
+                slabExtr.material.transparent = true;
+                slabExtr.material.opacity = 0.9;
+                showContainer.push( slabExtr );
+
+                const slabEdges = new THREE.EdgesGeometry( slabExtr.geometry, 20);
+                const slabline = new THREE.LineSegments( slabEdges, new THREE.LineBasicMaterial( {color: 'black'} ));
+                showContainer.push( slabline );
+                    
+
+                const traverseRadius = Math.sqrt( (totalRoad/2+ui.bracketB1+ui.bracketB2)**2+(transverseBaseY+ui.ductSlabDistance+ui.bracketH1)**2 );
+                const traverseTheta = Math.acos( (totalRoad/2+ui.bracketB1+ui.bracketB2)/traverseRadius );
+                const traverseShp = new THREE.Shape()
+                    .absarc( 0, 0, traverseRadius, traverseTheta, Math.PI-traverseTheta, false );
+                const traverseLine = addLine( traverseShp, 'red' );
+                // showContainer.push( traverseLine );
+                
+                // particle
+                pointGeometry = new THREE.BufferGeometry();
+
+                const n = (totalRoad/2+ui.bracketB1+ui.bracketB2)*2;
+                const n2 = n/2;
+
+                const maxCount = 2000;
+                const positions  = [];
+                const colors = [];
+
+                const color = new THREE.Color();
+
+                for ( let i = 0; i < maxCount; i ++ ) {
+
+                    const x = Math.random() * n - n2;
+                    const y = Math.sqrt( traverseRadius**2-x**2 ) - ( Math.sqrt( traverseRadius**2-x**2 ) - (transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness) )*Math.random();
+                    const z = Math.random() * ui.totalLength;
+                    
+                    positions.push( x, y, z );
+
+                    // positions .push( new THREE.Vector3( x, y, z ) )
+                }
+
+                pointGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+
+                const sprite = new THREE.TextureLoader().load( 'https://Lee-hoseong.github.io/texture/disc.png' );
+                pointMaterial = new THREE.PointsMaterial( { size : 4, sizeAttenuation: true, map: sprite, alphaTest: 0.5, transparent: true } );
+
+                particles = new THREE.Points( pointGeometry, pointMaterial );
+                pointMaterial.color.setHSL( 1.0, 0.3, 0.7 );
+
+				showContainer.push( particles );
+
+            }
+
+
+            
+            // 치수넣기 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            // 치수문자 : 방법1) 2D 캔버스
+            const labelGeometry = new THREE.PlaneGeometry(1, 1);
+
+            function makeLabelCanvas( size, name, color ) {
+
+                const borderSize = 2;
+                const ctx = document.createElement('canvas').getContext('2d');
+                const font =  `${ size }px bold sans-serif`;
+                ctx.font = font;
+
+                // 이름의 길이를 예측합니다.
+                const doubleBorderSize = borderSize * 2;
+                const width = ctx.measureText(name).width + doubleBorderSize;
+                const height = size + doubleBorderSize;
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+                
+                // 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
+                ctx.font = font;
+                ctx.textBaseline = 'top';
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = color
+                ctx.fillText(name, borderSize, borderSize);
+                
+                return ctx.canvas;
+
+            }
+
+            function addLabel( color, name, string ) {
+
+                const textCanvas = makeLabelCanvas( 50, name, color );
+                const texture = new THREE.CanvasTexture( textCanvas );
+
+                // 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
+                texture.minFilter = THREE.LinearFilter;
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+
+                const labelMaterial = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                } );
+
+                // 라벨의 크기를 조정 : 해상도를 높임
+                const label = new THREE.Mesh( labelGeometry, labelMaterial );
+                label.value = +name; // 숫자
+                label.key = string; // 변수명
+                const labelBaseScale = 0.001; // 라벨크기조절
+                label.scale.x = textCanvas.width  * labelBaseScale;
+                label.scale.y = textCanvas.height * labelBaseScale;
+
+                return label
+
+            }
+
+
+
+            // 1. 치수선 기준점 ////////////////////////////////////////////////////////////////////////////////////////////////////
+            // a) 좌측공동구 상부 수평선
+            const labelLtH1 = concreteLt.y + 0.15;
+
+            const hFootingLt1Pts = [];
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x, labelLtH1, wellSpacing+wellLength ));
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x -(lx01), labelLtH1, wellSpacing+wellLength ));
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02), labelLtH1, wellSpacing+wellLength ));
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03), labelLtH1, wellSpacing+wellLength ));
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04), labelLtH1, wellSpacing+wellLength ));
+            hFootingLt1Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05), labelLtH1, wellSpacing+wellLength ));
+
+            const labelLtH2 = concreteLt.y + footingLtType[footingLtType.length-1].y + 0.15;
+
+            const hFootingLt2Pts = [];
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13), labelLtH2, ui.totalLength ));
+            hFootingLt2Pts.push( new THREE.Vector3( concreteLt.x -(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13+lx14), labelLtH2, ui.totalLength ));
+            
+            // i) 좌측측대 : 좌측공동구이격거리
+            const hMarginLtPts = [];
+            hMarginLtPts.push( new THREE.Vector3( -roadDistance - ui.marginLeft, labelLtH1, 0 ));
+            hMarginLtPts.push( new THREE.Vector3( -roadDistance, labelLtH1, 0 ));
+
+            // b) 좌측공동구 측벽 수직선
+            const labelLtV1 = concreteLt.x + footingLtType[11].x - 0.125;
+
+            const vFootingLt1Pts = [];
+            vFootingLt1Pts.push( new THREE.Vector3( labelLtV1, concreteLt.y+footingLtType[7].y, ui.totalLength ));
+            vFootingLt1Pts.push( new THREE.Vector3( labelLtV1, concreteLt.y+footingLtType[7].y+ly01, ui.totalLength ));
+            vFootingLt1Pts.push( new THREE.Vector3( labelLtV1, concreteLt.y+footingLtType[7].y+ly01+ly02, ui.totalLength ));
+            vFootingLt1Pts.push( new THREE.Vector3( labelLtV1, concreteLt.y+footingLtType[7].y+ly01+ly02+ly03, ui.totalLength ));
+            vFootingLt1Pts.push( new THREE.Vector3( labelLtV1, concreteLt.y+footingLtType[7].y+ly01+ly02+ly03+ly04, ui.totalLength ));
+
+            // c) 좌측공동구 내부 수직선
+            const labelLtV2 = concreteLt.x + footingLtType[17].x - 0.125;
+
+            const vFootingLt2Pts = [];
+            vFootingLt2Pts.push( new THREE.Vector3( labelLtV2, concreteLt.y+footingLtType[16].y, ui.totalLength ));
+            vFootingLt2Pts.push( new THREE.Vector3( labelLtV2, concreteLt.y+footingLtType[16].y+ly06, ui.totalLength ));
+            vFootingLt2Pts.push( new THREE.Vector3( labelLtV2, concreteLt.y+footingLtType[16].y+ly06+ly05, ui.totalLength ));
+
+            // d) 좌측공동구 기초두께 및 집수정 수직선
+            const labelLtV3 = concreteLt.x - 0.125;
+
+            const vFootingLt3Pts = [];
+            vFootingLt3Pts.push( new THREE.Vector3( labelLtV3, concreteLt.y, ui.totalLength ));
+            vFootingLt3Pts.push( new THREE.Vector3( labelLtV3, concreteLt.y-ui.footingHeight, ui.totalLength ));
+            vFootingLt3Pts.push( new THREE.Vector3( labelLtV3, concreteLt.y-ui.footingHeight-0.05, ui.totalLength ));
+            vFootingLt3Pts.push( new THREE.Vector3( labelLtV3, concreteLt.y-ui.footingHeight-0.05-bottomPipeOutD, ui.totalLength ));
+            vFootingLt3Pts.push( new THREE.Vector3( labelLtV3, concreteLt.y-ui.footingHeight-0.05-bottomPipeOutD-0.05, ui.totalLength ));
+
+            // e) 우측공동구 상부 수평선
+            const labelRtH = concreteRt.y + 0.15;
+
+            const hFootingRt1Pts = [];
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x, labelRtH, wellSpacing+wellLength ));
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x+rx01, labelRtH, wellSpacing+wellLength ));
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02, labelRtH, wellSpacing+wellLength ));
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03, labelRtH, wellSpacing+wellLength ));
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04, labelRtH, wellSpacing+wellLength ));
+            hFootingRt1Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05, labelRtH, wellSpacing+wellLength ));
+
+            const labelRtH2 = concreteRt.y + footingRtType[footingRtType.length-1].y + 0.15;
+
+            const hFootingRt2Pts = [];
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13, labelRtH2, ui.totalLength ));
+            hFootingRt2Pts.push( new THREE.Vector3( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13+rx14, labelRtH2, ui.totalLength ));
+
+            // j) 우측측대 : 우측공동구이격거리
+            const hMarginRtPts = [];
+            hMarginRtPts.push( new THREE.Vector3( roadWidth-roadDistance, labelRtH, 0 ));
+            hMarginRtPts.push( new THREE.Vector3( roadWidth-roadDistance+ui.marginRight, labelRtH, 0 ));
+
+            // f) 우측공동구 측벽 수직선
+            const labelRtV1 = concreteRt.x + footingRtType[11].x + 0.125;
+
+            const vFootingRt1Pts = [];
+            vFootingRt1Pts.push( new THREE.Vector3( labelRtV1, concreteRt.y+footingRtType[7].y, ui.totalLength ));
+            vFootingRt1Pts.push( new THREE.Vector3( labelRtV1, concreteRt.y+footingRtType[7].y+ry01, ui.totalLength ));
+            vFootingRt1Pts.push( new THREE.Vector3( labelRtV1, concreteRt.y+footingRtType[7].y+ry01+ry02, ui.totalLength ));
+            vFootingRt1Pts.push( new THREE.Vector3( labelRtV1, concreteRt.y+footingRtType[7].y+ry01+ry02+ry03, ui.totalLength ));
+            vFootingRt1Pts.push( new THREE.Vector3( labelRtV1, concreteRt.y+footingRtType[7].y+ry01+ry02+ry03+ry04, ui.totalLength ));
+
+            // g) 우측공동구 내부 수직선
+            const labelRtV2 = concreteRt.x + footingRtType[16].x + 0.125;
+
+            const vFootingRt2Pts = [];
+            vFootingRt2Pts.push( new THREE.Vector3( labelRtV2, concreteRt.y+footingRtType[16].y, ui.totalLength ));
+            vFootingRt2Pts.push( new THREE.Vector3( labelRtV2, concreteRt.y+footingRtType[16].y+ry06, ui.totalLength ));
+            vFootingRt2Pts.push( new THREE.Vector3( labelRtV2, concreteRt.y+footingRtType[16].y+ry06+ry05, ui.totalLength ));
+
+
+            // h) 우측공동구 기초두께 및 집수정 수직선
+            const labelRtV3 = concreteRt.x + 0.125;
+
+            const vFootingRt3Pts = [];
+            vFootingRt3Pts.push( new THREE.Vector3( labelRtV3, concreteRt.y, ui.totalLength ));
+            vFootingRt3Pts.push( new THREE.Vector3( labelRtV3, concreteRt.y-ui.footingHeight, ui.totalLength ));
+            vFootingRt3Pts.push( new THREE.Vector3( labelRtV3, concreteRt.y-ui.footingHeight-0.05, ui.totalLength ));
+            vFootingRt3Pts.push( new THREE.Vector3( labelRtV3, concreteRt.y-ui.footingHeight-0.05-bottomPipeOutD, ui.totalLength ));
+            vFootingRt3Pts.push( new THREE.Vector3( labelRtV3, concreteRt.y-ui.footingHeight-0.05-bottomPipeOutD-0.05, ui.totalLength ));
+
+            // k) 브라켓 치수
+            const transverseBaseY = Math.max.apply( null, clearanceMaxHeight );
+
+            const totalRoad = ( roadWidth+shoulderLeft+shoulderRight );
+
+            const vBracketPts = [];
+            vBracketPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125, transverseBaseY+ui.ductSlabDistance+ui.bracketH1));
+            vBracketPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125, transverseBaseY+ui.ductSlabDistance));
+            vBracketPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125, transverseBaseY+ui.ductSlabDistance-ui.bracketH2));
+            vBracketPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125, transverseBaseY+ui.ductSlabDistance-ui.bracketH2-ui.bracketH3));
+
+            // 0) 브라켓 폭
+            const hBracketUpPts = [];
+            hBracketUpPts.push( new THREE.Vector3( -totalRoad/2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125));
+            hBracketUpPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125));
+            hBracketUpPts.push( new THREE.Vector3( -totalRoad/2-ui.bracketB1-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125));
+
+            // l) 슬래브 위치
+            const vSlabPts = [];
+            vSlabPts.push( new THREE.Vector3( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness ));
+            vSlabPts.push( new THREE.Vector3( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125, transverseBaseY+ui.ductSlabDistance ));
+            vSlabPts.push( new THREE.Vector3( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125, transverseBaseY ));
+
+
+
+            // 2. 치수선 ////////////////////////////////////////////////////////////////////////////////////////////////////
+            // a) 집수정 위
+            const wellDim = [ hFootingLt1Pts, hFootingRt1Pts ]; 
+            const wellDimension = addDimUp( wellDim, wellSpacing+wellLength );
+            showContainer.push( wellDimension );
+
+            // b) 공동구 위
+            const footingDim = [ hFootingLt2Pts, hFootingRt2Pts ]; 
+            const footingDimension = addDimUp( footingDim, ui.totalLength );
+            showContainer.push( footingDimension );
+
+            // c) 측대 위
+            const marginDim = [ hMarginLtPts, hMarginRtPts ]; 
+            const marginDimension = addDimUp( marginDim, 0 );
+            showContainer.push( marginDimension );
+
+            // d) 공동구 우
+            const footingRhtDim = [ vFootingRt1Pts, vFootingRt3Pts, vFootingRt2Pts ]; 
+            const footingRhtDimension = addDimRht( footingRhtDim, ui.totalLength );
+            showContainer.push( footingRhtDimension );
+
+            // e) 공동구 좌
+            const footingLftDim = [ vFootingLt1Pts, vFootingLt2Pts, vFootingLt3Pts ];
+            const footingLftDimension = addDimLft( footingLftDim, ui.totalLength );
+            showContainer.push( footingLftDimension );
+
+            if ( ui.ventilation == '횡류식') {            
+                // f) 브라켓제원 좌
+                const bracketLftDim = [ vBracketPts ];
+                const bracketLftDimension = addDimLft( bracketLftDim, 0 );
+                showContainer.push( bracketLftDimension );
+
+                // g) 브라켓제원 위
+                const bracketUpDim = [ hBracketUpPts ];
+                const bracketUpDimension = addDimUp( bracketUpDim, 0 );
+                showContainer.push( bracketUpDimension );
+
+                // h) 덕트슬래브 우
+                const slabDim = [ vSlabPts ];
+                const slabDimension = addDimRht( slabDim, 0 );
+                showContainer.push( slabDimension );
+            }
+
+
+
+            // 3. 치수문자 ////////////////////////////////////////////////////////////////////////////////////////////////////
+            const lx01Label = addLabel( 'red', lx01.toFixed(3), 'lx01' );
+            lx01Label.position.set( concreteLt.x-lx01/2, labelLtH1+0.04, wellSpacing+wellLength );
+            showContainer.push( lx01Label );
+            dimensionText.push( lx01Label );
+
+            const lx02Label = addLabel( 'black', lx02.toFixed(3)  );
+            lx02Label.position.set( concreteLt.x-(lx01+lx02/2), labelLtH1-0.05, wellSpacing+wellLength );
+            showContainer.push( lx02Label );
+
+            const lx03Label = addLabel( 'red', lx03.toFixed(3), 'lx03' );
+            lx03Label.position.set( concreteLt.x-(lx01+lx02+lx03/2), labelLtH1+0.04, wellSpacing+wellLength );
+            showContainer.push( lx03Label );
+            dimensionText.push( lx03Label );
+
+            const lx04Label = addLabel( 'black', lx04.toFixed(3) );
+            lx04Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04/2), labelLtH1-0.05, wellSpacing+wellLength );
+            showContainer.push( lx04Label );
+
+            const lx05Label = addLabel( 'red', lx05.toFixed(3), 'lx05' );
+            lx05Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05/2), labelLtH1+0.04, wellSpacing+wellLength );
+            showContainer.push( lx05Label );
+            dimensionText.push( lx05Label );
+
+            const lx06Label = addLabel( 'red', lx06.toFixed(3), 'lx06' );
+            lx06Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06/2), labelLtH2-0.05, ui.totalLength );
+            showContainer.push( lx06Label );
+            dimensionText.push( lx06Label );
+
+            const lx07Label = addLabel( 'red', lx07.toFixed(3), 'lx07' );
+            lx07Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07/2), labelLtH2+0.04, ui.totalLength );
+            showContainer.push( lx07Label );
+            dimensionText.push( lx07Label );
+
+            const lx08Label = addLabel( 'red', lx08.toFixed(3), 'lx08' );
+            lx08Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08/2), labelLtH2-0.05, ui.totalLength );
+            showContainer.push( lx08Label );
+            dimensionText.push( lx08Label );
+
+            const lx09Label = addLabel( 'red', lx09.toFixed(3), 'lx09' );
+            lx09Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09/2), labelLtH2+0.04, ui.totalLength );
+            showContainer.push( lx09Label );
+            dimensionText.push( lx09Label );
+
+            const lx10Label = addLabel( 'black', lx10.toFixed(3) );
+            lx10Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10/2), labelLtH2-0.05, ui.totalLength );
+            showContainer.push( lx10Label );
+
+            const lx11Label = addLabel( 'red', lx11.toFixed(3), 'lx11' );
+            lx11Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11/2), labelLtH2+0.04, ui.totalLength );
+            showContainer.push( lx11Label );
+            dimensionText.push( lx11Label );
+
+            const lx12Label = addLabel( 'red', lx12.toFixed(3), 'lx12' );
+            lx12Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx12/2), concreteLt.y+footingLtType[15].y-0.05, ui.totalLength );
+            showContainer.push( lx12Label );
+            dimensionText.push( lx12Label );
+
+            const lx13Label = addLabel( 'black', lx13.toFixed(3), 'lx13' );
+            lx13Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13/2), labelLtH2-0.05, ui.totalLength );
+            showContainer.push( lx13Label );
+
+            const lx14Label = addLabel( 'red', lx14.toFixed(3), 'lx14' );
+            lx14Label.position.set( concreteLt.x-(lx01+lx02+lx03+lx04+lx05+lx06+lx07+lx08+lx09+lx10+lx11+lx13+lx14/2), labelLtH2+0.04, ui.totalLength );
+            showContainer.push( lx14Label );
+            dimensionText.push( lx14Label );
+            
+            const marginLeftLabel = addLabel( 'red', ui.marginLeft.toFixed(3), 'ui.marginLeft' );
+            marginLeftLabel.position.set( -roadDistance-ui.marginLeft/2, labelLtH1+0.04, 0 );
+            showContainer.push( marginLeftLabel );
+            dimensionText.push( marginLeftLabel );
+
+
+            const ly01Label = addLabel( 'red', ly01.toFixed(3), 'ly01' );
+            ly01Label.position.set( labelLtV1+0.05, concreteLt.y+footingLtType[7].y+ly01/2, ui.totalLength );
+            ly01Label.rotation.z = Math.PI /2;
+            showContainer.push( ly01Label );
+            dimensionText.push( ly01Label );
+
+            const ly02Label = addLabel( 'red', ly02.toFixed(3), 'ly02' );
+            ly02Label.position.set( labelLtV1-0.04, concreteLt.y+footingLtType[7].y+ly01+ly02/2, ui.totalLength );
+            ly02Label.rotation.z = Math.PI /2;
+            showContainer.push( ly02Label );
+            dimensionText.push( ly02Label );
+
+            const ly03Label = addLabel( 'red', ly03.toFixed(3), 'ly03' );
+            ly03Label.position.set( labelLtV1+0.05, concreteLt.y+footingLtType[7].y+ly01+ly02+ly03/2, ui.totalLength );
+            ly03Label.rotation.z = Math.PI /2;
+            showContainer.push( ly03Label );
+            dimensionText.push( ly03Label );
+
+            const ly04Label = addLabel( 'red', ly04.toFixed(3), 'ly04' );
+            ly04Label.position.set( labelLtV1-0.04, concreteLt.y+footingLtType[7].y+ly01+ly02+ly03+ly04/2, ui.totalLength );
+            ly04Label.rotation.z = Math.PI /2;
+            showContainer.push( ly04Label );
+            dimensionText.push( ly04Label );
+
+            const ly05Label = addLabel( 'black', ly05.toFixed(3) );
+            ly05Label.position.set( labelLtV2-0.04, concreteLt.y+footingLtType[16].y+ly06+ly05/2, ui.totalLength );
+            ly05Label.rotation.z = Math.PI /2;
+            showContainer.push( ly05Label );
+
+            const ly06Label = addLabel( 'red', ly06.toFixed(3), 'ly06' );
+            ly06Label.position.set( labelLtV2-0.04, concreteLt.y+footingLtType[16].y+ly06/2, ui.totalLength );
+            ly06Label.rotation.z = Math.PI /2;
+            showContainer.push( ly06Label );
+            dimensionText.push( ly06Label );
+
+            const footingHeightLtLabel = addLabel( 'red', ui.footingHeight.toFixed(3), 'ui.footingHeight' );
+            footingHeightLtLabel.position.set( labelLtV3-0.04, concreteLt.y-ui.footingHeight/2, ui.totalLength );
+            footingHeightLtLabel.rotation.z = Math.PI /2;
+            showContainer.push( footingHeightLtLabel );
+            dimensionText.push( footingHeightLtLabel );
+
+            const wellMargin1LtLabel = addLabel( 'black', 0.05.toFixed(3) );
+            wellMargin1LtLabel.position.set( labelLtV3+0.05, concreteLt.y-ui.footingHeight-0.05/2, ui.totalLength );
+            wellMargin1LtLabel.rotation.z = Math.PI /2;
+            showContainer.push( wellMargin1LtLabel );
+
+            const bottomPipeLtLabel = addLabel( 'black', bottomPipeOutD.toFixed(3));
+            bottomPipeLtLabel.position.set( labelLtV3-0.04, concreteLt.y-ui.footingHeight-0.05-bottomPipeOutD/2, ui.totalLength );
+            bottomPipeLtLabel.rotation.z = Math.PI /2;
+            showContainer.push( bottomPipeLtLabel );
+
+            const wellMargin2LtLabel = addLabel( 'black', 0.05.toFixed(3) );
+            wellMargin2LtLabel.position.set( labelLtV3+0.05, concreteLt.y-ui.footingHeight-0.05-bottomPipeOutD-0.05/2, ui.totalLength );
+            wellMargin2LtLabel.rotation.z = Math.PI /2;
+            showContainer.push( wellMargin2LtLabel );
+
+
+            const rx01Label = addLabel( 'red', rx01.toFixed(3), 'rx01' );
+            rx01Label.position.set( concreteRt.x+rx01/2, labelRtH+0.04, wellSpacing+wellLength );
+            showContainer.push( rx01Label );
+            dimensionText.push( rx01Label );
+
+            const rx02Label = addLabel( 'black', rx02.toFixed(3) );
+            rx02Label.position.set( concreteRt.x+rx01+rx02/2, labelRtH-0.05, wellSpacing+wellLength );
+            showContainer.push( rx02Label );
+
+            const rx03Label = addLabel( 'red', rx03.toFixed(3), 'rx03' );
+            rx03Label.position.set( concreteRt.x+rx01+rx02+rx03/2, labelRtH+0.04, wellSpacing+wellLength );
+            showContainer.push( rx03Label );
+            dimensionText.push( rx03Label );
+
+            const rx04Label = addLabel( 'black', rx04.toFixed(3) );
+            rx04Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04/2, labelRtH-0.05, wellSpacing+wellLength );
+            showContainer.push( rx04Label );
+
+            const rx05Label = addLabel( 'red', rx05.toFixed(3), 'rx05' );
+            rx05Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05/2, labelRtH+0.04, wellSpacing+wellLength );
+            showContainer.push( rx05Label );
+            dimensionText.push( rx05Label );
+
+            const rx06Label = addLabel( 'red', rx06.toFixed(3), 'rx06' );
+            rx06Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06/2, labelRtH2-0.05, ui.totalLength );
+            showContainer.push( rx06Label );
+            dimensionText.push( rx06Label );
+
+            const rx07Label = addLabel( 'red', rx07.toFixed(3), 'rx07' );
+            rx07Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07/2, labelRtH2+0.04, ui.totalLength );
+            showContainer.push( rx07Label );
+            dimensionText.push( rx07Label );
+
+            const rx08Label = addLabel( 'red', rx08.toFixed(3), 'rx08' );
+            rx08Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08/2, labelRtH2-0.05, ui.totalLength );
+            showContainer.push( rx08Label );
+            dimensionText.push( rx08Label );
+
+            const rx09Label = addLabel( 'red', rx09.toFixed(3), 'rx09' );
+            rx09Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09/2, labelRtH2+0.04, ui.totalLength );
+            showContainer.push( rx09Label );
+            dimensionText.push( rx09Label );
+
+            const rx10Label = addLabel( 'black', rx10.toFixed(3) );
+            rx10Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10/2, labelRtH2-0.05, ui.totalLength );
+            showContainer.push( rx10Label );
+
+            const rx11Label = addLabel( 'red', rx11.toFixed(3), 'rx11' );
+            rx11Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11/2, labelRtH2+0.04, ui.totalLength );
+            showContainer.push( rx11Label );
+            dimensionText.push( rx11Label );
+
+            const rx13Label = addLabel( 'black', rx13.toFixed(3) );
+            rx13Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13/2, labelRtH2-0.05, ui.totalLength );
+            showContainer.push( rx13Label );
+
+            const rx14Label = addLabel( 'red', rx14.toFixed(3), 'rx14' );
+            rx14Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx11+rx13+rx14/2, labelRtH2+0.04, ui.totalLength );
+            showContainer.push( rx14Label );
+            dimensionText.push( rx14Label );
+
+            const rx12Label = addLabel( 'red', rx12.toFixed(3), 'rx12' );
+            rx12Label.position.set( concreteRt.x+rx01+rx02+rx03+rx04+rx05+rx06+rx07+rx08+rx09+rx10+rx12/2, concreteRt.y+footingRtType[15].y-0.05, ui.totalLength );
+            showContainer.push( rx12Label );
+            dimensionText.push( rx12Label );
+
+            const marginRightLabel = addLabel( 'red', ui.marginRight.toFixed(3), 'ui.marginRight' );
+            marginRightLabel.position.set( roadWidth-roadDistance+ui.marginRight/2, labelRtH+0.04, 0 );
+            showContainer.push( marginRightLabel );
+            dimensionText.push( marginRightLabel );
+
+
+            const ry01Label = addLabel( 'red', ry01.toFixed(3), 'ry01' );
+            ry01Label.position.set( labelRtV1+0.05, concreteRt.y+footingRtType[7].y+ry01/2, ui.totalLength );
+            ry01Label.rotation.z = Math.PI /2;
+            showContainer.push( ry01Label );
+            dimensionText.push( ry01Label );
+
+            const ry02Label = addLabel( 'red', ry02.toFixed(3), 'ry02' );
+            ry02Label.position.set( labelRtV1-0.04, concreteRt.y+footingRtType[7].y+ry01+ry02/2, ui.totalLength );
+            ry02Label.rotation.z = Math.PI /2;
+            showContainer.push( ry02Label );
+            dimensionText.push( ry02Label );
+
+            const ry03Label = addLabel( 'red', ry03.toFixed(3), 'ry03' );
+            ry03Label.position.set( labelRtV1+0.05, concreteRt.y+footingRtType[7].y+ry01+ry02+ry03/2, ui.totalLength );
+            ry03Label.rotation.z = Math.PI /2;
+            showContainer.push( ry03Label );
+            dimensionText.push( ry03Label );
+
+            const ry04Label = addLabel( 'red', ry04.toFixed(3), 'ry04' );
+            ry04Label.position.set( labelRtV1-0.04, concreteRt.y+footingRtType[7].y+ry01+ry02+ry03+ry04/2, ui.totalLength );
+            ry04Label.rotation.z = Math.PI /2;
+            showContainer.push( ry04Label );
+            dimensionText.push( ry04Label );
+
+            const ry05Label = addLabel( 'black', ry05.toFixed(3) );
+            ry05Label.position.set( labelRtV2-0.04, concreteRt.y+footingRtType[16].y+ry06+ry05/2, ui.totalLength );
+            ry05Label.rotation.z = Math.PI /2;
+            showContainer.push( ry05Label );
+
+            const ry06Label = addLabel( 'red', ry06.toFixed(3), 'ry06' );
+            ry06Label.position.set( labelRtV2-0.04, concreteRt.y+footingRtType[16].y+ry06/2, ui.totalLength );
+            ry06Label.rotation.z = Math.PI /2;
+            showContainer.push( ry06Label );
+            dimensionText.push( ry06Label );
+
+            const footingHeightRtLabel = addLabel( 'red', ui.footingHeight.toFixed(3), 'ui.footingHeight' );
+            footingHeightRtLabel.position.set( labelRtV3-0.04, concreteRt.y-ui.footingHeight/2, ui.totalLength );
+            footingHeightRtLabel.rotation.z = Math.PI /2;
+            showContainer.push( footingHeightRtLabel );
+            dimensionText.push( footingHeightRtLabel );
+
+            const wellMargin1RtLabel = addLabel( 'black', 0.05.toFixed(3) );
+            wellMargin1RtLabel.position.set( labelRtV3+0.05, concreteRt.y-ui.footingHeight-0.05/2, ui.totalLength );
+            wellMargin1RtLabel.rotation.z = Math.PI /2;
+            showContainer.push( wellMargin1RtLabel );
+
+            const bottomPipeRtLabel = addLabel( 'black', bottomPipeOutD.toFixed(3));
+            bottomPipeRtLabel.position.set( labelRtV3-0.04, concreteRt.y-ui.footingHeight-0.05-bottomPipeOutD/2, ui.totalLength );
+            bottomPipeRtLabel.rotation.z = Math.PI /2;
+            showContainer.push( bottomPipeRtLabel );
+
+            const wellMargin2RtLabel = addLabel( 'black', 0.05.toFixed(3) );
+            wellMargin2RtLabel.position.set( labelRtV3+0.05, concreteRt.y-ui.footingHeight-0.05-bottomPipeOutD-0.05/2, ui.totalLength );
+            wellMargin2RtLabel.rotation.z = Math.PI /2;
+            showContainer.push( wellMargin2RtLabel );
+
+
+            const labelRoadCenterline = addLabel( 'black', 'Road Centerline' );
+            labelRoadCenterline.position.set( -roadDistance, clearanceHeight +2.5 +0.15, 0 );
+            labelRoadCenterline.scale.x = 0.367*3;
+            labelRoadCenterline.scale.y = 0.054*3;
+            showContainer.push( labelRoadCenterline );
+            
+            const labelTunnelCenterline = addLabel( 'black', 'Tunnel Centerline' );
+            labelTunnelCenterline.position.set( 0, clearanceHeight +2.5 +0.15, 0 );
+            labelTunnelCenterline.scale.x = 0.403*3;
+            labelTunnelCenterline.scale.y = 0.054*3;
+            showContainer.push( labelTunnelCenterline );
+
+
+            const jetfanDistLabel = addLabel( 'red', `Jetfan Distance : ${ui.jetfanDistance.toFixed(3)}`, 'ui.jetfanDistance' );
+            jetfanDistLabel.position.set( 0, jetfanY+1 );
+            jetfanDistLabel.scale.x = 0.478*2;
+            jetfanDistLabel.scale.y = 0.054*2;
+            showContainer.push( jetfanDistLabel );
+            dimensionText.push( jetfanDistLabel );
+
+            const jetfanNumLabel = addLabel( 'red', `Jetfan Count : ${ui.jetfanNum.toFixed(0)}`, 'ui.jetfanNum' );
+            jetfanNumLabel.position.set( 0, jetfanY+1.15 );
+            jetfanNumLabel.scale.x = 0.329*2;
+            jetfanNumLabel.scale.y = 0.054*2;
+            showContainer.push( jetfanNumLabel );
+            dimensionText.push( jetfanNumLabel );
+
+
+            const wallPipeLtLabel = addLabel( 'black', `D:${ (wallPipeOutD-0.014).toFixed(3)*1000}` );
+            wallPipeLtLabel.position.set( x1ValueLt, yValueLt+wallPipeOutD*2/3, ui.totalLength );
+            showContainer.push( wallPipeLtLabel );
+
+            const wallPipeRtLabel = addLabel( 'black', `D:${ (wallPipeOutD-0.014).toFixed(3)*1000}` );
+            wallPipeRtLabel.position.set( x1ValueRt, yValueRt+wallPipeOutD*2/3, ui.totalLength );
+            showContainer.push( wallPipeRtLabel );
+
+            const botPipeLtLabel = addLabel( 'black', `D:${ (bottomPipeOutD).toFixed(3)*1000}` );  
+            botPipeLtLabel.position.set( -wellLtWidth/2 + concreteLt.x - wellLtDist, concreteLt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, ui.totalLength );
+            showContainer.push( botPipeLtLabel );
+
+            const botPipeRtLabel = addLabel( 'black', `D:${ (bottomPipeOutD).toFixed(3)*1000}` );  
+            botPipeRtLabel.position.set( +wellRtWidth/2 + concreteRt.x + wellRtDist, concreteRt.y - ui.footingHeight - 0.05 - bottomPipeOutD/2, ui.totalLength );
+            showContainer.push( botPipeRtLabel );
+
+
+            if ( ui.ventilation == '횡류식') {     
+                const bracketH1Label = addLabel( 'red', ui.bracketH1.toFixed(3), 'ui.bracketH1' );
+                bracketH1Label.position.set( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125-0.04, transverseBaseY+ui.ductSlabDistance+ui.bracketH1/2);
+                bracketH1Label.rotation.z = Math.PI/2;
+                showContainer.push( bracketH1Label );
+                dimensionText.push( bracketH1Label );
+                
+                const bracketH2Label = addLabel( 'red', ui.bracketH2.toFixed(3), 'ui.bracketH2' );
+                bracketH2Label.position.set( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125-0.04, transverseBaseY+ui.ductSlabDistance-ui.bracketH2/2);
+                bracketH2Label.rotation.z = Math.PI/2;
+                showContainer.push( bracketH2Label );
+                dimensionText.push( bracketH2Label );
+
+                const bracketH3Label = addLabel( 'red', ui.bracketH3.toFixed(3), 'ui.bracketH3' );
+                bracketH3Label.position.set( -totalRoad/2-ui.bracketB1-ui.bracketB2-0.5-0.125-0.04, transverseBaseY+ui.ductSlabDistance-ui.bracketH2-ui.bracketH3/2);
+                bracketH3Label.rotation.z = Math.PI/2;
+                showContainer.push( bracketH3Label );
+                dimensionText.push( bracketH3Label );
+
+                const slabThkLabel = addLabel( 'red', ui.ductSlabThickness.toFixed(3), 'ui.ductSlabThickness' );
+                slabThkLabel.position.set( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125-0.04, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness/2 );
+                slabThkLabel.rotation.z = Math.PI/2;
+                showContainer.push( slabThkLabel );
+                dimensionText.push( slabThkLabel );
+
+                const slabThkLabel2 = addLabel( 'black', `슬래브두께` );
+                slabThkLabel2.position.set( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125+0.05, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness/2 );
+                slabThkLabel2.rotation.z = Math.PI/2;
+                showContainer.push( slabThkLabel2 );
+
+                const slabDistLabel = addLabel( 'red', ui.ductSlabDistance.toFixed(3), 'ui.ductSlabDistance' );
+                slabDistLabel.position.set( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125-0.04, transverseBaseY+ui.ductSlabDistance/2 );
+                slabDistLabel.rotation.z = Math.PI/2;
+                showContainer.push( slabDistLabel );
+                dimensionText.push( slabDistLabel );
+
+                const slabDistLabel2 = addLabel( 'black', `시설한계-슬래브 거리` );
+                slabDistLabel2.position.set( totalRoad/2+ui.bracketB1+ui.bracketB2+0.5+0.125+0.05, transverseBaseY+ui.ductSlabDistance/2 );
+                slabDistLabel2.rotation.z = Math.PI/2;
+                showContainer.push( slabDistLabel2 );
+
+                const bracketWidthLabel = addLabel( 'red', ui.bracketB2.toFixed(3), 'ui.bracketB2' );
+                bracketWidthLabel.position.set( -totalRoad/2-ui.bracketB2/2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125+0.05);
+                showContainer.push( bracketWidthLabel );
+                dimensionText.push( bracketWidthLabel );
+
+                const bracketWidthLabel2 = addLabel( 'red', ui.bracketB1.toFixed(3), 'ui.bracketB1' );
+                bracketWidthLabel2.position.set( -totalRoad/2-ui.bracketB1/2-ui.bracketB2, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125+0.05);
+                showContainer.push( bracketWidthLabel2 );
+                dimensionText.push( bracketWidthLabel2 );
+
+                const ductAreaLabel = addLabel( 'red', `덕트면적 : ${ui.ductArea.toFixed(3)} m2`, 'ui.ductArea' );
+                ductAreaLabel.position.set( 0, transverseBaseY+ui.ductSlabDistance+ui.ductSlabThickness+0.125+0.05);
+                ductAreaLabel.scale.x = 0.487*3;
+                ductAreaLabel.scale.y = 0.054*3;
+                showContainer.push( ductAreaLabel );
+                dimensionText.push( ductAreaLabel );
+
+
+            }
+
+
+            // 집수정 우측 대칭복사로 생성
+            // {
+            //     const wellRtGeometry = wellLtMesh.geometry.clone();
+
+            //     const mS = (new THREE.Matrix4()).identity();
+            //     //set -1 to the corresponding axis
+            //     // mS.elements[0] = -1; // x축
+            //     // mS.elements[5] = -1; // y축
+            //     mS.elements[10] = -1; // z축
+
+            //     wellRtGeometry.applyMatrix4( mS );
+
+            //     const wellRightMesh = new THREE.Mesh( wellRtGeometry, new THREE.MeshPhongMaterial( { color: 'navy', opacity: 0.9, transparent: true } ) );
+            // }
+            
+
+            // scene 생성
+            showContainer.forEach( mesh => { scene.add( mesh ) });
+            jetfanWingContainer.forEach( mesh => { scene.add( mesh ) });
+
+
+            // 결과값 저장
+            sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
+
+        }
+
+
+
+        function createUI() {
+            
+            //onFinishChange : 최종적인 값의 변경, onChange : 값 변경 중의 매 순간 발생
+            const gui = new GUI();
+
+            const commonFolder = gui.addFolder( '공통' )
+            commonFolder.add( ui, 'crossSlopeStandard', crossSlopeMin, crossSlopeMax, 0.050 ).name( '적용 편경사' ).onFinishChange( designTunnel );
+            commonFolder.open();
+
+            const ventilationFolder = gui.addFolder( '환기타입' )
+            ventilationFolder.add( ui, 'ventilation', ['자연환기', '제트팬', '횡류식'] ).name( '환기타입' ).onFinishChange( ventilationDetail );
+            ventilationFolder.open();
+
+            const jetfanFolder = gui.addFolder( '제트팬상세' )
+            // jetfanFolder.add( ui, 'jetfanNum', { 1 : 1, 2 : 2, 3 : 3 } ).name( '제트팬개수' ).onFinishChange( designTunnel);
+            jetfanFolder.add( ui, 'jetfanInnerDiameter', { Type1030 : 1.030, Type1250 : 1.250, Type1400 : 1.400, Type1530 : 1.530 } ).name( '제트팬제원' ).onFinishChange( designTunnel );
+            // jetfanFolder.add( ui, 'jetfanDistance', 1.00, 3.00, 0.01 ).name( '제트팬이격거리' ).onFinishChange( designTunnel );
+            jetfanFolder.open();
+
+            const footingTypeFolder = gui.addFolder( '공동구타입' )
+            footingTypeFolder.add( ui, 'footingType', ['자연환기', '기계환기', '기계환기(물분무)' ] ).name( '공동구타입' ).onFinishChange( selectFootingType );
+            footingTypeFolder.open();
+
+            const drainFolder = gui.addFolder( '배수상세' )
+            drainFolder.add( ui, 'wallPipeInD', { D100 : 0.100, D150 : 0.150, D200 : 0.200 } ).name( '측벽배수관').onFinishChange( designTunnel );
+            drainFolder.add( ui, 'bottomPipeOutD', { D200 : 0.200, D300 : 0.300, D400 : 0.400 } ).name( '하부유공관').onFinishChange( designTunnel );
+            drainFolder.open();
+
+            function ventilationDetail() {
+                if( ui.ventilation == '자연환기') {
+                    jetfanFolder.hide();
+                    designTunnel();
+                } else if ( ui.ventilation == '제트팬') {
+                    jetfanFolder.show();
+                    designTunnel();
+                } else if ( ui.ventilation == '횡류식') {
+                    jetfanFolder.hide();
+                    designTunnel();
+                }
+            }
+        }
+        
+        
+
+        function addLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineBasicMaterial( { color } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            return line;
+        }
+       
+
+        function addDashLine( shape, color ) {
+            const points = shape.getPoints();
+            const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+            const lineMat = new THREE.LineDashedMaterial( { color , dashSize: 0.2, gapSize: 0.05 } );
+            const line = new THREE.Line( lineGeo, lineMat );
+            // line.castShadow = true;
+            line.computeLineDistances(); //점선으로 만들어주기 위해 필요
+            return line;
+        }
+
+
+        function addSurf( shape, color  ) {
+            const surfGeo = new THREE.ShapeGeometry( shape, 100 );
+            const surfMat = new THREE.MeshBasicMaterial( { color, side: THREE.DoubleSide } );
+            const mesh = new THREE.Mesh( surfGeo, surfMat );
+            return mesh;
+        }
+        
+        function addExtr( shape, color, length ) {            
+            const extrudeSettings = {
+                steps : 1,
+                depth : length,
+                bevelEnabled : false,
+            }           
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+        function addArr ( path ) {
+            const arr = [];
+            for ( let i=0; i*0.01 <= path.getLength(); i++) {
+                const segment = path.getPointAt( i*0.01 / path.getLength() );
+                arr.push( new THREE.Vector3( segment.x, segment.y, 0 ) );
+            }
+            return arr
+        }
+
+        function addPath ( arr ) {
+            const curvePath = new THREE.CurvePath();
+            for ( let i=0; i < arr.length-1; i++ ) {
+                const point1 = new THREE.Vector3( arr[i].x, arr[i].y );
+                const point2 = new THREE.Vector3( arr[i+1].x, arr[i+1].y );
+                const line = new THREE.LineCurve3( point1, point2 );
+                curvePath.add( line )
+            }
+            return curvePath
+        }
+
+        function addSweep( shape, color, path  ) {
+            const extrudeSettings = {
+                steps : 100, 
+                extrudePath : path
+            }
+            const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
+            const extrudeMat = new THREE.MeshPhongMaterial( { color } );
+            const mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
+            return mesh;
+        }
+
+        function showPts( arr, color ) {
+            const pointsGeometry = new THREE.BufferGeometry().setFromPoints( arr );            
+            const pointsMaterial = new THREE.PointsMaterial( { color, size: 7 } );
+            const points = new THREE.Points( pointsGeometry, pointsMaterial );
+            showContainer.push( points );
+        }
+
+        function addDimUp ( array, z_position ) {
+            const dimGroup = new THREE.Group();
+
+            // 메인선
+            for ( const arr of array ) {
+                const dimMainShp = new THREE.Shape( arr );
+                const dimMainLine = addLine( dimMainShp, 'black' );
+                dimMainLine.position.set( 0, 0, z_position );
+                dimGroup.add( dimMainLine );
+            }
+
+            // 점
+            const arrowMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.01 ), new THREE.MeshBasicMaterial( { color: 'black' } ) );
+
+            // 보조선
+            const dimAsstShp = new THREE.Shape()
+                .moveTo( 0.0, 0.0 )
+                .lineTo( 0.0, -0.1 );
+            const dimAsstLine = addLine( dimAsstShp, 'black' );
+
+            // 점과 보조선 배치
+            for ( const arr of array ) { 
+                for ( const point of arr ) {
+                    const arrowClone = arrowMesh.clone();
+                    arrowClone.position.copy( point );
+                    dimGroup.add( arrowClone );
+
+                    const asstLineClone = dimAsstLine.clone();
+                    asstLineClone.position.copy( point );
+                    dimGroup.add( asstLineClone );
+                }
+            }
+
+            return dimGroup
+        }
+
+        function addDimBot ( array, z_position ) {
+            const dimGroup = new THREE.Group();
+
+            // 메인선
+            for ( const arr of array ) {
+                const dimMainShp = new THREE.Shape( arr );
+                const dimMainLine = addLine( dimMainShp, 'black' );
+                dimMainLine.position.set( 0, 0, z_position );
+                dimGroup.add( dimMainLine );
+            }
+
+            // 점
+            const arrowMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.01 ), new THREE.MeshBasicMaterial( { color: 'black' } ) );
+
+            // 보조선
+            const dimAsstShp = new THREE.Shape()
+                .moveTo( 0.0, 0.0 )
+                .lineTo( 0.0, 0.1 );
+            const dimAsstLine = addLine( dimAsstShp, 'black' );
+
+            // 점과 보조선 배치
+            for ( const arr of array ) { 
+                for ( const point of arr ) {
+                    const arrowClone = arrowMesh.clone();
+                    arrowClone.position.copy( point );
+                    dimGroup.add( arrowClone );
+
+                    const asstLineClone = dimAsstLine.clone();
+                    asstLineClone.position.copy( point );
+                    dimGroup.add( asstLineClone );
+                }
+            }
+
+            return dimGroup
+        }
+
+        function addDimLft ( array, z_position ) {
+            const dimGroup = new THREE.Group();
+
+            // 메인선
+            for ( const arr of array ) {
+                const dimMainShp = new THREE.Shape( arr );
+                const dimMainLine = addLine( dimMainShp, 'black' );
+                dimMainLine.position.set( 0, 0, z_position );
+                dimGroup.add( dimMainLine );
+            }
+
+            // 점
+            const arrowMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.01 ), new THREE.MeshBasicMaterial( { color: 'black' } ) );
+
+            // 보조선
+            const dimAsstShp = new THREE.Shape()
+                .moveTo( 0.0, 0.0 )
+                .lineTo( 0.1, 0.0 );
+            const dimAsstLine = addLine( dimAsstShp, 'black' );
+
+            // 점과 보조선 배치
+            for ( const arr of array ) { 
+                for ( const point of arr ) {
+                    const arrowClone = arrowMesh.clone();
+                    arrowClone.position.copy( point );
+                    dimGroup.add( arrowClone );
+
+                    const asstLineClone = dimAsstLine.clone();
+                    asstLineClone.position.copy( point );
+                    dimGroup.add( asstLineClone );
+                }
+            }
+
+            return dimGroup
+        }
+
+        function addDimRht ( array, z_position ) {
+              const dimGroup = new THREE.Group();
+
+              // 메인선
+              for ( const arr of array ) {
+                  const dimMainShp = new THREE.Shape( arr );
+                  const dimMainLine = addLine( dimMainShp, 'black' );
+                  dimMainLine.position.set( 0, 0, z_position );
+                  dimGroup.add( dimMainLine );
+              }
+
+              // 점
+              const arrowMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.01 ), new THREE.MeshBasicMaterial( { color: 'black' } ) );
+
+              // 보조선
+              const dimAsstShp = new THREE.Shape()
+                  .moveTo( 0.0, 0.0 )
+                  .lineTo( -0.1, 0.0 );
+              const dimAsstLine = addLine( dimAsstShp, 'black' );
+
+              // 점과 보조선 배치
+              for ( const arr of array ) { 
+                  for ( const point of arr ) {
+                      const arrowClone = arrowMesh.clone();
+                      arrowClone.position.copy( point );
+                      dimGroup.add( arrowClone );
+
+                      const asstLineClone = dimAsstLine.clone();
+                      asstLineClone.position.copy( point );
+                      dimGroup.add( asstLineClone );
+                  }
+              }
+
+              return dimGroup
+        }
+
+        
+
+        
+
+
+        function onKeyDown( event ) {
+
+            switch ( event.keyCode ) {
+
+                case 70: /*F*/
+
+                    moveCam( 0, 0, 100, 0, 0, 0 );
+                    break;
+
+                case 66: /*b*/
+
+                    moveCam( 0, 0, -100, 0, 0, 0 );
+                    break;                    
+
+                case 82: /*R*/
+
+                    moveCam( 40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 76: /*L*/
+
+                    moveCam( -40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 84: /*T*/
+
+                    moveCam( 0, 100, 0, 0, 0, 0 );
+                    break;                    
+
+                case 79: /*O*/
+
+                    camera = cameraOrtho;
+                    camera.position.set( 0, 0, 40 );
+
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
+
+                    break;
+
+                case 80: /*P*/
+
+                    camera = cameraPerspective;
+                    
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
+
+                    break;
+
+            }
+
+        }
+
+        function moveCam(eye_x, eye_y, eye_z, target_x, target_y, target_z ) {
+            camera.position.set ( eye_x, eye_y, eye_z );
+            orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
+        }        
+
+
+        // double Click event
+        const mouse = new THREE.Vector2();
+
+        function onclick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(dimensionText, true);
+
+            if (intersects.length > 0) {
+                // 첫번째 객체선택
+                const selectedObject = intersects[0].object;
+
+                // prompt창 생성
+                const revValue = prompt( '수정할 값을 입력하세요', selectedObject.value );
+
+                // 값이 없을때 빠져나옴
+                if (revValue === null) {
+                    return; //break out of the function early
+                }
+
+                // prompt값 반영
+                eval( selectedObject.key + " =" + revValue );
+
+                // 함수실행
+                designTunnel();
+            }
+        }
+
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas1 = renderer.domElement;
+            const width = canvas1.clientWidth;
+            const height = canvas1.clientHeight;
+            const needResize = canvas1.width !== width || canvas1.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            
+            return needResize;
+        }
+        
+        let time = 0;
+        function render() {
+            if (resizeRendererToDisplaySize(renderer)) {
+
+                const canvas2 = renderer.domElement;
+                camera.aspect = canvas2.clientWidth / canvas2.clientHeight;
+                camera.updateProjectionMatrix();
+
+            }
+            
+            if ( ui.ventilation == '횡류식' ){
+
+                // const time = Date.now() * 0.0005;
+                time += 0.001;
+
+				const h = ( 360 * ( 1.0 + time ) % 360 ) / 360;
+				pointMaterial.color.setHSL( h, 0.5, 0.5 );
+
+                if ( camera == cameraPerspective ) {
+
+                    pointMaterial.size = 0.15;
+
+                } else {
+
+                    pointMaterial.size = 4;
+
+                }
+
+
+                // particle z방향으로 이동
+                let positions = particles.geometry.attributes.position.array;
+                
+                for( let i=0; i<particles.geometry.attributes.position.count; i++ ) {
+
+                    // positions[ 3*i + 0 ] = particles.geometry.attributes.position.getX( i ) 
+                    // positions[ 3*i + 1 ] = particles.geometry.attributes.position.getY( i )
+                    positions[ 3*i + 2 ] = particles.geometry.attributes.position.getZ( i ) - Math.random()*i/50000
+
+                }
+
+                // particle z>-2 인 경우만 보이기
+                const testFilterArr = [];
+
+                for ( let i=0; i<particles.geometry.attributes.position.count; i++) {
+
+                    if( positions[ 3*i+2] > -2 ) {
+
+                        testFilterArr.push( positions[ 3*i ] );
+                        testFilterArr.push( positions[ 3*i+1 ] );
+                        testFilterArr.push( positions[ 3*i+2 ] );
+
+                    }
+
+                }
+
+                pointGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( testFilterArr, 3 ) );
+
+                particles.geometry.attributes.position.needsUpdate = true;
+                
+                // array에서 splice 의 예시
+                // const numbers = [1, 2, 3, 4, 5]; 
+                // const result = []; 
+                // for (i = 0; i < numbers.length; i++) { 
+                //     const number = numbers[i]; 
+                //     if (number > 3) { 
+                //         result.push(number);
+                //      } 
+                // } 
+                // console.log(result); // [4, 5]
+
+            }
+
+
+
+            if ( ui.ventilation == '제트팬' && ui.jetfanNum == 1 ) {
+
+                jetfanWingContainer[0].rotation.z -= 0.15;
+
+            } else if ( ui.ventilation == '제트팬' && ui.jetfanNum == 2 ) {
+
+                jetfanWingContainer[0].rotation.z -= 0.15;
+                jetfanWingContainer[1].rotation.z -= 0.15;
+
+            } else if ( ui.ventilation == '제트팬' && ui.jetfanNum == 3 ) {
+
+                jetfanWingContainer[0].rotation.z -= 0.15;
+                jetfanWingContainer[1].rotation.z -= 0.15;
+                jetfanWingContainer[2].rotation.z -= 0.15;
+
+            };
+
+            
+            renderer.renderLists.dispose();
+            renderer.render(scene, camera);
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+
+
+        // export STL        
+        function exportFile() {
+
+            const result = exporter.parse( scene, { binary: true } );
+            saveArrayBuffer( result, '환기방식.stl' );
+            
+        };
+
+        const exporter = new STLExporter();
+        document.getElementById("button").addEventListener("click", exportFile);
+
+        const link = document.createElement( 'a' );
+        link.style.display = 'none';
+        document.body.appendChild( link );
+
+        function save( blob, filename ) {
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        }
+
+        function saveString( text, filename ) {
+
+            save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+        }
+
+        function saveArrayBuffer( buffer, filename ) {
+
+            save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+        } 
+
+    </script>
+    
+</body>
+
+</html>

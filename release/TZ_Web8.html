@@ -377,6 +377,7 @@
             
         }
 
+        console.log( 'addArr로 만든것들 getpoints로 변화, vertex가 안맞음' )
 
         function designTunnel() {
 
@@ -436,7 +437,8 @@
 
             }
 
-            const concretePavementExtr1 = addExtr( concretePavementShp, 0x474c55, pavementLength );
+            // const concretePavementExtr1 = addExtr( concretePavementShp, 0x474c55, pavementLength );
+            const concretePavementExtr1 = addExtr( concretePavementShp, 0x333333, pavementLength );
             showContainer.push( concretePavementExtr1 ); 
 
             const cementeFilterShp = new THREE.Shape();
@@ -820,7 +822,6 @@
                 // convex로 모델링
                 const wallLtGeo = new ConvexGeometry( wallLtPts );
                 const wallLtMat = new THREE.MeshStandardMaterial( { color: 0x5c5d57, opacity: 1 , transparent: true, clippingPlanes: [ clippingPlane ] } );
-
                 const wallLtMesh = new THREE.Mesh( wallLtGeo, wallLtMat );
                 wallLtMesh.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, ui.portalL1 + ui.totalLength) );
                 // showContainer.push( wallLtMesh );
@@ -873,7 +874,8 @@
 
                 // 3. 갱문, portal ////////////////////////////////////////////////////////////////////////////////////////////////////
                 const portalTop = r1Height + r1Final + ui.liningT3 + ditchH + ui.parapetCtr;
-                const portalMid = r1Height + r1Final + ui.liningT3 + ditchH;
+                // const portalMid = r1Height + r1Final + ui.liningT3 + ditchH;
+                const portalMid = r1Height + r1Final + ui.liningT3;
                 const portalBot = r1Height + r1Final + ui.liningT3 - ui.portalL2/Math.tan( Math.PI/12 ); // degree 15
 
                 const portalLtTop = wallBackLt2[1].applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX, footingLtSlope[0].y + wallLtPosY, 0 ) ); //옹벽좌측상단
@@ -968,13 +970,14 @@
                 // showContainer.push( portalBotLine );
 
 
+
                 // 3.3 갱문 모델링
                 // 3.3.1 갱문mid
                 // 포인트 이동
-                const portalMidArr = addArr( portalMidShp );
+                const portalMidArr = portalMidShp.getPoints().map( i => new THREE.Vector3 ( i.x, i.y, 0 ) );
                 const portalMidArrMove = portalMidArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 ) ) ); 
 
-                const portalBotArr = addArr( portalBotShp );
+                const portalBotArr = portalBotShp.getPoints().map( i => new THREE.Vector3 ( i.x, i.y, 0 ) );
                 const portalBotArrMove = portalBotArr.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 + ui.portalL2 ) ) );
 
                 // 포인트 합치기
@@ -990,9 +993,8 @@
 
                 // 3.3.2 갱문top
                 // 포인트 이동
-                const portalTopArr = addArr( portalTopShp );
-                const portalTopArr2 = addArr( portalTopShp );
-                const portalTopArrMove = portalTopArr2.map( i => i.applyMatrix4( matrix.makeTranslation( 0, 0, ui.portalL1 ) ) ); 
+                const portalTopArr = portalTopShp.getPoints().map( i => new THREE.Vector3 ( i.x, i.y, 0 ) );
+                const portalTopArrMove = portalTopShp.getPoints().map( i => new THREE.Vector3 ( i.x, i.y, ui.portalL1 ) );
 
                 // 포인트 합치기
                 const portalTopPts = [ ...portalTopArr, ...portalTopArrMove ];
@@ -1071,42 +1073,42 @@
                 // showContainer.push( portalCutExtr );
 
 
-                // 좌측cut형상 - 옹벽절단, 안짤려서 큰 형상을 만들어줬음
-                const sideLtCutShp = new THREE.Shape()
-                    .moveTo( 0, 0 )
-                    .lineTo( 0, wallBackLtHeight + 1 )
-                    .lineTo( ui.portalL1, wallBackLtHeight + 1 )
-                    .lineTo( ui.portalL1, wallBackLtHeight - ui.parapetLt )
-                    .lineTo( ui.portalL1 + ui.portalL2, 0);
+                // // 좌측cut형상 - 옹벽절단, 안짤려서 큰 형상을 만들어줬음
+                // const sideLtCutShp = new THREE.Shape()
+                //     .moveTo( 0, 0 )
+                //     .lineTo( 0, wallBackLtHeight + 1 )
+                //     .lineTo( ui.portalL1, wallBackLtHeight + 1 )
+                //     .lineTo( ui.portalL1, wallBackLtHeight - ui.parapetLt )
+                //     .lineTo( ui.portalL1 + ui.portalL2, 0);
 
-                const sideLtCutShpLine = addLine( sideLtCutShp, 'orange' );
-                sideLtCutShpLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
-                sideLtCutShpLine.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
-                // showContainer.push( sideLtCutShpLine );
+                // const sideLtCutShpLine = addLine( sideLtCutShp, 'orange' );
+                // sideLtCutShpLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
+                // sideLtCutShpLine.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
+                // // showContainer.push( sideLtCutShpLine );
 
-                const sideLtCutExtr = addExtr( sideLtCutShp, 'red', 1 );
-                sideLtCutExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
-                sideLtCutExtr.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal + 0.5, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
-                // showContainer.push( sideLtCutExtr );
+                // const sideLtCutExtr = addExtr( sideLtCutShp, 'red', 1 );
+                // sideLtCutExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
+                // sideLtCutExtr.applyMatrix4( matrix.makeTranslation( footingLtSlope[0].x + wallLtPosX - wallBackLtWidthFinal + 0.5, footingLtSlope[0].y + wallLtPosY -0.9, ui.totalLength ) );
+                // // showContainer.push( sideLtCutExtr );
 
 
-                // 우측cut형상 - 옹벽절단, 안짤려서 큰 형상을 만들어줬음
-                const sideRtCutShp = new THREE.Shape()
-                    .moveTo( 0, 0 )
-                    .lineTo( 0, wallBackRtHeight + 1 )
-                    .lineTo( ui.portalL1, wallBackRtHeight + 1 )
-                    .lineTo( ui.portalL1, wallBackRtHeight - ui.parapetRt )
-                    .lineTo( ui.portalL1 + ui.portalL2, 0);
+                // // 우측cut형상 - 옹벽절단, 안짤려서 큰 형상을 만들어줬음
+                // const sideRtCutShp = new THREE.Shape()
+                //     .moveTo( 0, 0 )
+                //     .lineTo( 0, wallBackRtHeight + 1 )
+                //     .lineTo( ui.portalL1, wallBackRtHeight + 1 )
+                //     .lineTo( ui.portalL1, wallBackRtHeight - ui.parapetRt )
+                //     .lineTo( ui.portalL1 + ui.portalL2, 0);
 
-                const sideRtCutLine = addLine( sideRtCutShp, 'darkred' );
-                sideRtCutLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
-                sideRtCutLine.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.3, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
-                // showContainer.push( sideRtCutLine );
+                // const sideRtCutLine = addLine( sideRtCutShp, 'darkred' );
+                // sideRtCutLine.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
+                // sideRtCutLine.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.3, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
+                // // showContainer.push( sideRtCutLine );
                     
-                const sideRtCutExtr = addExtr( sideRtCutShp, 'red', 1 );
-                sideRtCutExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
-                sideRtCutExtr.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.5, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
-                // showContainer.push( sideRtCutExtr );
+                // const sideRtCutExtr = addExtr( sideRtCutShp, 'red', 1 );
+                // sideRtCutExtr.applyMatrix4( matrix.makeRotationY( -Math.PI/2 ) );
+                // sideRtCutExtr.applyMatrix4( matrix.makeTranslation( footingRtSlope[0].x + wallRtPosX + wallBackRtWidthFinal + 0.5, footingRtSlope[0].y + wallRtPosY -0.9, ui.totalLength ) );
+                // // showContainer.push( sideRtCutExtr );
 
 
                 // 4. Constructive Solid Geometry ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1124,13 +1126,15 @@
 
                 // 옹벽좌측 subtract
                 const wallLtSub = new CSG();
-                wallLtSub.subtract( [ wallLtUniMesh, portalMidMesh, portalTopMesh, sideLtCutExtr ] );
+                // wallLtSub.subtract( [ wallLtUniMesh, portalMidMesh, portalTopMesh, sideLtCutExtr ] );
+                wallLtSub.subtract( [ wallLtUniMesh, portalMidMesh, portalTopMesh, portalSideLtExtr ] );
                 const wallLtSubMesh = wallLtSub.toMesh();
                 showContainer.push( wallLtSubMesh );
 
                 // 옹벽우측 subtract
                 const wallRtSub = new CSG();
-                wallRtSub.subtract( [ wallRtUniMesh, portalMidMesh, portalTopMesh, sideRtCutExtr ] );
+                // wallRtSub.subtract( [ wallRtUniMesh, portalMidMesh, portalTopMesh, sideRtCutExtr ] );
+                wallRtSub.subtract( [ wallRtUniMesh, portalMidMesh, portalTopMesh, portalSideRtExtr ] );
                 const wallRtSubMesh = wallRtSub.toMesh();
                 showContainer.push( wallRtSubMesh );
 
@@ -1243,8 +1247,6 @@
                 const collarHeight2Line = addLine( collarHeight2, 'lightgray' );
                 collarHeight2Line.position.set( 0, 0, ui.totalLength);
                 showContainer.push( collarHeight2Line );
-
-
 
 
                 // 2. 마우스 칼라부 모델링 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1766,11 +1768,11 @@
             wallFolder.add( ui, 'wallRtLength', 3.000, 20.000, 0.100 ).name( '옹벽우측길이' ).onFinishChange( designTunnel );
 
             const portalFolder = gui.addFolder( '아치면벽' );
-            portalFolder.add( ui, 'portalL1', 0.500, 3.000, 0.100 ).name( '갱문길이1' ).onFinishChange( designTunnel );
-            portalFolder.add( ui, 'portalL2', 0.500, 3.000, 0.100 ).name( '갱문길이2' ).onFinishChange( designTunnel );
-            portalFolder.add( ui, 'parapetCtr', 0.500, 4.000, 0.100 ).name( '파라펫 중앙높이' ).onFinishChange( designTunnel );
-            portalFolder.add( ui, 'parapetLt', 0.500, 4.000, 0.100 ).name( '파라펫 좌측높이' ).onFinishChange( designTunnel );
-            portalFolder.add( ui, 'parapetRt', 0.500, 4.000, 0.100 ).name( '파라펫 우측높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'portalL1', 0.500, 2.000, 0.100 ).name( '갱문길이1' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'portalL2', 0.500, 2.000, 0.100 ).name( '갱문길이2' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetCtr', 0.500, 3.000, 0.100 ).name( '파라펫 중앙높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetLt', 0.500, 3.000, 0.100 ).name( '파라펫 좌측높이' ).onFinishChange( designTunnel );
+            portalFolder.add( ui, 'parapetRt', 0.500, 3.000, 0.100 ).name( '파라펫 우측높이' ).onFinishChange( designTunnel );
             portalFolder.add( ui, 'footHeight', 0.500, 3.000, 0.100 ).name( '기초두께' ).onFinishChange( designTunnel );
             portalFolder.add( ui, 'footLength', 1.000, 6.000, 0.100 ).name( '기초길이' ).onFinishChange( designTunnel );
 
@@ -1848,7 +1850,7 @@
             const mesh = new THREE.Mesh( surfGeo, surfMat );
             return mesh;
         }
-        
+
         function addExtr( shape, color, length ) {            
             const extrudeSettings = {
                 steps : 1,
@@ -1960,6 +1962,7 @@
                 case 80: /*P*/
 
                     camera = cameraPerspective;
+                    
                     orbitControls.object = camera
                     orbitControls.target.set( 0, 0, 0 );
                     orbitControls.update();

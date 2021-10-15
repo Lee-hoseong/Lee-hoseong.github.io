@@ -1013,7 +1013,7 @@
                 const angle = Math.atan2(tangent.y, tangent.x);
                 
                 const auxiliaryMesh = new THREE.Mesh( auxiliaryGeo, auxiliaryMat );
-                auxiliaryMesh.castShadow = true;
+                // auxiliaryMesh.castShadow = true;
                 auxiliaryMesh.rotation.x = THREE.Math.degToRad( 170 );  //설치각도                
                 
                 const blockSystem = new THREE.Object3D();  // 빈 객체에 회전된 객체를 넣음, 캐드에서 블록을 만드는 개념
@@ -1040,7 +1040,7 @@
                 const angle = Math.atan2(-tangent.y, -tangent.x);
                 
                 const auxiliaryMesh = new THREE.Mesh( auxiliaryGeo, auxiliaryMat ) ;
-                auxiliaryMesh.castShadow = true;
+                // auxiliaryMesh.castShadow = true;
                 auxiliaryMesh.rotation.x = THREE.Math.degToRad( 170 );  //설치각도   
                 
                 const blockSystem = new THREE.Object3D();  // 빈 객체에 회전된 객체를 넣음, 캐드에서 블록을 만드는 개념

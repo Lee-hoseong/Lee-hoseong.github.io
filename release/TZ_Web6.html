@@ -37,6 +37,19 @@
         
         #button:hover {
             background: #444;
+        }
+
+        #info {
+            position: absolute;
+            top: 40px;
+            left : 50%;
+            /* top: 40px; */
+            padding: 10px;
+            transform : translate( -50% );
+            text-align: center;
+            background: rgba( 0, 0, 0, 0 );
+            color: black;
+            font-size: 12px;
         }        
 
         /* Add a black background color to the top navigation */
@@ -86,6 +99,12 @@
     
     <canvas id="c"></canvas>
 
+    <div id="info">
+        <b> Camera : </b><b style="color:#2FA1D6">P </b>Perspective, <b style="color:#2FA1D6">O </b>Orthographic
+        <br>
+        <b> View : </b> <b style="color:#2FA1D6">F </b> Front, <b style="color:#2FA1D6">B </b> Back, <b style="color:#2FA1D6">R </b> Right, <b style="color:#2FA1D6">L </b> Left, <b style="color:#2FA1D6">T </b> Top 
+    </div>    
+
     <button id="button" type="button" >Export Model</button>
 
     <script type="module">
@@ -95,6 +114,7 @@
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
         import { GLTFExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/GLTFExporter.js';
 
+        import { STLExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/STLExporter.js';
         // import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee/csg.module.js';//looeee
         import { CSG } from 'https://Lee-hoseong.github.io/csg/looeee_NPM/CSG.js';//looeee
         
@@ -108,7 +128,8 @@
 
 
         // Three js 기본변수
-        let camera, scene, renderer, raycaster
+        let canvas, camera, scene, renderer, raycaster, orbitControls
+        let cameraPerspective, cameraOrtho
 
 
         // 계산값 불러오기
@@ -144,18 +165,6 @@
         const crossSlopeStandard = JSON.parse( sessionStorage.getItem('적용편경사' ) );
 
 
-
-
-
-
-
-
-        /// raycast 어떻게 정리 할 것인지
-        let INTERSECTED;
-        const pointer = new THREE.Vector2();
-
-
-
         // 파라메트릭 값
         const ui = {
 
@@ -180,27 +189,28 @@
 
         function initGraphic() {
             
-            const canvas = document.querySelector('#c'); 
+            canvas = document.querySelector('#c'); 
             
             // camera(필수)
             
-            // // Perspective
-            // camera = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
-            // camera.position.set( -7, 7, 15 );             
+            // Perspective
+            cameraPerspective = new THREE.PerspectiveCamera( 50, 2, 0.1, 1000 ); //화각, 2, 가까운면, 먼쪽면
+            cameraPerspective.position.set( -14, 9, 30 );
             
 
             // Orthographic
-            camera = new THREE.OrthographicCamera( 
-                window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+            cameraOrtho = new THREE.OrthographicCamera( 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
             ); //left. right, top, bottom, near, far 
-            camera.position.set( 0, 0, 20 ); 
+            cameraOrtho.position.set( 0, 0, 40 );
+            cameraOrtho.zoom = 30;
             
+            camera = cameraPerspective;
 
             // OrbitControl : 뷰 확대 및 회전
-            const controls = new OrbitControls( camera, canvas );
-            // controls.target.set( 0, 3, 0 );
-            controls.target.set( 0, 0, 0 );
-            controls.update();
+            orbitControls = new OrbitControls( camera, canvas );
+            orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
             
 
             // Scene(필수) : 컨테이너
@@ -218,14 +228,14 @@
             // scene.add( plane );
             
 
-            // 바닥 그리드
-            const size = 30;
-            const divisions = 30;
-            const gridHelper = new THREE.GridHelper( size, divisions );
-            gridHelper.position.y = - 2;
-            gridHelper.material.opacity = 0.4;
-            gridHelper.material.transparent = true;
-            scene.add(gridHelper);
+            // // 바닥 그리드
+            // const size = 30;
+            // const divisions = 30;
+            // const gridHelper = new THREE.GridHelper( size, divisions );
+            // gridHelper.position.y = - 2;
+            // gridHelper.material.opacity = 0.4;
+            // gridHelper.material.transparent = true;
+            // scene.add(gridHelper);
             
 
             // 좌표축 생성, x축:red, y축:green, z축:blue
@@ -248,6 +258,9 @@
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
             renderer.shadowMap.enabled = true;
+
+            // keydown
+            document.addEventListener( 'keydown', onKeyDown );
             
         }
         
@@ -305,6 +318,45 @@
             const cementeFilterExtr = addExtr( cementeFilterShp, 'silver', ui.totalLength, 0.5 );
             showContainer.push( cementeFilterExtr );
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
 
             // 편경사변화에 따른 공동구 위치 계산 
             const footingLtSlope = footingLtType.map( i => new THREE.Vector2 ( i.x + concreteLt.x, i.y + concreteLt.y ) );
@@ -528,7 +580,6 @@
             // 터널형상 그리기
             const footingRtReverse = [...footingRtSlope].reverse();//원본 배열유지
 
-
             const liningShp = new THREE.Shape();
             liningShp.absarc( r2Origin.x, r2Origin.y, r2Final, Math.PI/2 + r1ThetaLt + r2Theta3, Math.PI/2 + r1ThetaLt, true ) ;
             liningShp.absarc( 0, r1Height, r1Final, Math.PI/2 + r1ThetaLt, Math.PI/2 - r1ThetaRt, true );
@@ -596,7 +647,6 @@
                 횡배수관(하부유공관)
                 횡배수관(집수정)
                 횡배수관(디치)
-                
             */
 
             // 공동구 형상
@@ -1563,8 +1613,6 @@
             // 결과값 저장
             sessionStorage.setItem('적용편경사', JSON.stringify( ui.crossSlopeStandard ) );
 
-
-
         }
 
 
@@ -1658,18 +1706,75 @@
             return mesh;
         }
 
-        function onPointerMove( event ) {
+        function onKeyDown( event ) {
 
-            pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-            pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            switch ( event.keyCode ) {
+
+                case 70: /*F*/
+
+                    moveCam( 0, 0, 100, 0, 0, 0 );
+                    break;
+
+                case 66: /*b*/
+
+                    moveCam( 0, 0, -100, 0, 0, 0 );
+                    break;                    
+
+                case 82: /*R*/
+
+                    moveCam( 40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 76: /*L*/
+
+                    moveCam( -40, 0, 0, 0, 0, 0 );
+                    break;
+
+                case 84: /*T*/
+
+                    moveCam( 0, 100, 0, 0, 0, 0 );
+                    break;                    
+
+                case 79: /*O*/
+
+                    camera = cameraOrtho;
+                    camera.position.set( 0, 0, 40 );
+
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
+
+                    break;
+
+                case 80: /*P*/
+
+                    camera = cameraPerspective;
+                    
+                    orbitControls.object = camera
+                    orbitControls.target.set( 0, 0, 0 );
+                    orbitControls.update();
+
+                    camera.updateProjectionMatrix();
+
+                    break;
+
+            }
 
         }
 
+        function moveCam(eye_x, eye_y, eye_z, target_x, target_y, target_z ) {
+            camera.position.set ( eye_x, eye_y, eye_z );
+            orbitControls.target.set( 0, 0, 0 );
+            orbitControls.update();
+        }        
+
         function resizeRendererToDisplaySize(renderer) {
-            const canvas = renderer.domElement;
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            const needResize = canvas.width !== width || canvas.height !== height;
+            const canvas1 = renderer.domElement;
+            const width = canvas1.clientWidth;
+            const height = canvas1.clientHeight;
+            const needResize = canvas1.width !== width || canvas1.height !== height;
             if (needResize) {
                 renderer.setSize(width, height, false);
             }
@@ -1678,40 +1783,17 @@
         }
         
         function render() {
-
             if (resizeRendererToDisplaySize(renderer)) {
-                const canvas = renderer.domElement;
-                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+
+                const canvas2 = renderer.domElement;
+                camera.aspect = canvas2.clientWidth / canvas2.clientHeight;
                 camera.updateProjectionMatrix();
+
             }
 
-            // // find intersections
+            // 
 
-            // raycaster.setFromCamera( pointer, camera );
-
-            // const intersects = raycaster.intersectObjects( scene.children );
-
-            // if ( intersects.length > 0 ) {
-
-            //     if ( INTERSECTED != intersects[ 0 ].object ) {
-
-            //         if ( INTERSECTED ) INTERSECTED.material.color.set( INTERSECTED.current );
-
-            //         INTERSECTED = intersects[ 0 ].object;
-            //         // INTERSECTED.current = INTERSECTED.material.color
-            //         INTERSECTED.material.color.set( 0xff0000 );
-
-            //     }
-
-            // } else {
-
-            //     if ( INTERSECTED ) INTERSECTED.material.color.set( INTERSECTED.current );
-
-            //     INTERSECTED = null;
-
-            // }            
-
-
+            
             renderer.renderLists.dispose();
             renderer.render(scene, camera);
             
@@ -1721,30 +1803,16 @@
         requestAnimationFrame(render);
 
 
-
-
-        // export GLTF
-        const exporter = new GLTFExporter();
-
-        document.getElementById("button").addEventListener("click", exportFile);        
-        
-        
+        // export STL        
         function exportFile() {
 
-            const result = exporter.parse( scene, function ( result ) {
+            const result = exporter.parse( scene, { binary: true } );
+            saveArrayBuffer( result, '환기방식.stl' );
+            
+        };
 
-					if ( result instanceof ArrayBuffer ) {
-
-						saveArrayBuffer( result, '단면.glb' );
-
-					} else {
-
-						const output = JSON.stringify( result, null, 2 );
-						saveString( output, '단면.gltf' );
-
-					}
-
-            } ) }
+        const exporter = new STLExporter();
+        document.getElementById("button").addEventListener("click", exportFile);
 
         const link = document.createElement( 'a' );
         link.style.display = 'none';
@@ -1770,7 +1838,6 @@
 
         } 
 
-        
     </script>
     
 </body>

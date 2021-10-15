@@ -267,15 +267,19 @@
         const roadWidth = JSON.parse( sessionStorage.getItem( '도로폭' ) );
         const shoulderLeft = JSON.parse( sessionStorage.getItem( '좌측길어깨폭' ) );
         const shoulderRight = JSON.parse( sessionStorage.getItem( '우측길어깨폭' ) );
+
         const crossSlopeMin = JSON.parse( sessionStorage.getItem( '최소편경사' ) );
         const crossSlopeMax = JSON.parse( sessionStorage.getItem( '최대편경사' ) );
+
         const concrete = JSON.parse( sessionStorage.getItem( '콘크리트포장두께' ) );
         const cementeFilter = JSON.parse( sessionStorage.getItem( '필터층포장두께' ) );
+
         const clearanceHeight = JSON.parse( sessionStorage.getItem( '시설한계높이' ) );
         const cornerLeftWidth = JSON.parse( sessionStorage.getItem( '좌측모서리폭' ) );
         const cornerLeftHeight = JSON.parse( sessionStorage.getItem( '좌측모서리높이') );
         const cornerRightWidth = JSON.parse( sessionStorage.getItem( '우측모서리폭' ) );
         const cornerRightHeight = JSON.parse( sessionStorage.getItem( '우측모서리높이' ) );
+        
         const limitMargin = JSON.parse( sessionStorage.getItem( '여유폭' ) );
 
         const roadDistance = JSON.parse( sessionStorage.getItem( '이격거리' ) );
@@ -668,15 +672,15 @@
 
             // Orthographic
             camera = new THREE.OrthographicCamera( 
-                window.innerWidth / - 64, window.innerWidth / 64, window.innerHeight / 64, window.innerHeight / - 64, 0.1, 1000 
+                window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 
             ); //left. right, top, bottom, near, far 
-            camera.position.set( 0, 0, 20 ); 
+            camera.position.set( 0, 3, 20 ); 
+            camera.zoom = 60;
             
 
             // OrbitControl : 뷰 확대 및 회전
             const controls = new OrbitControls( camera, canvas );
-            // controls.target.set( 0, 3, 0 );
-            controls.target.set( 0, 0, 0 );
+            controls.target.set( 0, 3, 0 );
             controls.update();
             
 
@@ -2067,6 +2071,62 @@
 
             const scSurf = addSurf( scShp, 'skyblue' );
             showContainer.push( scSurf );
+
+
+// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //
+
+{
+
+    const liningOutline = new THREE.Shape()
+        .absarc( r5Origin.x, r5Origin.y, r5Final, Math.PI/2 - r1ThetaRt - r5Theta1, Math.PI/2 - r1ThetaRt, false )
+        .absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2 - r1ThetaRt,  Math.PI/2, false )
+        .absarc( 0, ui.r1Height, r1Final + ui.liningT0, Math.PI/2,  Math.PI/2 + r1ThetaLt, false )
+        .absarc( r3Origin.x, r3Origin.y, r3Final, Math.PI/2 + r1ThetaLt, Math.PI/2 + r1ThetaLt + r3Theta1, false )
+    
+    const rebarPts = [];
+
+    const rebarPath = liningOutline;
+    const spacing = 0.001;
+    const coverDepth = 0.060;
+
+    for ( let i=0; i*spacing < rebarPath.getLength(); i++ ) {
+        
+        // 일정길이로 나누기
+        const v1 = rebarPath.getPointAt( i*spacing / rebarPath.getLength() );
+        const tangent = rebarPath.getTangentAt( i*spacing / rebarPath.getLength() );
+
+        const v2 = new THREE.Vector2( v1.x - tangent.y, v1.y + tangent.x); // clock : false
+        const v3 = new THREE.Vector2();
+
+        v3.subVectors( v2, v1 ).normalize ().multiplyScalar( coverDepth ).add( v1 );
+
+        rebarPts.push( v3 )
+
+        // 반시계방향 : ( segment.x - tangent.y, segment.y + tangent.x);
+        // 시계방향 : ( segment.x + tangent.y, segment.y - tangent.x);
+        
+    };
+
+    // 특정 높이 포함
+    // const rebarPts2 = rebarPts.filter( i => {
+    //     return i.y >= 3
+    // });
+
+    const coverShp = new THREE.Shape( rebarPts )
+    const coverLine = addLine( coverShp, 'red' );
+    showContainer.push( coverLine );
+    
+}
+            
+
+// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //// 테스트 //
+
+
+
+
+
+
+
 
 
             // 공동구 라이닝두께T1 그리기
