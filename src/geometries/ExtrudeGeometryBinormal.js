@@ -411,7 +411,7 @@
 					//  binormal.copy( splineTube.binormals[ 0 ] ).multiplyScalar( vert.y );
  
 					//  position2.copy( extrudePts[ 0 ] ).add( normal ).add( binormal );
-					 position2.copy( extrudePts[ 0 ] ).add( normal );
+					//  position2.copy( extrudePts[ 0 ] ).add( normal );
  
 					 v( position2.x, position2.y, position2.z );
  
@@ -440,7 +440,7 @@
 						//  binormal.copy( splineTube.binormals[ s ] ).multiplyScalar( vert.y );
  
 						//  position2.copy( extrudePts[ s ] ).add( normal ).add( binormal );
-						 position2.copy( extrudePts[ s ] ).add( normal );
+						//  position2.copy( extrudePts[ s ] ).add( normal );
  
 						 v( position2.x, position2.y, position2.z );
  
