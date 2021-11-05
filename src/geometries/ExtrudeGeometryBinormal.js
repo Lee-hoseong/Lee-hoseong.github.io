@@ -2,7 +2,7 @@
  * Creates extruded geometry from a path shape.
  *
  * parameters = {
- *
+ *	// binormal delete
  *  curveSegments: <int>, // number of points on the curves
  *  steps: <int>, // number of points for z-side extrusions / used for subdividing segments of extrude spline too
  *  depth: <float>, // Depth to extrude the shape
