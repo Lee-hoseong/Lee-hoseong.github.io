@@ -2,7 +2,7 @@
  * Creates extruded geometry from a path shape.
  *
  * parameters = {
- *	// binormal delete
+ *	// computeFrenetFrames modify
  *  curveSegments: <int>, // number of points on the curves
  *  steps: <int>, // number of points for z-side extrusions / used for subdividing segments of extrude spline too
  *  depth: <float>, // Depth to extrude the shape
@@ -22,7 +22,7 @@
 
  import { BufferGeometry } from '../core/BufferGeometry.js';
  import { Float32BufferAttribute } from '../core/BufferAttribute.js';
- import * as Curves from '../extras/curves/Curves.js';
+ import * as CurveBinormal from '../extras/curves/CurveBinormal.js';
  import { Vector2 } from '../math/Vector2.js';
  import { Vector3 } from '../math/Vector3.js';
  import { ShapeUtils } from '../extras/ShapeUtils.js';
@@ -95,8 +95,7 @@
 			 //
  
 			 let extrudePts, extrudeByPath = false;
-			//  let splineTube, binormal, normal, position2;
-			 let splineTube, normal, position2;
+			 let splineTube, binormal, normal, position2;
  
 			 if ( extrudePath ) {
  
@@ -113,7 +112,7 @@
  
 				 // console.log(splineTube, 'splineTube', splineTube.normals.length, 'steps', steps, 'extrudePts', extrudePts.length);
  
-				//  binormal = new Vector3();
+				 binormal = new Vector3();
 				 normal = new Vector3();
 				 position2 = new Vector3();
  
@@ -408,10 +407,9 @@
 					 // v( vert.x, vert.y + extrudePts[ 0 ].y, extrudePts[ 0 ].x );
  
 					 normal.copy( splineTube.normals[ 0 ] ).multiplyScalar( vert.x );
-					//  binormal.copy( splineTube.binormals[ 0 ] ).multiplyScalar( vert.y );
+					 binormal.copy( splineTube.binormals[ 0 ] ).multiplyScalar( vert.y );
  
-					//  position2.copy( extrudePts[ 0 ] ).add( normal ).add( binormal );
-					 position2.copy( extrudePts[ 0 ] ).add( normal );
+					 position2.copy( extrudePts[ 0 ] ).add( normal ).add( binormal );
  
 					 v( position2.x, position2.y, position2.z );
  
@@ -437,10 +435,9 @@
 						 // v( vert.x, vert.y + extrudePts[ s - 1 ].y, extrudePts[ s - 1 ].x );
  
 						 normal.copy( splineTube.normals[ s ] ).multiplyScalar( vert.x );
-						//  binormal.copy( splineTube.binormals[ s ] ).multiplyScalar( vert.y );
+						 binormal.copy( splineTube.binormals[ s ] ).multiplyScalar( vert.y );
  
-						//  position2.copy( extrudePts[ s ] ).add( normal ).add( binormal );
-						 position2.copy( extrudePts[ s ] ).add( normal );
+						 position2.copy( extrudePts[ s ] ).add( normal ).add( binormal );
  
 						 v( position2.x, position2.y, position2.z );
  
@@ -715,7 +712,7 @@
  
 		 if ( extrudePath !== undefined ) {
  
-			 data.options.extrudePath = new Curves[ extrudePath.type ]().fromJSON( extrudePath );
+			 data.options.extrudePath = new CurveBinormal[ extrudePath.type ]().fromJSON( extrudePath );
  
 		 }
  
