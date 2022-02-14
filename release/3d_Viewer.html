@@ -57,15 +57,15 @@
         import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js'; // min으로 교체
         import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
         import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';
-        import { STLExporter } from 'https://Lee-hoseong.github.io/jsm/exporters/STLExporter.js';
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
+        import { RGBELoader } from 'https://Lee-hoseong.github.io/jsm/loaders/RGBELoader.js';
 
 
         // variable
         let camera, scene, light, renderer;
         let cameraPerspective, cameraOrtho;
         let controlsPerspective, controlsOrtho;
-        let box, sizeBox, model;
+        let box, sizeBox, centerBox, model;
         let progressBarDiv;
         let clippingPlanes;
 
@@ -126,29 +126,47 @@
             
 
             // light
-            scene.add( new THREE.AmbientLight( 0xffffff, 0.1 ) );
+            scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
             
-            light = new THREE.DirectionalLight( 'white', 1 );
+            light = new THREE.DirectionalLight( 'white', 3 );
             light.position.set( -1, 2, 4 );
-            light.target.position.set( 0, 0, 0 );
-            light.castShadow = true;
+            // light.position.set( 0.5, 0, 0.866 );
+            // light.target.position.set( 0, 0, 0 );
+            // light.castShadow = true;
             // scene.add(light);
             camera.add( light );
+
+            const hemiLight = new THREE.HemisphereLight();
+            light.add( hemiLight );
             
 
             // light helper
             // const lightHelper = new THREE.DirectionalLightHelper( light, 10 );
             // scene.add( lightHelper );
 
-            
+
+            //
+            new RGBELoader()
+                .setDataType( THREE.FloatType )
+                .setPath( 'https://Lee-hoseong.github.io/texture/' )
+                // .load( 'short_tunnel_1k.hdr', function ( texture ) {
+                .load( 'footprint_court_2k.hdr', function ( texture ) {
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    scene.environment = texture;
+                } );
+
+
             // Render
             renderer = new THREE.WebGLRenderer( { canvas } );
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( window.innerWidth, window.innerHeight );
             renderer.outputEncoding = THREE.sRGBEncoding; // 출력 렌더링 인코딩을 제어
             renderer.toneMapping = THREE.ACESFilmicToneMapping; // HDR값을 LDR값으로 변환
-            renderer.toneMappingExposure = 0.5;
+            renderer.toneMappingExposure = 1.0;
+
             renderer.shadowMap.enabled = true;
+
+            renderer.physicallyCorrectLights = true
 
             renderer.localClippingEnabled = true;
 
@@ -178,7 +196,8 @@
             // GLTF Loader
             // let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );
             let gltfLoader = new GLTFLoader();
-            const url = 'truck.glb';
+            // const url = 'truck.glb';
+            const url = '3dtest.glb';
             // const url = '/rock/scene.gltf';
             // const url = '1250_main.glb';
             gltfLoader.load( url, function ( gltf ) {
@@ -215,11 +234,14 @@
                     child.material.clippingPlanes = clippingPlanes;
                 })
                 
+                console.log( "model :", model );
+                console.log( "sizeBox :", sizeBox );
+
                 // grid
                 const size = 2*sizeBox;
-                const divisions = 2*sizeBox;
+                const divisions = 20;
                 const gridHelper = new THREE.GridHelper( size, divisions );
-                gridHelper.position.x = (box.min.x+box.max.x)/2;
+                gridHelper.position.x = centerBox.x;
                 gridHelper.position.y = 0;
                 gridHelper.material.opacity = 0.4;
                 gridHelper.material.transparent = true;
@@ -244,7 +266,7 @@
             sizeBox = box.getSize(new THREE.Vector3()).length();
 
             // 모델의 경계 박스 중심 위치
-            const centerBox = box.getCenter(new THREE.Vector3());
+            centerBox = box.getCenter(new THREE.Vector3());
 
             // viewmode 설정
             let offsetX =0, offsetY=0, offsetZ=0;
