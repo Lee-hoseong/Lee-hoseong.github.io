@@ -28,6 +28,27 @@
             font-size: 12px;
         } 
 
+        .obit-controls-gizmo {
+            position: absolute;
+            top: 2em;
+            right: 2em;
+            z-index: 1000;
+            background-color: #FFF0;
+            border-radius: 100%;
+            transition: background-color .15s  linear;
+            cursor: pointer;
+        }
+
+        .obit-controls-gizmo.dragging, 
+        .obit-controls-gizmo:hover {
+            background-color: #FFF3;
+        }
+
+        .obit-controls-gizmo.inactive {
+            pointer-events: none;
+            background-color: #FFF0  !important;
+        }
+
     </style>
 </head>
 <body>
@@ -56,6 +77,7 @@
         
         import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js'; // min으로 교체
         import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { OrbitControlsGizmo  } from 'https://Lee-hoseong.github.io//ThreeOrbitControlsGizmo/OrbitControlsGizmo.js';
         import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
         import { RGBELoader } from 'https://Lee-hoseong.github.io/jsm/loaders/RGBELoader.js';
@@ -109,6 +131,13 @@
             controlsOrtho.autoRotate = true;
             controlsOrtho.autoRotateSpeed = -3;
             controlsOrtho.screenSpacePanning = true;
+
+
+            // Gizmo
+            const controlsGizmoPerspective = new  OrbitControlsGizmo(controlsPerspective, { size:  100, padding:  8 });
+            document.body.appendChild(controlsGizmoPerspective.domElement);
+            console.log( controlsGizmoPerspective )
+
 
             // plane
             // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
@@ -196,8 +225,8 @@
             // GLTF Loader
             // let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );
             let gltfLoader = new GLTFLoader();
-            // const url = 'truck.glb';
-            const url = '3dtest.glb';
+            const url = 'truck.glb';
+            // const url = '3dtest.glb';
             // const url = '/rock/scene.gltf';
             // const url = '1250_main.glb';
             gltfLoader.load( url, function ( gltf ) {
@@ -248,7 +277,7 @@
                 scene.add( gridHelper );
 
                 hideProgressBar();
-                createUI();
+                // createUI();
 
             }, onProgress, onError );
 
