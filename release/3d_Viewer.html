@@ -76,7 +76,7 @@
     <script type="module">
         
         import * as THREE from 'https://Lee-hoseong.github.io/build/three.module.js'; // min으로 교체
-        import { OrbitControls } from 'https://Lee-hoseong.github.io/jsm/controls/OrbitControls.js';
+        import { OrbitControls } from 'https://Lee-hoseong.github.io//ThreeOrbitControlsGizmo/OrbitControls.js';
         import { OrbitControlsGizmo  } from 'https://Lee-hoseong.github.io//ThreeOrbitControlsGizmo/OrbitControlsGizmo.js';
         import { GLTFLoader } from 'https://Lee-hoseong.github.io/jsm/loaders/GLTFLoader.js';
         import { GUI } from 'https://Lee-hoseong.github.io/jsm/libs/dat.gui.module.js';
@@ -87,6 +87,7 @@
         let camera, scene, light, renderer;
         let cameraPerspective, cameraOrtho;
         let controlsPerspective, controlsOrtho;
+        let controlsGizmoPerspective, controlsGizmoOrtho;
         let box, sizeBox, centerBox, model;
         let progressBarDiv;
         let clippingPlanes;
@@ -106,7 +107,6 @@
             const aspect = window.innerWidth/window.innerHeight;
             
             cameraPerspective = new THREE.PerspectiveCamera( 75, aspect, 0.1, 1000 );
-            // camera.position.set( 0, 0, 0);
             scene.add( cameraPerspective );
 
             cameraOrtho = new THREE.OrthographicCamera( 
@@ -115,7 +115,7 @@
                 window.innerHeight/aspect, 
                 window.innerHeight/-aspect, 0.1, 1000 
             );
-            cameraOrtho.zoom = 50;
+            // cameraOrtho.zoom = 1;
             scene.add( cameraOrtho );
 
             camera = cameraPerspective;
@@ -134,20 +134,10 @@
 
 
             // Gizmo
-            const controlsGizmoPerspective = new  OrbitControlsGizmo(controlsPerspective, { size:  100, padding:  8 });
+            controlsGizmoPerspective = new OrbitControlsGizmo(controlsPerspective, { size:  100, padding:  8 });
+            controlsGizmoOrtho = new OrbitControlsGizmo(controlsOrtho, { size:  100, padding:  8 });
             document.body.appendChild(controlsGizmoPerspective.domElement);
-            console.log( controlsGizmoPerspective )
-
-
-            // plane
-            // const planeGeometry = new THREE.PlaneBufferGeometry( 100, 100 );
-            // planeGeometry.rotateX( - Math.PI/2 );
-            // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.3 } );
-            // const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-            // plane.position.y = -1.999;
-            // plane.receiveShadow = true;
-            // scene.add( plane );
-            
+          
 
             // Axes
             const axes = new THREE.AxesHelper( 1 ); 
@@ -165,9 +155,6 @@
             // scene.add(light);
             camera.add( light );
 
-            const hemiLight = new THREE.HemisphereLight();
-            light.add( hemiLight );
-            
 
             // light helper
             // const lightHelper = new THREE.DirectionalLightHelper( light, 10 );
@@ -178,17 +165,18 @@
             new RGBELoader()
                 .setDataType( THREE.FloatType )
                 .setPath( 'https://Lee-hoseong.github.io/texture/' )
-                // .load( 'short_tunnel_1k.hdr', function ( texture ) {
-                .load( 'footprint_court_2k.hdr', function ( texture ) {
+                .load( 'short_tunnel_1k.hdr', function ( texture ) {
+                // .load( 'footprint_court_2k.hdr', function ( texture ) {
                     texture.mapping = THREE.EquirectangularReflectionMapping;
                     scene.environment = texture;
                 } );
 
 
             // Render
-            renderer = new THREE.WebGLRenderer( { canvas } );
+            renderer = new THREE.WebGLRenderer( { canvas, antialias: true } );
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( window.innerWidth, window.innerHeight );
+
             renderer.outputEncoding = THREE.sRGBEncoding; // 출력 렌더링 인코딩을 제어
             renderer.toneMapping = THREE.ACESFilmicToneMapping; // HDR값을 LDR값으로 변환
             renderer.toneMappingExposure = 1.0;
@@ -198,6 +186,7 @@
             renderer.physicallyCorrectLights = true
 
             renderer.localClippingEnabled = true;
+
 
             // resize
             window.addEventListener( 'resize', onWindowResize );
@@ -222,13 +211,12 @@
             updateProgressBar( 0 );
             showProgressBar();
 
+
             // GLTF Loader
             // let gltfLoader = new GLTFLoader().setPath( 'https://Lee-hoseong.github.io/model/' );
             let gltfLoader = new GLTFLoader();
-            const url = 'truck.glb';
-            // const url = '3dtest.glb';
-            // const url = '/rock/scene.gltf';
-            // const url = '1250_main.glb';
+            // const url = 'truck.glb';
+            const url = '3dtest.glb';
             gltfLoader.load( url, function ( gltf ) {
                 // gltf.scene.traverse( function( node ) {
                 //     if ( node instanceof THREE.Mesh ) {
@@ -241,7 +229,7 @@
                 model = gltf.scene;
                 scene.add( model );
 
-                zoomFit( model, camera, "Z", true   );
+                zoomFit( model, camera, "Z", true );
 
                 // clipping
                 clippingPlanes = [ 
@@ -264,7 +252,6 @@
                 })
                 
                 console.log( "model :", model );
-                console.log( "sizeBox :", sizeBox );
 
                 // grid
                 const size = 2*sizeBox;
@@ -284,23 +271,13 @@
         }
 
         function zoomFit(obj3D, viewMode, bFront) {
-            
-            // 모델의 경계 박스
             box = new THREE.Box3().setFromObject(obj3D);
-
-            // const boxHelper = new THREE.BoxHelper( obj3D, 'black' );
-            // scene.add( boxHelper );
-
-            // 모델의 경계 박스 대각의 길이
             sizeBox = box.getSize(new THREE.Vector3()).length();
-
-            // 모델의 경계 박스 중심 위치
             centerBox = box.getCenter(new THREE.Vector3());
 
             // viewmode 설정
             let offsetX =0, offsetY=0, offsetZ=0;
-            viewMode === "X" ? offsetX = 1 : (viewMode === "Y") ?
-                offsetY = 1 : offsetZ = 1;
+            viewMode === "X" ? offsetX = 1 : (viewMode === "Y") ? offsetY = 1 : offsetZ = 1;
 
             // 앞면을 볼지 뒷면을 볼지
             if( !bFront ) {
@@ -343,11 +320,9 @@
             // orbitControl이 객체중심에서 회전하도록
             controlsPerspective.target.set(centerBox.x, centerBox.y, centerBox.z);
             controlsOrtho.target.set(centerBox.x, centerBox.y, centerBox.z);
-
         }
 
         function onKeyDown( event ) {
-
             switch ( event.keyCode ) {
 
                 case 70: /*F*/
@@ -383,6 +358,10 @@
                 case 67: /*C*/
                     if( camera == cameraPerspective ) {
                         // perspective에서 ortho로 변경
+                        cameraOrtho.near = cameraPerspective.near;
+                        cameraOrtho.far = cameraPerspective.far;
+                        cameraOrtho.zoom = Math.min( window.innerWidth / (box.max.x - box.min.x), window.innerHeight / (box.max.y - box.min.y)) * 0.4
+
                         camera = cameraOrtho;
                         camera.position.copy( cameraPerspective.position );
                         cameraOrtho.updateProjectionMatrix();
@@ -391,6 +370,13 @@
 
                         controlsOrtho.target.set(centerBox.x, centerBox.y, centerBox.z);
                         // controlsOrtho.update();
+
+                        // Gizmo
+                        document.body.removeChild(controlsGizmoPerspective.domElement);
+                        document.body.appendChild(controlsGizmoOrtho.domElement);
+
+                        // console.log( 'controlsGizmo', controlsGizmo );
+
                     } else {
                         // ortho에서 perspective로 변경
                         camera = cameraPerspective;
@@ -401,6 +387,11 @@
 
                         controlsPerspective.target.set(centerBox.x, centerBox.y, centerBox.z);
                         // controlsPerspective.update();
+
+                        // Gizmo
+                        document.body.removeChild(controlsGizmoOrtho.domElement);
+                        document.body.appendChild(controlsGizmoPerspective.domElement);
+
                     }
                     break;
                     
@@ -419,6 +410,7 @@
 
         }
 
+
         function onWindowResize() {
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -430,7 +422,7 @@
             camera.right = height * aspect;
             camera.top = height;
             camera.bottom = -height;
-
+      
             camera.updateProjectionMatrix();
 
             renderer.setSize( width, height );
@@ -490,6 +482,7 @@
                 z : box.max.z,
                 negateZ : false,
             };
+
             clippingFolder.add( props, 'x', box.min.x, box.max.x, 0.01 ).onChange( (value) => {
                 if(props.negateX) {
                     clippingPlanes[ 0 ].constant = -value;
@@ -497,9 +490,11 @@
                     clippingPlanes[ 0 ].constant = value;
                 }
             });
+
             clippingFolder.add( props, 'negateX').name( 'x방향반대' ).onChange( ()=>{
                 clippingPlanes[ 0 ].negate();
             });
+
             clippingFolder.add( props, 'y', box.min.y, box.max.y ).onChange( (value)=>{
                 if(props.negateY) {
                     clippingPlanes[ 1 ].constant = -value;
@@ -507,6 +502,7 @@
                     clippingPlanes[ 1 ].constant = value;
                 }
             });
+
             clippingFolder.add( props, 'negateY').name( 'y방향반대' ).onChange( ()=>{
                 clippingPlanes[ 1 ].negate();
             });
@@ -518,15 +514,13 @@
                     clippingPlanes[ 2 ].constant = value;
                 }
             });
+
             clippingFolder.add( props, 'negateZ').name( 'z방향반대' ).onChange( ()=>{
                 clippingPlanes[ 2 ].negate();
             });
             // clippingFolder.open();
         }
 
-
     </script>
-    
 </body>
-
 </html>
