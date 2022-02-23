@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Three Orientation Gizmo Example</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        orientation-gizmo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border-radius: 100%;
+            cursor: pointer;
+        }
+
+        orientation-gizmo:hover {
+            background: rgba(255, 255, 255, .2);
+        }
+    </style>
+</head>
+
+<body>
+    <script src="../node_modules/three/build/three.js"></script>
+    <script src="../node_modules/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/OrientationGizmo.js"></script>
+
+    <script>
+    class CameraSwitcher {
+        constructor(scene, renderer, perspective, orthographic) {
+            this.scene = scene;
+            this.renderer = renderer;
+
+            this.perspective = perspective;
+            this.orthographic = orthographic;
+            this.onSwitch = null;
+
+            renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+        }
+
+        onMouseDown() {
+            this.toPerspective();
+        }
+
+        toOrtho() {
+            if(!!this.scene.activeCamera && this.scene.activeCamera != this.orthographic) {
+                this.orthographic.position.copy(this.perspective.position);
+
+                // Update Depth
+                var look_direction = this.perspective.getWorldDirection(new THREE.Vector3());
+                var distance = controls.target.clone().sub( this.perspective.position );
+                var depth = distance.dot( look_direction );
+
+                var size = this.renderer.getSize(new THREE.Vector2());
+                var aspect = size.x / size.y;
+
+                var height_ortho = depth * 2 * Math.atan(this.perspective.fov * (Math.PI / 180) / 2);
+                var width_ortho = height_ortho * aspect;
+
+                this.orthographic.zoom = 1;
+                this.orthographic.left = width_ortho / -2;
+                this.orthographic.right = width_ortho / 2;
+                this.orthographic.top = height_ortho / 2;
+                this.orthographic.bottom = height_ortho / -2;
+                this.orthographic.updateProjectionMatrix();
+                this.orthographic.position.copy(this.perspective.position);
+                this.orthographic.quaternion.copy(this.perspective.quaternion);
+            }
+
+            this.scene.activeCamera = this.orthographic;
+
+            if(!!this.onSwitch && typeof this.onSwitch == "function") {
+                this.onSwitch(this.scene.activeCamera);
+            }
+        }
+
+        toPerspective() {
+            if(!!this.scene.activeCamera && this.scene.activeCamera != this.perspective) {
+                this.perspective.position.copy(this.orthographic.position);
+            }
+
+            this.scene.activeCamera = this.perspective;
+
+            if(!!this.onSwitch && typeof this.onSwitch == "function") {
+                this.onSwitch(this.scene.activeCamera);
+            }
+        }
+
+        toggle() {
+            if(this.scene.activeCamera == null) {
+                this.scene.activeCamera = this.perspective;
+            } else if(this.scene.activeCamera == this.perspective) {
+                this.toOrtho();
+            } else {
+                this.toPerspective();
+            }
+        }
+
+        onWindowResize(aspect) {
+            this.perspective.aspect = aspect;
+            this.perspective.updateProjectionMatrix();
+        }
+
+    }
+    </script>
+
+    <script>
+        // Generate a scene
+        var scene = new THREE.Scene();
+
+        // Create Cameras
+        var cameraOrthographic = new THREE.OrthographicCamera(0,0,0,0, -100, 1000);
+        var cameraPerspective = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        cameraPerspective.position.set(0, 3, 3);
+
+        // Create the renderer and add it to the page
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Use orbit controls
+        var controls = new THREE.OrbitControls(cameraPerspective, renderer.domElement);
+
+        // Add Grid Helper
+        var size = 10;
+        var divisions = 10;
+        var gridHelper = new THREE.GridHelper(size, divisions);
+        scene.add(gridHelper);
+
+        // Add Axis Helper
+        var axesHelper = new THREE.AxesHelper(5);
+        scene.add(axesHelper);
+
+        // Create the cube geometry and material
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+        var material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            vertexColors: THREE.FaceColors
+        });
+
+        const materials = [
+          new THREE.MeshBasicMaterial({color: 'red'}),
+          new THREE.MeshBasicMaterial({color: 'green'}),
+          new THREE.MeshBasicMaterial({color: 'blue'}),
+        ];
+
+        // Assign faces to colors
+        for (let i = 0; i < geometry.groups.length; i++) {
+          geometry.groups[i].materialIndex = Math.floor(i/2);
+        }
+
+        // Create the cube mesh and add to scene
+        var cube = new THREE.Mesh(geometry, materials);
+        scene.add(cube);
+
+        // Create our orientation gizmo
+        var orientationGizmo = new OrientationGizmo(cameraPerspective);
+        document.body.appendChild(orientationGizmo);
+
+        orientationGizmo.onAxisSelected = function(axis) {
+            const camera = cameraSwitcher.scene.activeCamera;
+            var distance = camera.position.distanceTo(controls.target);
+            camera.position.copy(axis.direction.multiplyScalar(distance).add(controls.target));
+            camera.lookAt(controls.target);
+            cameraSwitcher.toOrtho();
+        }
+
+        // Create a new camera switcher
+        var cameraSwitcher = new CameraSwitcher(scene, renderer, cameraPerspective, cameraOrthographic);
+
+        cameraSwitcher.onSwitch = function(camera) {
+            controls.object = camera;
+            controls.update();
+            orientationGizmo.camera = camera;
+        }
+
+        cameraSwitcher.toPerspective();
+
+        // Handle Resizing of the window
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            var aspect = window.innerWidth / window.innerHeight;
+            cameraSwitcher.onWindowResize.call(cameraSwitcher, aspect);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            orientationGizmo.update();
+            renderer.render(scene, scene.activeCamera);
+        }
+
+        animate();
+    </script>
+</body>
+
+</html>
