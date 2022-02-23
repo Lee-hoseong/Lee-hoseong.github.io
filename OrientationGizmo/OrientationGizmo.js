@@ -1,5 +1,6 @@
 class OrientationGizmo extends HTMLElement {
 	constructor(camera, options) {
+		super();
 		this.camera = camera;
 		this.options = Object.assign({
 			size: 90,
