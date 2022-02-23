@@ -1,5 +1,3 @@
-"use strict";
-
 class OrientationGizmo extends HTMLElement {
 	constructor(camera, options) {
 		super();
@@ -184,6 +182,4 @@ class OrientationGizmo extends HTMLElement {
 	}
 }
 
-window.customElements.define('orientation-gizmo', OrientationGizmo);
-
-module.exports = OrientationGizmo;
+export { OrientationGizmo }
