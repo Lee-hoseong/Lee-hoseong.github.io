@@ -150,10 +150,10 @@
 		mesh.traverse((o) => {
 			if (o.isMesh) o.material = newMaterial;
 		});
-		mesh.scale.set( 0.3, 0.3, 0.3);
+		mesh.scale.set( 0.001, 0.001, 0.001);
 		mesh.rotation.x = Math.PI / 2;
 		// mesh.geometry( 0, 0, );
-		mesh.position.set( 0, 0, 20);
+		mesh.position.set( 0, 0, 0);
 		scene.add( mesh );
 
 	})
