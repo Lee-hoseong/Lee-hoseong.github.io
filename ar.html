@@ -156,7 +156,8 @@
 	var mesh3 = addLine( videoBoxShp, 'black' );
 	scene.add( mesh3 )
 
-	mesh3.position.set( 1/2, 1.125/2, 0);
+	mesh.rotation.set(new THREE.Vector3( Math.PI/2, 0, 0));
+	mesh3.position.set( 1/2, 0, 1.125/2 );
 
 	function addLine( shape, color ) {
 		const points = shape.getPoints();
