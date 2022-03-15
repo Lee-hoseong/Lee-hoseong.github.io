@@ -142,7 +142,7 @@
 
 	var geometry2	= new THREE.TorusKnotGeometry(0.3,0.1,64,16);
 	var material2	= new THREE.MeshNormalMaterial();
-	var mesh2	= new THREE.Mesh( geometry, material );
+	var mesh2	= new THREE.Mesh( geometry2, material2 );
 	mesh2.position.y	= 0.5
 	scene.add( mesh2 );
 
@@ -166,7 +166,7 @@
 		}
 		
 		const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-		const extrudeMat = new THREE.MeshNormalMaterial( { opacity: 0.5, transparent: true } );
+		const extrudeMat = new THREE.MeshBasicMaterial( { opacity: 0.5, transparent: true, color: 0xffff00 } );
 		let mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
 		return mesh;
             
