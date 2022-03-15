@@ -146,19 +146,27 @@
 	mesh2.position.y	= 0.5
 	scene.add( mesh2 );
 
-	const concretePavementShp = new THREE.Shape();
-	concretePavementShp.moveTo( 0, 0 );
-	concretePavementShp.lineTo( 2, 0 );
-	concretePavementShp.lineTo( 2, 2 );
-	concretePavementShp.lineTo( 0, 2 );
-	concretePavementShp.lineTo( 0, 0 ); //close Path
+	const videoBoxShp = new THREE.Shape()
+		.moveTo( 0, 0 )
+		.lineTo( 2, 0 )
+		.lineTo( 2, 1.125 )
+		.lineTo( 0, 1.125 )
+		.lineTo( 0, 0 ); //close Path
 
-	var mesh3 = addExtr( concretePavementShp, 3 );
+	var mesh3 = addLine( videoBoxShp, 'black' );
 	scene.add( mesh3 )
 
+	mesh3.position.set( 1/2, 1.125/2, 0);
 
+	function addLine( shape, color ) {
+		const points = shape.getPoints();
+		const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+		const lineMat = new THREE.LineBasicMaterial( { color } );
+		const line = new THREE.Line( lineGeo, lineMat );
+		return line;
+	}
+	
 	function addExtr( shape, length ) {
-            
 		const extrudeSettings = {
 			steps : 1,
 			depth : length,
@@ -169,8 +177,7 @@
 		const extrudeMat = new THREE.MeshBasicMaterial( { opacity: 0.5, transparent: true, color: 0xffff00 } );
 		let mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
 		return mesh;
-            
-	};
+	}
 
 	onRenderFcts.push(function(delta){
 		mesh2.rotation.y += Math.PI*delta
