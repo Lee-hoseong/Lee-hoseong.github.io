@@ -146,12 +146,12 @@
 	mesh2.position.y	= 0.5
 	scene.add( mesh2 );
 
-	const videoBoxShp = new THREE.Shape()
-		.moveTo( 0, 0 )
-		.lineTo( 2, 0 )
-		.lineTo( 2, 1.125 )
-		.lineTo( 0, 1.125 )
-		.lineTo( 0, 0 ); //close Path
+	const videoBoxShp = new THREE.Shape();
+	videoBoxShp.moveTo( 0, 0 );
+	videoBoxShp.lineTo( 2, 0 );
+	videoBoxShp.lineTo( 2, 1.125 );
+	videoBoxShp.lineTo( 0, 1.125 );
+	videoBoxShp.lineTo( 0, 0 ); //close Path
 
 	var mesh3 = addLine( videoBoxShp, 'black' );
 	scene.add( mesh3 )
