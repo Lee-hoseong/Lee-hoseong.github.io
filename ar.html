@@ -187,12 +187,12 @@
 
 	dircetionMesh.scale.set( 0.2, 0.2, 0 );
 	dircetionMesh.rotation.x = -Math.PI / 2;
-	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3
+	dircetionMesh.position.set( 0, 1, -1.8 -0.2 ); // 위로 0.2
 	scene.add( dircetionMesh );
 
 
 	// 비디오
-	var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.6 );
+	var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.8 );
 	var video = document.getElementById( 'video' );
 	video.play();
 
@@ -204,7 +204,7 @@
 	
 	var videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
 	videoMesh.rotation.x = -Math.PI/2;
-	videoMesh.position.set( 3.2/2 + 0.5, 0, 0 );
+	videoMesh.position.set( 0, 2, 1.8 +0.2);
 	scene.add( videoMesh );	
 
 
@@ -265,7 +265,7 @@
 	const label1 = addLabel( '#2FA1D6' , '기술개발센터' );
 	
 	label1.rotation.x = -Math.PI / 2;
-	label1.position.set( 0, 0, 1.5/2 + 0.3 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
+	label1.position.set( 1.5, 0, 0 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
 
 	scene.add( label1 );	
 	
