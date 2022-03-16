@@ -126,6 +126,7 @@
 	//		add an object in the scene
 	//////////////////////////////////////////////////////////////////////////////////
 
+	/* 기본 */
 	// add a torus knot
 	var geometry	= new THREE.CubeGeometry(1,1,1);
 	var material	= new THREE.MeshNormalMaterial({
@@ -147,6 +148,8 @@
 	mesh2.position.y	= 0.5
 	scene.add( mesh2 );
 
+	
+	/* 비디오 */
 	const videoBoxShp = new THREE.Shape();
 	videoBoxShp.moveTo( 0, 0 );
 	videoBoxShp.lineTo( 2, 0 );
@@ -189,6 +192,9 @@
 	texture1.wrapT = THREE.RepeatWrapping;
 	texture1.repeat.set( 1, 1 );
 
+	
+	
+	// 오시는 길
 	var directionGeo = new THREE.PlaneGeometry( 1.6, 0.9 );
 	var directionMat = new THREE.MeshBasicMaterial( {side: THREE.DoubleSide} );
 	var dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
