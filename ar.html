@@ -13,7 +13,7 @@
 		더구나, 지금은 설명도 필요없는 시대다!
 	</div>
 
-	<video id="video" loop crossOrigin="anonymous" playsinline style="display:none">
+	<video id="video" loop crossOrigin="anonymous">
 		<source src="https://Lee-hoseong.github.io/ar/video-sample.mp4" type='video/mp4'>
 	</video>
 
@@ -179,9 +179,9 @@
 
 	const texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
 
-	var directionGeo = new THREE.PlaneGeometry( 16, 9 );
-	var directionMat = new THREE.MeshBasicMaterial( { } );
-	var dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
+	const directionGeo = new THREE.PlaneGeometry( 16, 9 );
+	const directionMat = new THREE.MeshBasicMaterial( { } );
+	const dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
 
 	dircetionMesh.material.map = texture1;
 
