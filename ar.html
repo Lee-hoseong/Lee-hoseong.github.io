@@ -14,6 +14,7 @@
 		더구나, 지금은 설명도 필요없는 시대다!
 	</div>
 
+	<!-- 사파리 정책 변경으로 무음으로 재생 -->
 	<video id="video" autoplay loop muted playsinline crossOrigin="anonymous" style="display:none">
 		<source src="https://Lee-hoseong.github.io/ar/video-sample.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
 	</video>
@@ -132,6 +133,9 @@
 		//		add an object in the scene
 		//////////////////////////////////////////////////////////////////////////////////
 
+
+
+		/* 기본 메쉬 */
 		// add a torus knot
 		var geometry	= new THREE.CubeGeometry(1,1,1);
 		var material	= new THREE.MeshNormalMaterial({
@@ -153,6 +157,8 @@
 		mesh2.position.y	= 0.5
 		scene.add( mesh2 );
 
+
+		/* 라인 */
 		// const videoBoxShp = new THREE.Shape();
 		// videoBoxShp.moveTo( 0, 0 );
 		// videoBoxShp.lineTo( 2, 0 );
@@ -176,7 +182,8 @@
 		// }
 		
 
-		// 이미지
+
+		/* 이미지 */
 		var textureLoader = new THREE.TextureLoader();
 
 		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
@@ -193,7 +200,7 @@
 		scene.add( dircetionMesh );
 
 
-		// 비디오
+		/* 비디오 */
 		var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.8 );
 		var video = document.getElementById( 'video' );
 		video.play();
@@ -212,32 +219,32 @@
 		scene.add( videoMesh );	
 
 
-		// glTF Loader
-		var threeGLTFLoader = new THREE.GLTFLoader();
-		var model;
+		/* 모델로더 */
+		// var threeGLTFLoader = new THREE.GLTFLoader();
+		// var model;
 
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch.glb", function (gltf) {
-			model = gltf.scene;
+		// threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch.glb", function (gltf) {
+		// 	model = gltf.scene;
 
-			var newMaterial = new THREE.MeshNormalMaterial({
-				side: THREE.DoubleSide, 
-				// color : 0x2FA1D6,
-				opacity : 0.8, 
-				transparent: true,
-			});
+		// 	var newMaterial = new THREE.MeshNormalMaterial({
+		// 		side: THREE.DoubleSide, 
+		// 		// color : 0x2FA1D6,
+		// 		opacity : 0.8, 
+		// 		transparent: true,
+		// 	});
 
-			model.traverse((o) => {
-				if (o.isMesh) o.material = newMaterial;
-			});
+		// 	model.traverse((o) => {
+		// 		if (o.isMesh) o.material = newMaterial;
+		// 	});
 
-			model.scale.set( 0.2, 0.2, 0.2);
-			model.position.set( 2, 0, 0 );
+		// 	model.scale.set( 0.2, 0.2, 0.2);
+		// 	model.position.set( 2, 0, 0 );
 
-			scene.add( model );
-		})
+		// 	scene.add( model );
+		// })
 		
 
-		// 텍스트
+		/* 텍스트 */
 		const labelGeometry = new THREE.PlaneGeometry(1, 1);
 
 		function makeLabelCanvas( size, name, color ) {
