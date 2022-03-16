@@ -28,7 +28,7 @@
 		alpha: true
 	});
 	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
-	renderer.setSize( 640, 480 );
+	renderer.setSize( 1280, 960 );
 	renderer.domElement.style.position = 'absolute'
 	renderer.domElement.style.top = '0px'
 	renderer.domElement.style.left = '0px'
@@ -174,7 +174,8 @@
 	// 	return line;
 	// }
 	
-	// 오시는 길
+
+	// 이미지
 	var textureLoader = new THREE.TextureLoader();
 
 	var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
@@ -186,8 +187,8 @@
 	dircetionMesh.material.map = texture1;
 
 	dircetionMesh.scale.set( 0.2, 0.2, 0 );
-	dircetionMesh.rotation.x = -Math.PI / 4;
-	dircetionMesh.position.set( 0, 1.0, -1.8 );
+	dircetionMesh.rotation.x = -Math.PI / 2;
+	dircetionMesh.position.set( 0, 1, -1.8 -0.2 ); // 위로 0.2
 	scene.add( dircetionMesh );
 
 
@@ -202,18 +203,18 @@
 	var videoMaterial = new THREE.MeshBasicMaterial( { map: videoTexture } );
 	
 	var videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
+
 	videoMesh.rotation.x = -Math.PI/2;
 	videoMesh.position.set( 0, 2, 1.8 +0.2);
-	
+
 	video.play();
-	
+
 	scene.add( videoMesh );	
 
-	
 
 	
 
-	// 치수문자
+	// 텍스트
 	const labelGeometry = new THREE.PlaneGeometry(1, 1);
 
 	function makeLabelCanvas( size, name, color ) {
