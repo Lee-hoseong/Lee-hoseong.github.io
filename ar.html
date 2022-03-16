@@ -14,7 +14,7 @@
 	</div>
 
 	<video id="video" loop crossOrigin="anonymous" playsinline style="display:none">
-		<source src="https://lee-hoseong.github.io/ar/video-sample.mp4" type='video/mp4'>
+		<source src="https://Lee-hoseong.github.io/ar/video-sample.mp4" type='video/mp4'>
 	</video>
 
 <script>
@@ -179,19 +179,22 @@
 
 	const texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
 
-	var directionGeo = new THREE.PlaneGeometry( 6.4, 3.6 );
+	var directionGeo = new THREE.PlaneGeometry( 16, 9 );
 	var directionMat = new THREE.MeshBasicMaterial( { } );
 	var dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
 
 	dircetionMesh.material.map = texture1;
 
-	dircetionMesh.scale.set( 0.5, 0.5, 0 );
+	dircetionMesh.scale.set( 0.1, 0.1, 0 );
 	dircetionMesh.rotation.x = -Math.PI / 2;
 	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3
 	scene.add( dircetionMesh );
 
+
 	// 비디오
 	const video = document.getElementById( 'video' );
+	video.play();
+
 	const videoGeo = new THREE.PlaneBufferGeometry(3.2, 1.8);
 	const videoTexture = new THREE.VideoTexture( video );
 	const videoMaterial = new THREE.MeshBasicMaterial( { map: videoTexture } );
