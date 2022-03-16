@@ -193,7 +193,7 @@
 	dircetionMesh.material.map = texture1;
 
 	dircetionMesh.rotation.x = -Math.PI / 2;
-	dircetionMesh.position.set( 0, 0, -1.8/2 );
+	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3만큼
 	scene.add( dircetionMesh );
 
 
@@ -252,7 +252,7 @@
 	const label1 = addLabel( '#2FA1D6' , '기술개발센터' );
 	
 	label1.rotation.x = -Math.PI / 2;
-	label1.position.set( 0, 0, -1.5/2 - 0.3 ); // 오른쪽으로 : 0.5, 위로 : -0.3
+	label1.position.set( 0, 0, 1.5/2 + 0.3 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
 
 	scene.add( label1 );	
 	
