@@ -6,11 +6,16 @@
 <script src='https://Lee-hoseong.github.io/ar/ar.js'></script>
 <!-- <script>THREEx.ArToolkitContext.baseURL = '../'</script> -->
 
-<body style='margin : 0px; overflow: hidden; font-family: Monospace;'><div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
-	설명하지 못한다면, 그것은 진정으로 이해한 것이 아니다.
-	<br/>
-	더구나, 지금은 설명도 필요없는 시대다!
-</div>
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+	<div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+		설명하지 못한다면, 그것은 진정으로 이해한 것이 아니다.
+		<br/>
+		더구나, 지금은 설명도 필요없는 시대다!
+	</div>
+
+	<video id="video" loop crossOrigin="anonymous" playsinline style="display:none">
+		<source src="https://lee-hoseong.github.io/ar/video-sample.mp4" type='video/mp4'>
+	</video>
 
 <script>
 	//////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +187,7 @@
 		return mesh;
 	}
 
+	// 오시는 길
 	const textureLoader = new THREE.TextureLoader();
 
 	const texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
@@ -193,9 +199,21 @@
 	dircetionMesh.material.map = texture1;
 
 	dircetionMesh.rotation.x = -Math.PI / 2;
-	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3만큼
+	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3
 	scene.add( dircetionMesh );
 
+	// 비디오
+	const video = document.getElementById( 'video' );
+	const videoGeo = new THREE.PlaneBufferGeometry(3.2, 1.8);
+	const videoTexture = new THREE.VideoTexture( video );
+	const videoMaterial = new THREE.MeshBasicMaterial( { map: videoTexture } );
+
+	const videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
+	
+	videoMesh.rotation.x = -Math.PI/2;
+	videoMesh.position.set( 3.2/2 + 0.5, 0, 0 );
+	scene.add( videoMesh );	
+	
 
 	// 치수문자
 	const labelGeometry = new THREE.PlaneGeometry(1, 1);
