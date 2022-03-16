@@ -152,52 +152,40 @@
 	mesh2.position.y	= 0.5
 	scene.add( mesh2 );
 
-	const videoBoxShp = new THREE.Shape();
-	videoBoxShp.moveTo( 0, 0 );
-	videoBoxShp.lineTo( 2, 0 );
-	videoBoxShp.lineTo( 2, 1.125 );
-	videoBoxShp.lineTo( 0, 1.125 );
-	videoBoxShp.lineTo( 0, 0 ); //close Path
+	// const videoBoxShp = new THREE.Shape();
+	// videoBoxShp.moveTo( 0, 0 );
+	// videoBoxShp.lineTo( 2, 0 );
+	// videoBoxShp.lineTo( 2, 1.125 );
+	// videoBoxShp.lineTo( 0, 1.125 );
+	// videoBoxShp.lineTo( 0, 0 ); //close Path
 
-	var mesh3 = addLine( videoBoxShp, 'black' );
-	scene.add( mesh3 )
+	// const mesh3 = addLine( videoBoxShp, 'black' );
+	// scene.add( mesh3 )
 
-	mesh3.rotation.x = Math.PI / 2;
-	mesh3.scale.set( 1, 1, 1);
-	mesh3.position.set( 1/2, 0, -1.125/2 );
+	// mesh3.rotation.x = Math.PI / 2;
+	// mesh3.scale.set( 1, 1, 1);
+	// mesh3.position.set( 1/2, 0, -1.125/2 );
 
-	function addLine( shape, color ) {
-		const points = shape.getPoints();
-		const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
-		const lineMat = new THREE.LineBasicMaterial( { color } );
-		const line = new THREE.Line( lineGeo, lineMat );
-		return line;
-	}
+	// function addLine( shape, color ) {
+	// 	const points = shape.getPoints();
+	// 	const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+	// 	const lineMat = new THREE.LineBasicMaterial( { color } );
+	// 	const line = new THREE.Line( lineGeo, lineMat );
+	// 	return line;
+	// }
 	
-	function addExtr( shape, length ) {
-		const extrudeSettings = {
-			steps : 1,
-			depth : length,
-			bevelEnabled : false,
-		}
-		
-		const extrudeGeo = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
-		const extrudeMat = new THREE.MeshBasicMaterial( { opacity: 0.5, transparent: true, color: 0xffff00 } );
-		let mesh = new THREE.Mesh( extrudeGeo, extrudeMat ) ;
-		return mesh;
-	}
-
 	// 오시는 길
 	const textureLoader = new THREE.TextureLoader();
 
 	const texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
 
-	var directionGeo = new THREE.PlaneGeometry( 3.2, 1.8 );
+	var directionGeo = new THREE.PlaneGeometry( 6.4, 3.6 );
 	var directionMat = new THREE.MeshBasicMaterial( { } );
 	var dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
 
 	dircetionMesh.material.map = texture1;
 
+	dircetionMesh.scale.set( 0.5, 0.5, 0 );
 	dircetionMesh.rotation.x = -Math.PI / 2;
 	dircetionMesh.position.set( 0, 0, -1.8 -0.3 ); // 위로 0.3
 	scene.add( dircetionMesh );
