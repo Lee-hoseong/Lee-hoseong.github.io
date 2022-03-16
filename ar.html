@@ -186,15 +186,14 @@
 	dircetionMesh.material.map = texture1;
 
 	dircetionMesh.scale.set( 0.2, 0.2, 0 );
-	dircetionMesh.rotation.x = -Math.PI / 2;
-	dircetionMesh.position.set( 0, 1, -1.8 -0.2 ); // 위로 0.2
+	dircetionMesh.rotation.x = -Math.PI / 4;
+	dircetionMesh.position.set( 0, 1.0, -1.8 );
 	scene.add( dircetionMesh );
 
 
 	// 비디오
 	var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.8 );
 	var video = document.getElementById( 'video' );
-	// video.play();
 
 	var videoTexture = new THREE.VideoTexture( video );
 	videoTexture.minFilter = THREE.LinearFilter;
@@ -205,8 +204,12 @@
 	var videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
 	videoMesh.rotation.x = -Math.PI/2;
 	videoMesh.position.set( 0, 2, 1.8 +0.2);
+	
+	video.play();
+	
 	scene.add( videoMesh );	
 
+	
 
 	
 
