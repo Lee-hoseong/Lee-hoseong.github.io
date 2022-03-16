@@ -194,6 +194,7 @@
 	// 비디오
 	var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.6 );
 	var video = document.getElementById( 'video' );
+	video.play();
 
 	var videoTexture = new THREE.VideoTexture( video );
 	videoTexture.minFilter = THREE.LinearFilter;
