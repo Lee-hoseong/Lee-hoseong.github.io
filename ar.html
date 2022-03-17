@@ -301,9 +301,9 @@
 		scene.add( label1 );	
 		
 		
-		// onRenderFcts.push(function(delta){
-		// 	mesh2.rotation.y += Math.PI*delta
-		// })
+		onRenderFcts.push(function(delta){
+			mesh2.rotation.y += Math.PI*delta
+		})
 
 
 
@@ -314,17 +314,18 @@
 		//////////////////////////////////////////////////////////////////////////////////
 
 
-        function animate() { 
-			
-			mesh2.rotation.y += 0.01;
-			
+        function animate() { 					
             requestAnimationFrame( animate );
-            render();
+		
+			// render the scene
+			onRenderFcts.push(function(){
+				renderer.render( scene, camera );
+			})
         }
 
-        function render() {
-            renderer.render( scene, camera );
-        }
+        // function render() {
+        //     renderer.render( scene, camera );
+        // }
 
 		animate();
 
