@@ -143,6 +143,7 @@
 			opacity: 0.5,
 			side: THREE.DoubleSide
 		});
+
 		
 		var mesh1	= new THREE.Mesh( geometry, material );
 		mesh1.position.y	= geometry.parameters.height/2
@@ -306,51 +307,30 @@
 		})
 
 
-
-
-
 		//////////////////////////////////////////////////////////////////////////////////
 		//		render the whole thing on the page
 		//////////////////////////////////////////////////////////////////////////////////
 
+		// render the scene
+		onRenderFcts.push(function(){
+			renderer.render( scene, camera );
+		})
 
-        function animate() { 					
-            requestAnimationFrame( animate );
-		
-			// render the scene
-			onRenderFcts.push(function(){
-				renderer.render( scene, camera );
-			})
-        }
-
-        // function render() {
-        //     renderer.render( scene, camera );
-        // }
-
-		animate();
-
-
-
-		// // render the scene
-		// onRenderFcts.push(function(){
-		// 	renderer.render( scene, camera );
-		// })
-		
-		// // run the rendering loop
-		// var lastTimeMsec= null
-		// requestAnimationFrame(function animate(nowMsec){
-		// 	// keep looping
-		// 	requestAnimationFrame( animate );
+		// run the rendering loop
+		var lastTimeMsec= null
+		requestAnimationFrame(function animate(nowMsec){
+			// keep looping
+			requestAnimationFrame( animate );
 			
-		// 	// measure time
-		// 	lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
-		// 	var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
-		// 	lastTimeMsec	= nowMsec
+			// measure time
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
 
-		// 	// call each update function
-		// 	onRenderFcts.forEach(function(onRenderFct){
-		// 		onRenderFct(deltaMsec/1000, nowMsec/1000)
-		// 	})
-		// })
+			// call each update function
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			})
+		})
 	</script>
 </body>
