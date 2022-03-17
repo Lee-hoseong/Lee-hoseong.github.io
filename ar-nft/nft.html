@@ -172,7 +172,7 @@
 
 	    
 	/* 박스 */
-	var geometry	= new THREE.BoxGeometry(1,1,1);
+	var geometry	= new THREE.BoxGeometry(1000,1000,1000);
 	var material	= new THREE.MeshNormalMaterial({
 		transparent : true,
 		opacity: 0.5,
@@ -215,7 +215,7 @@
 		
 	threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch.glb", function (gltf) {	
 		model = gltf.scene.children[0];
-			model.scale.set( 0.2, 0.2, 0.2);;
+			model.scale.set( 1, 1, 1);;
 		root.add(model);
 
 
