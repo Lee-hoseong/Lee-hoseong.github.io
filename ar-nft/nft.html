@@ -179,7 +179,7 @@
 		side: THREE.DoubleSide
 	});
 		
-	var mesh1 = new THREE.Mesh( geometry, material );
+	var mesh1 = new THREE.Mesh( geometry, material )
 	mesh1.position.y = geometry.parameters.height/2;
 	root.add( mesh1 );
 	    
@@ -215,6 +215,7 @@
 		
 	threeGLTFLoader.load("Lee-hoseong.github.io/model/arch.glb", function (gltf) {	
 		model = gltf.scene.children[0];
+			model.scale.set( 0.2, 0.2, 0.2);;
 		root.add(model);
 
 
