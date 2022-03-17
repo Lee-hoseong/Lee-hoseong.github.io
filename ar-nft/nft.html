@@ -164,19 +164,7 @@
         var root = new THREE.Object3D();
         scene.add(root);
 
-        /* 박스 */
-        var geometry	= new THREE.CubeGeometry(1,1,1);
-		var material	= new THREE.MeshNormalMaterial({
-			transparent : true,
-			opacity: 0.5,
-			side: THREE.DoubleSide
-		});
-		
-		var mesh1	= new THREE.Mesh( geometry, material );
-		mesh1.position.y	= geometry.parameters.height/2
-		scene.add( mesh1 )
-        
-        
+       
         
         //////////////////////////////////////////////////////////////////////////////////
         //		add an object in the scene
@@ -202,6 +190,19 @@
             model.position.x = 100;
             model.position.y = 100;
 
+		/* 박스 */
+		var geometry	= new THREE.CubeGeometry(1,1,1);
+		var material	= new THREE.MeshNormalMaterial({
+			transparent : true,
+			opacity: 0.5,
+			side: THREE.DoubleSide
+		});
+		
+		var mesh1 = new THREE.Mesh( geometry, material );
+		mesh1.position.y = geometry.parameters.height/2
+		scene.add( mesh1 )
+        		
+		
 
             //////////////////////////////////////////////////////////////////////////////////
             //		render the whole thing on the page
