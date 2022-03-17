@@ -172,7 +172,7 @@
 
 	    
 	/* 박스 */
-	var geometry	= new THREE.BoxGeometry(500,500,500);
+	var geometry	= new THREE.BoxGeometry(300,300,300);
 	var material	= new THREE.MeshNormalMaterial({
 		transparent : true,
 		opacity: 0.5,
@@ -180,6 +180,7 @@
 	});
 		
 	var mesh1 = new THREE.Mesh( geometry, material )
+	mesh1.position.x = 300/2;
 	mesh1.position.y = geometry.parameters.height/2;
 	root.add( mesh1 );
 	    
