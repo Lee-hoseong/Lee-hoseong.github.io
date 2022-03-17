@@ -10,7 +10,6 @@ import {
  * random samples may be selected in O(logn) time. Memory usage is O(n).
  *
  * References:
- * - https://stackoverflow.com/a/4322940/1314762
  */
 
 const _face = new Triangle();
