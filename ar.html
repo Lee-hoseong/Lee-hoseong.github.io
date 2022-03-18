@@ -143,9 +143,6 @@
 			opacity: 0.5,
 			side: THREE.DoubleSide
 		});
-		// var mesh	= new THREE.Mesh( geometry, material );
-		// mesh.position.y	= geometry.parameters.height/2
-		// scene.add( mesh );
 		
 		var mesh1	= new THREE.Mesh( geometry, material );
 		mesh1.position.y	= geometry.parameters.height/2
@@ -186,22 +183,21 @@
 		/* 이미지 */
 		var textureLoader = new THREE.TextureLoader();
 
-		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/direction.JPG' );
+		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/cardInfo.JPG' );
 
-		var directionGeo = new THREE.PlaneGeometry( 16, 9 );
-		var directionMat = new THREE.MeshBasicMaterial( { } );
-		var dircetionMesh = new THREE.Mesh( directionGeo, directionMat );
+		var imageGeo = new THREE.PlaneGeometry( 2.571429, 1.446428 );
+		var imageMat = new THREE.MeshBasicMaterial( { } );
+		var imageMesh = new THREE.Mesh( imageGeo, imageMat );
 
-		dircetionMesh.material.map = texture1;
+		imageMesh.material.map = texture1;
 
-		dircetionMesh.scale.set( 0.2, 0.2, 0 );
-		dircetionMesh.rotation.x = -Math.PI / 2;
-		dircetionMesh.position.set( 0.0, 0.0, -1.8 -0.2 ); // 위로 0.2
-		scene.add( dircetionMesh );
+		imageMesh.rotation.x = -Math.PI / 2;
+		imageMesh.position.set( -0.714286, 0.0, -1.8 );
+		scene.add( imageMesh );
 
 
 		/* 비디오 */
-		var videoGeo = new THREE.PlaneBufferGeometry( 3.2, 1.8 );
+		var videoGeo = new THREE.PlaneBufferGeometry( 2.571429, 1.446428 );
 		var video = document.getElementById( 'video' );
 		video.play();
 
@@ -214,7 +210,7 @@
 		var videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
 
 		videoMesh.rotation.x = -Math.PI/2;
-		videoMesh.position.set( 0.0, 0.0, 1.8 +0.2);
+		videoMesh.position.set( -0.714286, 0.0, 1.8);
 
 		scene.add( videoMesh );	
 
@@ -245,63 +241,63 @@
 		
 
 		/* 텍스트 */
-		const labelGeometry = new THREE.PlaneGeometry(1, 1);
+		// const labelGeometry = new THREE.PlaneGeometry(1, 1);
 
-		function makeLabelCanvas( size, name, color ) {
-			const borderSize = 2;
-			const ctx = document.createElement('canvas').getContext('2d');
-			const font =  `${ size }px bold sans-serif`;
-			ctx.font = font;
+		// function makeLabelCanvas( size, name, color ) {
+		// 	const borderSize = 2;
+		// 	const ctx = document.createElement('canvas').getContext('2d');
+		// 	const font =  `${ size }px bold sans-serif`;
+		// 	ctx.font = font;
 
-			// 이름의 길이를 예측합니다.
-			const doubleBorderSize = borderSize * 2;
-			const width = ctx.measureText(name).width + doubleBorderSize;
-			const height = size + doubleBorderSize;
-			ctx.canvas.width = width;
-			ctx.canvas.height = height;
+		// 	// 이름의 길이를 예측합니다.
+		// 	const doubleBorderSize = borderSize * 2;
+		// 	const width = ctx.measureText(name).width + doubleBorderSize;
+		// 	const height = size + doubleBorderSize;
+		// 	ctx.canvas.width = width;
+		// 	ctx.canvas.height = height;
 			
-			// 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
-			ctx.font = font;
-			ctx.textBaseline = 'top';
+		// 	// 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
+		// 	ctx.font = font;
+		// 	ctx.textBaseline = 'top';
 			
-			ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
-			ctx.fillRect(0, 0, width, height);
-			ctx.fillStyle = color
-			ctx.fillText(name, borderSize, borderSize);
+		// 	ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
+		// 	ctx.fillRect(0, 0, width, height);
+		// 	ctx.fillStyle = color
+		// 	ctx.fillText(name, borderSize, borderSize);
 			
-			return ctx.canvas;
-		}
+		// 	return ctx.canvas;
+		// }
 
-		function addLabel( color, name ) {
-			const textCanvas = makeLabelCanvas( 50, name, color );
-			const texture = new THREE.CanvasTexture( textCanvas );
+		// function addLabel( color, name ) {
+		// 	const textCanvas = makeLabelCanvas( 50, name, color );
+		// 	const texture = new THREE.CanvasTexture( textCanvas );
 
-			// 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
-			texture.minFilter = THREE.LinearFilter;
-			texture.wrapS = THREE.ClampToEdgeWrapping;
-			texture.wrapT = THREE.ClampToEdgeWrapping;
+		// 	// 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
+		// 	texture.minFilter = THREE.LinearFilter;
+		// 	texture.wrapS = THREE.ClampToEdgeWrapping;
+		// 	texture.wrapT = THREE.ClampToEdgeWrapping;
 
-			const labelMaterial = new THREE.MeshBasicMaterial({
-				map: texture,
-				side: THREE.DoubleSide,
-				transparent: true,
-			} );
+		// 	const labelMaterial = new THREE.MeshBasicMaterial({
+		// 		map: texture,
+		// 		side: THREE.DoubleSide,
+		// 		transparent: true,
+		// 	} );
 
-			// 라벨의 크기를 조정 : 해상도를 높임
-			const label = new THREE.Mesh( labelGeometry, labelMaterial );
-			const labelBaseScale = 0.01;
-			label.scale.x = textCanvas.width  * labelBaseScale;
-			label.scale.y = textCanvas.height * labelBaseScale;
+		// 	// 라벨의 크기를 조정 : 해상도를 높임
+		// 	const label = new THREE.Mesh( labelGeometry, labelMaterial );
+		// 	const labelBaseScale = 0.01;
+		// 	label.scale.x = textCanvas.width  * labelBaseScale;
+		// 	label.scale.y = textCanvas.height * labelBaseScale;
 
-			return label
-		}
+		// 	return label
+		// }
 
-		const label1 = addLabel( '#2FA1D6' , '기술개발센터' );
+		// const label1 = addLabel( '#2FA1D6' , '기술개발센터' );
 		
-		label1.rotation.x = -Math.PI / 2;
-		label1.position.set( 1.5, 0, 0 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
+		// label1.rotation.x = -Math.PI / 2;
+		// label1.position.set( 1.5, 0, 0 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
 
-		scene.add( label1 );	
+		// scene.add( label1 );		
 		
 		
 		onRenderFcts.push(function(delta){
