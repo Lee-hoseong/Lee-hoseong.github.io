@@ -183,7 +183,7 @@
 		/* 이미지 */
 		var textureLoader = new THREE.TextureLoader();
 
-		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/cardInfo.png' );
+		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/cardInfo.JPG' );
 
 		var imageGeo = new THREE.PlaneGeometry( 2.571429, 1.446428 );
 		var imageMat = new THREE.MeshBasicMaterial( { } );
@@ -192,7 +192,7 @@
 		imageMesh.material.map = texture1;
 
 		imageMesh.rotation.x = -Math.PI / 2;
-		imageMesh.position.set( -0.714286, 0.0, -1.8 );
+		imageMesh.position.set( -0.714286, 0.0, -1.7 );
 		scene.add( imageMesh );
 
 
@@ -210,7 +210,7 @@
 		var videoMesh = new THREE.Mesh( videoGeo, videoMaterial );
 
 		videoMesh.rotation.x = -Math.PI/2;
-		videoMesh.position.set( -0.714286, 0.0, 1.8);
+		videoMesh.position.set( -0.714286, 0.0, 1.7);
 
 		scene.add( videoMesh );	
 
