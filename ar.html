@@ -70,7 +70,7 @@
 		arToolkitSource.init(function onReady(){
 			setTimeout(() => {
 				onResize()
-			}, 2000);
+			}, 1000);
 		})
 
 		// handle resize
@@ -183,7 +183,7 @@
 		/* 이미지 */
 		var textureLoader = new THREE.TextureLoader();
 
-		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/cardInfo.JPG' );
+		var texture1 = textureLoader.load( 'https://Lee-hoseong.github.io/ar/cardInfo.png' );
 
 		var imageGeo = new THREE.PlaneGeometry( 2.571429, 1.446428 );
 		var imageMat = new THREE.MeshBasicMaterial( { } );
