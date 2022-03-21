@@ -251,15 +251,9 @@
 				lineSeg.computeLineDistances();
 				lineSeg.material.dashSize = 0;
 				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
-
 				scene.add( lineSeg );
 				
-				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
-				lineSeg.computeLineDistances();
-				const lineCount = lineSeg.geometry.attributes.lineDistance.count;
-				lineSeg.material.dashSize = 0;
-				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineCount - 2];
-				scene.add( lineSeg );
+
 			});
 
 		})
