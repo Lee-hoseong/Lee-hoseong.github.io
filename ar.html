@@ -280,11 +280,11 @@
             scene.traverse( ( child )=> {
                 if( !child.isLineSegments ) return;
 
-                child.material.dashSize +=0.2;
+                child.material.dashSize +=0.1;
                 // child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
-                    child.material.color.set( 'green' );
+                    child.material.color.set( 'skyblue' );
                     // child.material.color.set( Math.random() * 0xffffff );
 
                     // child.visible = false;
