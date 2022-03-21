@@ -219,7 +219,7 @@
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch_ar.glb", function (gltf) {
+		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/rotary5.glb", function (gltf) {
 			model = gltf.scene;
 
 			var newMaterial = new THREE.MeshNormalMaterial({
@@ -239,6 +239,21 @@
 				if( !child.isMesh ) return;
 
 				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
+				
+				
+				// Matrix 선언
+				const matrix = new THREE.Matrix4();
+
+				// geometry이동
+				edgesGeo.applyMatrix4( matrix.makeTranslation( -0.714286, 0, 0 ) );
+
+				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
+				lineSeg.computeLineDistances();
+				lineSeg.material.dashSize = 0;
+				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
+
+				scene.add( lineSeg );
+				
 				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
 				lineSeg.computeLineDistances();
 				const lineCount = lineSeg.geometry.attributes.lineDistance.count;
@@ -337,12 +352,12 @@
                 child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
-                    child.material.color.set( 'blue' );
+                    child.material.color.set( 'green' );
                     // child.material.color.set( Math.random() * 0xffffff );
 
-                    child.visible = false;
-                    model.visible = true;
-                    model.rotation.y += 0.005;
+                    // child.visible = false;
+                    // model.visible = true;
+                    // model.rotation.y += 0.005;
                 }
             })
 
