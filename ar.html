@@ -226,7 +226,7 @@
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch_ar.glb", function (gltf) {
+		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxOnly.glb", function (gltf) {
 			model = gltf.scene;
 
 			var newMaterial = new THREE.MeshNormalMaterial({
@@ -246,7 +246,7 @@
 				if( !child.isMesh ) return;
 
 				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
-				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
+				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
 				lineSeg.computeLineDistances();
 				lineSeg.material.dashSize = 0;
 				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
@@ -280,7 +280,7 @@
             scene.traverse( ( child )=> {
                 if( !child.isLineSegments ) return;
 
-                child.material.dashSize +=0.1;
+                child.material.dashSize +=0.05;
                 child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
