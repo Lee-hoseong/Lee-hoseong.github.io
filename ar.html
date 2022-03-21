@@ -178,6 +178,13 @@
 		// 	return line;
 		// }
 		
+		/* plane */
+		const planeGeo = new THREE.PlaneGeometry( 1, 1);
+		const planeMat = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+		const planeMesh = new THREE.Mesh( planeGeo, planeMat );
+		planeMesh.rotation.x = -Math.PI / 2;
+		scene.add( planeMesh );
+
 
 
 		/* 이미지 */
