@@ -226,7 +226,7 @@
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxOnly.glb", function (gltf) {
+		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxTest.glb", function (gltf) {
 			model = gltf.scene;
 
 			var newMaterial = new THREE.MeshNormalMaterial({
@@ -280,8 +280,8 @@
             scene.traverse( ( child )=> {
                 if( !child.isLineSegments ) return;
 
-                child.material.dashSize +=0.05;
-                child.rotation.y += 0.005;
+                child.material.dashSize +=0.2;
+                // child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
                     child.material.color.set( 'green' );
