@@ -219,7 +219,7 @@
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch_ar.glb", function (gltf) {
+		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/rotary5.glb", function (gltf) {
 			model = gltf.scene;
 
 			var newMaterial = new THREE.MeshNormalMaterial({
@@ -248,66 +248,6 @@
 			});
 
 		})
-		
-
-		/* 텍스트 */
-		// const labelGeometry = new THREE.PlaneGeometry(1, 1);
-
-		// function makeLabelCanvas( size, name, color ) {
-		// 	const borderSize = 2;
-		// 	const ctx = document.createElement('canvas').getContext('2d');
-		// 	const font =  `${ size }px bold sans-serif`;
-		// 	ctx.font = font;
-
-		// 	// 이름의 길이를 예측합니다.
-		// 	const doubleBorderSize = borderSize * 2;
-		// 	const width = ctx.measureText(name).width + doubleBorderSize;
-		// 	const height = size + doubleBorderSize;
-		// 	ctx.canvas.width = width;
-		// 	ctx.canvas.height = height;
-			
-		// 	// 캔버스 크기를 바꿨을 때 폰트를 다시 설정해줘야 합니다.
-		// 	ctx.font = font;
-		// 	ctx.textBaseline = 'top';
-			
-		// 	ctx.fillStyle = 'rgba(255, 255, 255, 0.0 )';
-		// 	ctx.fillRect(0, 0, width, height);
-		// 	ctx.fillStyle = color
-		// 	ctx.fillText(name, borderSize, borderSize);
-			
-		// 	return ctx.canvas;
-		// }
-
-		// function addLabel( color, name ) {
-		// 	const textCanvas = makeLabelCanvas( 50, name, color );
-		// 	const texture = new THREE.CanvasTexture( textCanvas );
-
-		// 	// 텍스처용 캔버스는 2D이므로 픽셀이 모자를 경우 대략적으로 필터링도록 설정
-		// 	texture.minFilter = THREE.LinearFilter;
-		// 	texture.wrapS = THREE.ClampToEdgeWrapping;
-		// 	texture.wrapT = THREE.ClampToEdgeWrapping;
-
-		// 	const labelMaterial = new THREE.MeshBasicMaterial({
-		// 		map: texture,
-		// 		side: THREE.DoubleSide,
-		// 		transparent: true,
-		// 	} );
-
-		// 	// 라벨의 크기를 조정 : 해상도를 높임
-		// 	const label = new THREE.Mesh( labelGeometry, labelMaterial );
-		// 	const labelBaseScale = 0.01;
-		// 	label.scale.x = textCanvas.width  * labelBaseScale;
-		// 	label.scale.y = textCanvas.height * labelBaseScale;
-
-		// 	return label
-		// }
-
-		// const label1 = addLabel( '#2FA1D6' , '기술개발센터' );
-		
-		// label1.rotation.x = -Math.PI / 2;
-		// label1.position.set( 1.5, 0, 0 ); // 오른쪽으로 : 0.5, 아래로 : -0.3
-
-		// scene.add( label1 );		
 		
 		
 		onRenderFcts.push(function(delta){
