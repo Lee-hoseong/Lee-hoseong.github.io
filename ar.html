@@ -312,7 +312,7 @@
 		
 		
 		onRenderFcts.push(function(delta){
-			mesh2.rotation.y += Math.PI*delta
+			// mesh2.rotation.y += Math.PI*delta
 		})
 
 
@@ -347,7 +347,6 @@
                 }
             })
 
-			
 			// measure time
 			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
 			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
