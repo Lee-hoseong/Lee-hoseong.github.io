@@ -234,13 +234,12 @@
 			});
 
 			model.position.set( 0, 0, 0 );
-			scene.add( model );
 
 			model.traverse( ( child )=> {
 				if( !child.isMesh ) return;
 
 				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
-				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
+				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
 				lineSeg.computeLineDistances();
 				const lineCount = lineSeg.geometry.attributes.lineDistance.count;
 				lineSeg.material.dashSize = 0;
