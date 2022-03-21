@@ -222,25 +222,25 @@
 		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/arch_ar.glb", function (gltf) {
 			model = gltf.scene;
 
-			// var newMaterial = new THREE.MeshNormalMaterial({
-			// 	side: THREE.DoubleSide, 
-			// 	// color : 0x2FA1D6,
-			// 	opacity : 0.8, 
-			// 	transparent: true,
-			// });
+			var newMaterial = new THREE.MeshNormalMaterial({
+				side: THREE.DoubleSide, 
+				// color : 0x2FA1D6,
+				opacity : 0.8, 
+				transparent: true,
+			});
 
-			// model.traverse((o) => {
-			// 	if (o.isMesh) o.material = newMaterial;
-			// });
+			model.traverse((o) => {
+				if (o.isMesh) o.material = newMaterial;
+			});
 
-			// model.position.set( 0, 0, 0 );
-			// scene.add( model );
+			model.position.set( 0, 0, 0 );
+			scene.add( model );
 
 			model.traverse( ( child )=> {
 				if( !child.isMesh ) return;
 
 				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
-				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'white' } ) );
+				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
 				lineSeg.computeLineDistances();
 				const lineCount = lineSeg.geometry.attributes.lineDistance.count;
 				lineSeg.material.dashSize = 0;
@@ -335,15 +335,15 @@
                 if( !child.isLineSegments ) return;
 
                 child.material.dashSize +=0.1;
-                // child.rotation.y += 0.005;
+                child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
-                    // child.material.color.set( 'blue' );
-                    child.material.color.set( Math.random() * 0xffffff );
+                    child.material.color.set( 'blue' );
+                    // child.material.color.set( Math.random() * 0xffffff );
 
-                    // child.visible = false;
-                    // model.visible = true;
-                    // model.rotation.y += 0.01;
+                    child.visible = false;
+                    model.visible = true;
+                    model.rotation.y += 0.005;
                 }
             })
 
