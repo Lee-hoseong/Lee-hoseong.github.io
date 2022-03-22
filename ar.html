@@ -228,7 +228,7 @@
 		var model;
 
  		// threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxTest.glb", function (gltf) {
-		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/guideSign.glb", function (gltf) {
+		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxTest.glb", function (gltf) {
 			model = gltf.scene;
 			
 // 			var newMaterial = new THREE.MeshNormalMaterial({
@@ -282,7 +282,7 @@
 			if( !child.isLineSegments ) return;
 
 			child.material.dashSize +=0.5;
-			child.rotation.y += 0.005;
+			// child.rotation.y += 0.005;
 
 			if (child.material.dashSize >= child.material.gapSize) {
 			    child.material.color.set( 0x2FA1D6 );
