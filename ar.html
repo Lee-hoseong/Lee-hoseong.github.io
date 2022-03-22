@@ -28,7 +28,7 @@
 		var renderer = new THREE.WebGLRenderer({
 			antialias: true,
 			alpha: true,
-			precision: 'mediump',
+			// precision: 'mediump',
 		});
 		renderer.setClearColor(new THREE.Color('lightgrey'), 0)
 		renderer.setSize( 1280, 960 );
@@ -230,7 +230,6 @@
  		// threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxTest.glb", function (gltf) {
 		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/guideSign.glb", function (gltf) {
 			model = gltf.scene;
-			scene.add( model );
 			
 // 			var newMaterial = new THREE.MeshNormalMaterial({
 // 				side: THREE.DoubleSide, 
@@ -287,7 +286,7 @@
                 // child.rotation.y += 0.005;
 
                 if (child.material.dashSize >= child.material.gapSize) {
-                    child.material.color.set( 'skyblue' );
+                    child.material.color.set( 0x2FA1D6 );
                     // child.material.color.set( Math.random() * 0xffffff );
 
                     // child.visible = false;
