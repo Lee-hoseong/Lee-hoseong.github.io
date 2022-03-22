@@ -247,15 +247,12 @@
 			model.traverse( ( child )=> {
 				if( !child.isMesh ) return;
 				
-				child.material.precision = 'mediump';
-
 				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
 				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
 				lineSeg.computeLineDistances();
 				lineSeg.material.dashSize = 0;
 				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
 				scene.add( lineSeg );
-				
 			});
 
 		})
@@ -281,21 +278,21 @@
 			// keep looping
 			requestAnimationFrame( animate );
 
-            scene.traverse( ( child )=> {
-                if( !child.isLineSegments ) return;
+		    scene.traverse( ( child )=> {
+			if( !child.isLineSegments ) return;
 
-                child.material.dashSize +=1;
-                // child.rotation.y += 0.005;
+			child.material.dashSize +=0.5;
+			child.rotation.y += 0.005;
 
-                if (child.material.dashSize >= child.material.gapSize) {
-                    child.material.color.set( 0x2FA1D6 );
-                    // child.material.color.set( Math.random() * 0xffffff );
+			if (child.material.dashSize >= child.material.gapSize) {
+			    child.material.color.set( 0x2FA1D6 );
+			    // child.material.color.set( Math.random() * 0xffffff );
 
-                    // child.visible = false;
-                    model.visible = true;
-                    // model.rotation.y += 0.005;
-                }
-            })
+			    // child.visible = false;
+			    // model.visible = true;
+			    // model.rotation.y += 0.005;
+			}
+		    })
 
 			// measure time
 			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
