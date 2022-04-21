@@ -1,0 +1,291 @@
+html, body {
+	margin: 0;
+	height: 100%;
+	font-size: 62.50%; /* font-size : 10px */
+	/* background: linear-gradient(to bottom,  #063280 0%,#D0D9DB 100%); */
+}
+
+#three-canvas {
+	/* position: absolute; // 캔버스가 div위로 올라옴 */
+	left: 0;
+	top: 0;
+	display: block; /* 꽉 안참 */
+}
+
+/* 세로모드 모바일 디바이스 || 가로 해상도 < 576px || font-size : 4px */
+@media (max-width: 575px) {
+	html, body { 
+		font-size: 25.00%; -webkit-text-size-adjust:none;
+		/* background-color: red */
+	} 
+}
+
+/* 576px < 가로 해상도 < 768px || font-size : 5px */
+@media (min-width: 576px) and (max-width: 767px) {
+	html, body { 
+		font-size: 25.00%; -webkit-text-size-adjust:none;
+		/* background-color: green */
+	} 
+}
+ 
+/* 태블릿 디바이스 || 768px < 가로 해상도 < 991px || font-size: 5px */
+@media (min-width: 768px) and (max-width: 991px) {
+	html, body { 
+		font-size: 31.25%; -webkit-text-size-adjust:none;
+		/* background-color: dodgerblue */
+	}
+} 
+ 
+/* 992px < 가로 해상도 < 1199px || font-size : 6px */
+@media (min-width: 992px) and (max-width: 1199px) {
+	html, body { 
+		font-size: 37.50%; -webkit-text-size-adjust:none;
+		/* background-color: purple */
+	}
+} 
+ 
+/* 가로 해상도 > 1200px || font-size : 6px */
+@media (min-width: 1200px) {
+	html, body { 
+		font-size: 37.50%; -webkit-text-size-adjust:none;
+		/* background-color: gray */
+	}
+}
+
+/* obit-controls */
+.obit-controls-gizmo {
+	position: absolute;
+	top: 2em;
+	right: 2em;
+	z-index: 1000;
+	background-color: #FFF0;
+	border-radius: 100%;
+	transition: background-color .15s  linear;
+	cursor: pointer;
+}
+
+.obit-controls-gizmo.dragging, 
+.obit-controls-gizmo:hover {
+	background-color: #FFF3;
+}
+
+.obit-controls-gizmo.inactive {
+	pointer-events: none;
+	background-color: #FFF0  !important;
+}
+
+
+/* bottom btn-Group */
+.btn-container {
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+	margin-bottom: 3.0rem;
+}
+
+.btn-group button {
+	justify-content: space-between;
+	width: 25%;
+	/* background-color: #555;  */
+	background-color: transparent; 
+	border-style: hidden;
+	color: black;
+	padding: 2.4rem 0;
+	cursor: pointer;
+	float: left; /* Float the buttons side by side */
+	text-align: center;
+	font-size: 3.6rem;
+}
+
+.btn-group button:not(:last-child) {
+	border-right: none; /* Prevent double borders */
+}
+
+.btn-group:after { /* Clear floats (clearfix hack) */
+	content: "";
+	clear: both;
+	display: table;
+}
+
+.btn-group button:hover {
+	background-color: rgb(170, 170, 170);
+}
+
+
+/* offcanvas */
+.offcanvasBottom {
+	height: 0%;
+	width: 100%;
+	position: fixed;
+	z-index: 10001;
+	/* top: 0; */
+	bottom : 0;
+	left: 0;
+	color:white; 
+	background-color: rgba( 29, 49, 45, 0.5 );
+	overflow-x: hidden;
+	transition: 0.3s;
+	padding-left : 3.0rem;
+	/* padding-top: 3.0rem; */
+}
+
+.offcanvasBottom a {
+	padding: 0.8rem 0.8rem 0.8rem 0.8rem;
+	text-decoration: none;
+	font-size: 3.6rem;
+	color: white;
+	display: block;
+	transition: 0.3s;
+}
+
+.offcanvasBottom a:hover {
+	color: #f1f1f1;
+}
+
+.offcanvasBottom .closebtn {
+	position: absolute;
+	top: 1.0rem;
+	right: 2.5rem;
+	font-size: 3.6rem;
+	margin-right: 3.0rem;
+}
+
+/* btnNeg */
+.btnNeg {
+	border: 0.2rem solid #EB530C;
+	background-color: transparent;
+	color: #EB530C;
+	padding: 0.0rem 2.8rem;
+	font-size: 3.6rem;
+	cursor: pointer;
+}
+
+
+/* slider */
+.slidecontainer {
+	width: 60%; /* Width of the outside container */
+}
+
+.slider {
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	display:flex;
+	width: 85%; /* Full-width */
+	border-radius: 2.0rem;
+	/* border: none; */
+	margin-left: 5%;
+	height: 1.0rem; /* Specified height */
+	background: white; /* Grey background */
+	outline: none; /* Remove outline */
+	opacity: 1.0; /* Set transparency (for mouse-over effects on hover) */
+	-webkit-transition: .2s; /* 0.2 seconds transition on hover */
+	transition: opacity .2s;
+}
+
+.slider:hover {
+	opacity: 1.0; /* Fully shown on mouse-over */
+}
+
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	border-radius: 50%;
+	width: 3.6rem; /* Set a specific slider handle width */
+	height: 3.6rem; /* Slider handle height */
+	background: #EB530C; /* Green background */
+	cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+	width: 3.6rem; /* Set a specific slider handle width */
+	height: 3.6rem; /* Slider handle height */
+	border-radius: 50%;
+	background: #EB530C; /* Green background */
+	cursor: pointer; /* Cursor on hover */
+}
+
+
+/* toggle */
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 6.0rem;
+	height: 3.6rem;
+}
+
+.switch input { 
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.switch-label {
+	position: relative;
+	left: 10rem;
+	/* top: 10%; */
+	width: 40rem
+}
+
+.toggle {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	-webkit-transition: .2s;
+	transition: .2s;
+}
+
+.toggle:before {
+	position: absolute;
+	content: "";
+	height: 2.6rem;
+	width: 2.6rem;
+	left: 0.4rem;
+	bottom: 0.4rem;
+	background-color: white;
+	-webkit-transition: .2s;
+	transition: .2s;
+}
+
+input:checked + .toggle {
+	background-color: #EB530C;
+}
+
+input:focus + .toggle {
+	box-shadow: 0 0 0.1rem #EB530C;
+}
+
+input:checked + .toggle:before {
+	-webkit-transform: translateX(2.6rem);
+	-ms-transform: translateX(2.6rem);
+	transform: translateX(2.6rem);
+}
+
+.toggle.round {
+	border-radius: 3.4rem;
+}
+
+.toggle.round:before {
+	border-radius: 50%;
+}
+
+#videoDiv {
+	position: absolute;
+	display:block;
+	top: 5.0rem;
+	/* height: auto; */
+	z-index: 1001;
+	/* left : 50%; */
+	padding: 1.0rem;
+	/* transform : translate( -50% ); */
+	/* text-align: center; */
+}
+
+/* .measurementLabel {
+	font-family: monospace;
+	background-color: black;
+	color: white;
+} */
