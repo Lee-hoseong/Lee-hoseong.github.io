@@ -227,7 +227,6 @@
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
- 		// threeGLTFLoader.load("https://Lee-hoseong.github.io/model/boxTest.glb", function (gltf) {
 		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/abutment.glb", function (gltf) {
 			model = gltf.scene;
 			
@@ -241,6 +240,8 @@
 			model.traverse((o) => {
 				if (o.isMesh) o.material = newMaterial;
 			});
+
+			scene.add( model );
 
 // 			model.position.set( 0, 0, 0 );
 
