@@ -231,16 +231,12 @@
 			model = gltf.scene;
 			
 			// var newMaterial = new THREE.MeshNormalMaterial({
-			var newMaterial = new THREE.MeshBasicMaterial({
-				side: THREE.DoubleSide, 
-				color : 'gray',
-				// opacity : 0.8, 
-				// transparent: true,
-			});
+			// 	side: THREE.DoubleSide, 
+			// });
 
-			model.traverse((o) => {
-				if (o.isMesh) o.material = newMaterial;
-			});
+			// model.traverse((o) => {
+			// 	if (o.isMesh) o.material = newMaterial;
+			// });
 
 			scene.add( model );
 
