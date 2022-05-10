@@ -264,13 +264,15 @@
 		var model;
 
 		new THREE.MTLLoader()
-			.load( 'https://Lee-hoseong.github.io/model/abutment.mtl', function ( materials ) {
+			.setPath( 'https://Lee-hoseong.github.io/model/' )
+			.load( 'abutment.mtl', function ( materials ) {
 
 				materials.preload();
 
 				new THREE.OBJLoader()
 					.setMaterials( materials )
-					.load( 'https://Lee-hoseong.github.io/model/abutment.obj', function ( object ) {
+					.setPath( 'https://Lee-hoseong.github.io/model/' )
+					.load( 'abutment.obj', function ( object ) {
 
 						model = object
 						model.material.side = THREE.DoubleSide;
