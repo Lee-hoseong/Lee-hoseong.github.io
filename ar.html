@@ -278,6 +278,11 @@
 						// object.position.y = - 95;
 						scene.add( model );
 
+						scene.traverse( ( child )=> {
+							if( !child.isMesh ) return;
+							child.material.side =  THREE.DoubleSide;
+						} )
+
 					} );
 
 			} );
