@@ -5,10 +5,10 @@
 <!-- ar.js -->
 <script src='https://Lee-hoseong.github.io/ar/ar.js'></script>
 <!-- three.js load GLTF -->
-<!-- <script src='https://Lee-hoseong.github.io/ar/GLTFLoader.js'></script> -->
+<script src='https://Lee-hoseong.github.io/ar/GLTFLoader.js'></script>
 <!-- three.js load GLTF -->
-<script src='https://Lee-hoseong.github.io/ar/OBJLoader.js'></script>
-<script src='https://Lee-hoseong.github.io/ar/MTLLoader.js'></script>
+<!-- <script src='https://Lee-hoseong.github.io/ar/OBJLoader.js'></script> -->
+<!-- <script src='https://Lee-hoseong.github.io/ar/MTLLoader.js'></script> -->
 
 <body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
 	<div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
@@ -227,40 +227,41 @@
 
 
 		/* 모델로더 */
-		/*
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
 		threeGLTFLoader.load("https://Lee-hoseong.github.io/model/abutment.glb", function (gltf) {
 			model = gltf.scene;
 			
-			// var newMaterial = new THREE.MeshNormalMaterial({
-			// 	side: THREE.DoubleSide, 
-			// });
+			var newMaterial = new THREE.MeshNormalMaterial({
+				transparent : true,
+				opacity : 0.5,
+				side: THREE.DoubleSide, 
+			});
 
-			// model.traverse((o) => {
-			// 	if (o.isMesh) o.material = newMaterial;
-			// });
+			model.traverse((o) => {
+				if (o.isMesh) o.material = newMaterial;
+			});
 
 			scene.add( model );
 
- 			// model.position.set( 0, 0, 0 );
+ 			// model.position.set( 0, 0.1, 0 );
 
-			// model.traverse( ( child )=> {
-			// 	if( !child.isMesh ) return;
+			model.traverse( ( child )=> {
+				if( !child.isMesh ) return;
 				
-			// 	const edgesGeo = new THREE.EdgesGeometry( child.geometry );
-			// 	const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
-			// 	lineSeg.computeLineDistances();
-			// 	lineSeg.material.dashSize = 0;
-			// 	lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
-			// 	scene.add( lineSeg );
-			// });
+				const edgesGeo = new THREE.EdgesGeometry( child.geometry );
+				const lineSeg = new THREE.LineSegments( edgesGeo, new THREE.LineDashedMaterial( { color: 'darkgreen' } ) );
+				lineSeg.computeLineDistances();
+				lineSeg.material.dashSize = 0;
+				lineSeg.material.gapSize = lineSeg.geometry.attributes.lineDistance.array[lineSeg.geometry.attributes.lineDistance.count - 2];
+				scene.add( lineSeg );
+			});
 
 		})
-		*/
 
 		/* OBJ로더 */
+		/*
 		var model;
 
 		new THREE.MTLLoader()
@@ -286,7 +287,7 @@
 					} );
 
 			} );
-		
+		*/
 		
 		onRenderFcts.push(function(delta){
 			// model.rotation.y += Math.PI/5*delta
@@ -308,21 +309,21 @@
 			// keep looping
 			requestAnimationFrame( animate );
 
-		    // scene.traverse( ( child )=> {
-			// if( !child.isLineSegments ) return;
+		    scene.traverse( ( child )=> {
+			if( !child.isLineSegments ) return;
 
-			// child.material.dashSize +=0.5;
-			// // child.rotation.y += 0.005;
+			child.material.dashSize +=0.5;
+			// child.rotation.y += 0.005;
 
-			// if (child.material.dashSize >= child.material.gapSize) {
-			//     child.material.color.set( 0x2FA1D6 );
-			//     // child.material.color.set( Math.random() * 0xffffff );
+			if (child.material.dashSize >= child.material.gapSize) {
+			    child.material.color.set( 0x2FA1D6 );
+			    // child.material.color.set( Math.random() * 0xffffff );
 
-			//     // child.visible = false;
-			//     // model.visible = true;
-			//     // model.rotation.y += 0.005;
-			// }
-		    // })
+			    // child.visible = false;
+			    // model.visible = true;
+			    // model.rotation.y += 0.005;
+			}
+		    })
 
 			// measure time
 			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
