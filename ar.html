@@ -5,7 +5,10 @@
 <!-- ar.js -->
 <script src='https://Lee-hoseong.github.io/ar/ar.js'></script>
 <!-- three.js load GLTF -->
-<script src='https://Lee-hoseong.github.io/ar/GLTFLoader.js'></script>
+<!-- <script src='https://Lee-hoseong.github.io/ar/GLTFLoader.js'></script> -->
+<!-- three.js load GLTF -->
+<script src='https://Lee-hoseong.github.io/ar/OBJLoader.js'></script>
+<script src='https://Lee-hoseong.github.io/ar/MTLLoader.js'></script>
 
 <body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
 	<div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
@@ -224,6 +227,7 @@
 
 
 		/* 모델로더 */
+		/*
 		var threeGLTFLoader = new THREE.GLTFLoader();
 		var model;
 
@@ -240,7 +244,7 @@
 
 			scene.add( model );
 
-// 			model.position.set( 0, 0, 0 );
+ 			// model.position.set( 0, 0, 0 );
 
 			// model.traverse( ( child )=> {
 			// 	if( !child.isMesh ) return;
@@ -254,6 +258,27 @@
 			// });
 
 		})
+		*/
+
+		/* OBJ로더 */
+		var model;
+
+		new MTLLoader()
+			.load( 'https://Lee-hoseong.github.io/model/abutment.mtl', function ( materials ) {
+
+				materials.preload();
+
+				new OBJLoader()
+					.setMaterials( materials )
+					.load( 'https://Lee-hoseong.github.io/model/abutment.obj', function ( object ) {
+
+						model = object
+						// object.position.y = - 95;
+						scene.add( object );
+
+					}, onProgress, onError );
+
+			} );
 		
 		
 		onRenderFcts.push(function(delta){
