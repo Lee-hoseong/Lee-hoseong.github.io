@@ -1,0 +1,326 @@
+html, body {
+	margin: 0;
+	height: 100%;
+	font-size: 62.50%; /* font-size : 10px */
+	/* background: linear-gradient(to bottom,  #063280 0%,#D0D9DB 100%); */
+}
+
+#three-canvas {
+	position: absolute; 
+	top: 0;
+	left: 0;
+}
+
+/* OrientationGizmo */
+#gizmo { 
+	position: absolute;
+	width : 10rem;
+	left : 0rem;
+	top: 7rem;
+}
+
+#gizmo canvas{ 
+	width : 14rem;
+}
+
+#gizmo:hover {
+    background: rgba(255, 255, 255, .2);
+    border-radius: 100%;
+    cursor: pointer;
+}
+
+/* 상단 컨테이너 */
+.containerTop {
+	position: absolute;
+	width: 100%;
+	height: 6rem;
+
+	top: 0;
+	/* padding-bottom: 2rem; */
+
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	color: #F5F1E8;
+	background-color: #18312d;
+	/* background-color: rgba(255,255,192, 0.5); */
+	/* backdrop-filter: blur(10px); */
+
+	z-index: 10;
+}
+
+.containerTop button {
+	width: 8rem;
+	height: 6rem;
+
+	padding: 0;
+
+	border-style: hidden;
+	cursor: pointer;
+	
+	color: black;
+	background-color: inherit;
+	text-align: center;
+	font-size: 2.4rem;
+}
+
+.containerTop button:hover {
+	/* transform: scale(1.2); */
+	background-color: darkolivegreen;
+}
+
+
+.flexCenter {
+	display: flex;
+	align-items: center;
+}
+
+
+/* 우측탭 상단버튼 */
+.containerTop .tap {
+	/* position: absolute; */
+	right: 0rem;
+	margin-right : 1rem;
+
+	display: flex;
+	justify-content: space-between;
+
+	width: calc(48rem + 1rem);
+	/* background-color: red; */
+}
+
+.containerTop .tap button:hover {
+	/* transform: scale(1.2); */
+	background-color: darkgray;
+}
+
+.containerTop .tap button.active {
+	background-color: rgb(232, 238, 240);
+}
+
+
+/* 우측탭 내용 */
+.tapContent {
+	position: absolute;
+	top: 6rem;
+	right: 0rem;
+
+	height: calc(100% - 6rem - 2rem); /*padding*2*/
+	width: 48rem;
+	padding: 1rem;
+
+	overflow-x: visible;
+	overflow-y: auto;
+
+	display: none;
+
+	font-size: 2.4rem;
+	font-family: sans-serif;
+	color: black;
+	background-color: rgb(232, 238, 240);
+
+	z-index: 100;
+}
+
+.tapContent header {
+	position: sticky;
+	top: 0rem;
+
+	transform : translateY( -1rem );
+
+	padding-top: 2rem;
+	padding-bottom: 0.5rem;
+	padding-left: 1rem;
+
+	display: flex; 
+	justify-content: space-between; 
+	align-items: center; 
+	
+	font-size: 3rem; 
+	font-weight: bold;
+	background-color : inherit;
+	/* backdrop-filter: blur(10px); */
+}
+
+.tapContent button {
+	border-style: hidden;
+	background-color: transparent; 
+	cursor: pointer;
+	font-size: 2.4rem;
+}
+
+.tapContent button:hover {
+	/* transform: scale(1.2); */
+	background-color: darkgray;
+}
+
+
+/* 스크롤바 : 스크롤바는 고정값px로 */
+.scrollbar::-webkit-scrollbar {
+	width: 20px; /* 스크롤바는 고정값px로 */
+}
+
+.scrollbar::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+	background-color: #d6dee1;
+	border-radius: 20px; /* 스크롤바는 고정값px로 */
+	border: 6px solid transparent;
+	background-clip: content-box;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+	background-color: #a8bbbf;
+}
+
+
+/* 탭안의 체크박스와 라벨 */
+input[type=checkbox] + label {
+	display: flex;
+	margin: 0.6rem;
+	cursor: pointer;
+	padding: 0.6rem;
+}
+
+input[type=checkbox] {
+	display: none;
+}
+
+input[type=checkbox] + label:before {
+	content: "\2714";
+	border: 0.3rem solid #000;
+	border-radius: 0.6rem;
+	border-color: white;
+	display: inline-block;
+	width: 2.4rem;
+	height: 2.4rem;
+	padding-left: 0.6rem;
+	padding-bottom: 0.9rem;
+	margin-right: 0.9rem;
+	vertical-align: bottom;
+	color: transparent;
+	transition: .2s;
+}
+
+input[type=checkbox] + label:active:before {
+	transform: scale(0);
+}
+
+input[type=checkbox]:checked + label:before {
+	background-color: #2e6b62;
+	border-color: #2e6b62;
+	color: #fff;
+}
+
+input[type=text] {
+	width: 4.8rem;
+	text-align: center;
+	border: none;
+	font-size: 2.4rem;
+	color: red;
+	background-color: transparent;
+}
+
+input[type="color"] {
+	-webkit-appearance: none;
+	border: none;
+	width: 6rem;
+	height: 3rem;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0.4rem;
+}
+input[type="color"]::-webkit-color-swatch {
+	border-radius : 0.5rem;
+	border: none;
+}
+
+/* 밑줄 */
+.underLine {
+	border-bottom: 1px solid gray; 
+	padding-top: 2rem; 
+	padding-bottom: 2rem
+}
+
+
+/* 슬라이더 */
+.slidecontainer {
+	width: 60%; /* Width of the outside container */
+}
+
+.slider {
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	display:flex;
+	width: 50%; /* Full-width */
+	border-radius: 2.0rem;
+	/* border: none; */
+	margin-left: 5%;
+	height: 1.0rem; /* Specified height */
+	background: white; /* Grey background */
+	outline: none; /* Remove outline */
+	opacity: 1.0; /* Set transparency (for mouse-over effects on hover) */
+	-webkit-transition: .2s; /* 0.2 seconds transition on hover */
+	transition: opacity .2s;
+}
+
+.slider:hover {
+	opacity: 1.0; /* Fully shown on mouse-over */
+}
+
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	border-radius: 50%;
+	width: 3.0rem; /* Set a specific slider handle width */
+	height: 3.0rem; /* Slider handle height */
+	background: #2e6b62;
+	cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+	width: 3.0rem; /* Set a specific slider handle width */
+	height: 3.0rem; /* Slider handle height */
+	border-radius: 50%;
+	background: #2e6b62;
+	cursor: pointer; /* Cursor on hover */
+}
+
+
+@media (max-width: 575px) {
+	html, body { 
+		font-size: 25.00%; -webkit-text-size-adjust:none; /* font-size : 4px */
+		/* background-color: red */
+	} 
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+	html, body { 
+		font-size: 25.00%; -webkit-text-size-adjust:none; /* font-size : 5px */
+		/* background-color: green */
+	} 
+}
+ 
+@media (min-width: 768px) and (max-width: 991px) {
+	html, body { 
+		font-size: 31.25%; -webkit-text-size-adjust:none; /* font-size: 5px */
+		/* background-color: dodgerblue */
+	}
+} 
+ 
+@media (min-width: 992px) and (max-width: 1199px) {
+	html, body { 
+		font-size: 37.50%; -webkit-text-size-adjust:none; /* font-size : 6px */
+		/* background-color: purple */
+	}
+} 
+ 
+@media (min-width: 1200px) {
+	html, body { 
+		font-size: 37.50%; -webkit-text-size-adjust:none; /* font-size : 6px */
+		/* background-color: gray */
+	}
+}
