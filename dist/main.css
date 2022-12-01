@@ -43,7 +43,7 @@ html, body {
 	align-items: center;
 
 	color: #F5F1E8;
-	background-color: #18312d;
+	background-color: #1F524B;
 	/* background-color: rgba(255,255,192, 0.5); */
 	/* backdrop-filter: blur(10px); */
 
@@ -111,6 +111,9 @@ html, body {
 	padding: 1rem;
 
 	overflow-x: visible;
+	/* overflow-x: hidden; */
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	overflow-y: auto;
 
 	display: none;
@@ -205,13 +208,21 @@ input[type=checkbox] + label:before {
 	transition: .2s;
 }
 
+label {
+	width: 28rem;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 input[type=checkbox] + label:active:before {
 	transform: scale(0);
 }
 
 input[type=checkbox]:checked + label:before {
-	background-color: #2e6b62;
-	border-color: #2e6b62;
+	/* background-color: #2e6b62; */
+	background-color: #D05C26;
+	border-color: #D05C26;
 	color: #fff;
 }
 
@@ -225,7 +236,7 @@ input[type=text] {
 }
 
 input[type="color"] {
-	-webkit-appearance: none;
+	appearance: none;
 	border: none;
 	width: 6rem;
 	height: 3rem;
@@ -277,7 +288,7 @@ input[type="color"]::-webkit-color-swatch {
 	border-radius: 50%;
 	width: 3.0rem; /* Set a specific slider handle width */
 	height: 3.0rem; /* Slider handle height */
-	background: #2e6b62;
+	background: #D05C26;
 	cursor: pointer; /* Cursor on hover */
 }
 
@@ -285,7 +296,7 @@ input[type="color"]::-webkit-color-swatch {
 	width: 3.0rem; /* Set a specific slider handle width */
 	height: 3.0rem; /* Slider handle height */
 	border-radius: 50%;
-	background: #2e6b62;
+	background: #D05C26;
 	cursor: pointer; /* Cursor on hover */
 }
 
