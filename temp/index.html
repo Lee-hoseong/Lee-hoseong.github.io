@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Highway BIM Viewer</title>
+    <link rel="stylesheet" href="./main.css">
+    <link rel="icon" href="./textures/favicon.ico" type="image/x-icon">
+    <script defer="defer" src="465.min.js"></script>
+    <script defer="defer" src="main.min.js"></script>
+</head>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<body><canvas id="three-canvas"></canvas>
+    <div class="menu">
+        <div class="nameContainer">
+            <div class="dropdown"><button id="btnMenu" style="font-size: 2.4rem;" onclick="dropdown()">☰</button>
+                <div id="dropdown" class="dropdown-content">
+                    <a href="./?url=./keyangGanghwa4/a_bridge_kd.glb&url=./keyangGanghwa4/a_road_kd.glb&url=./keyangGanghwa4/b_bridge_kd.glb&url=./keyangGanghwa4/b_road_kd.glb&url=./keyangGanghwa4/bridge_kd.glb&url=./keyangGanghwa4/dns_kd.glb&url=./keyangGanghwa4/dyke_kd.glb&url=./keyangGanghwa4/fillMerge_kd.glb&url=./keyangGanghwa4/line_kd.glb&url=./keyangGanghwa4/median_kd.glb&url=./keyangGanghwa4/road_kd.glb&url=./keyangGanghwa4/terrain_kd.glb&url=./keyangGanghwa4/icon_kd.glb">계양강화5공구<span style="color: #D05C26;">(Only PC)</span></a>
+                    <a href="./?url=./keyangGanghwa4/a_bridge_kd.glb&url=./keyangGanghwa4/a_road_kd.glb&url=./keyangGanghwa4/b_bridge_kd.glb&url=./keyangGanghwa4/b_road_kd.glb&url=./keyangGanghwa4/bridge_kd.glb&url=./keyangGanghwa4/dns_kd.glb&url=./keyangGanghwa4/dyke_kd.glb&url=./keyangGanghwa4/fillMerge_kd.glb&url=./keyangGanghwa4/median_kd.glb&url=./keyangGanghwa4/road_kd.glb&url=./keyangGanghwa4/terrain_kd.glb&url=./keyangGanghwa4/icon_kd.glb">계양강화5공구(Noline)<span style="color: #D05C26;">(Only PC)</span></a>
+                </div>
+            </div>
+            <div id="fileName"></div>
+        </div>
+        <div class="mainBtnContainer"><button class="tablinks" id="btnMeshList"
+                onclick="openTab( event, 'tapMeshList')"><img src="./textures/list.svg" alt="객체목록"
+                    style="width: 2.0rem;"></button> <button class="tablinks" id="btnQuery"
+                onclick="openTab( event, 'tapQuery')"><img src="./textures/query.svg" alt="조회"
+                    style="width: 2.0rem;"></button> <button class="tablinks" id="btnTransform"
+                onclick="openTab( event, 'tapTransform')"><img src="./textures/transform.svg" alt="객체변형"
+                    style="width: 2.0rem;"></button> <button class="tablinks" id="btnSetting"
+                onclick="openTab( event, 'tapSetting')"><img src="./textures/setting.svg" alt="설정"
+                    style="width: 2.0rem;"></button></div>
+    </div>
+    <div class="side" id="tapMeshList">
+        <div class="title">
+            <div><img src="./textures/list.svg" alt="객체목록"
+                    style="width: 2.0rem; filter: invert(25%) sepia(12%) saturate(2009%) hue-rotate(122deg) brightness(60%) contrast(90%);">
+                객체목록</div>
+            <div style="font-size: 8px;">불투명도(%)</div>
+        </div>
+        <div class="pannel scrollbar" id="listOnOff"></div>
+    </div>
+    <div class="side" id="tapQuery">
+        <div class="title">
+            <div><img src="./textures/query.svg" alt="조회"
+                    style="width: 2.0rem; filter: invert(25%) sepia(12%) saturate(2009%) hue-rotate(122deg) brightness(60%) contrast(90%);">
+                조회</div>
+        </div>
+        <div class="pannel scrollbar">
+            <div class="fn_container">
+                <div class="fn_title">정보조회</div>
+                <div class="fn_content"><button onclick="dist()"
+                        style="width: 20rem; height: 4rem; text-align:left;"><img src="./textures/dist.svg" alt="거리측정"
+                            style="width: 2.0rem;"> 거리측정</button><br><button onclick="areaCal()"
+                        style="width: 20rem; height: 4rem; text-align:left;"><img src="./textures/area.svg" alt="면적계산"
+                            style="width: 2.0rem;"> <span style="color: red">[테스트]</span>면적계산</button><br><button
+                        onclick="volumeCal()" style="width: 20rem; height: 4rem; text-align:left;"><img
+                            src="./textures/volume.svg" alt="체적계산" style="width: 2.0rem;"> <span
+                            style="color: red">[테스트]</span>체적계산</button></div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title"><span style="color: red">[테스트]</span>렌더정보</div>
+                <div class="fn_content">Draw Calls : <span id="renderCalls"></span><br>Triangles: <span
+                        id="renderTriangles"></span><br>Geometries : <span id="renderGeometries"></span><br>Textures :
+                    <span id="renderTextures"></span><br>fps : <span id="renderFps"></span><br></div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title">속성조회</div>
+                <div class="fn_content">
+                    <div id="propContents"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="side" id="tapTransform">
+        <div class="title">
+            <div><img src="./textures/transform.svg" alt="객체변형"
+                    style="width: 2.0rem; filter: invert(25%) sepia(12%) saturate(2009%) hue-rotate(122deg) brightness(60%) contrast(90%);">
+                객체변형</div>
+        </div>
+        <div class="pannel scrollbar">
+            <div class="fn_container">
+                <div class="fn_title">스케일</div>
+                <div class="fn_content">
+                    <div class="item">
+                        <div class="range_name">X(좌우)</div><input type="range" class="slider" id="rngScaleX" min="1"
+                            max="6" step="0.5" value="1.0" oninput="scaleXUp( event )"> <span class="range_value"
+                            id="scaleXSpan">1</span>
+                    </div>
+                    <div class="item">
+                        <div class="range_name">Y(상하)</div><input type="range" class="slider" id="rngScaleY" min="1"
+                            max="6" step="0.5" value="1.0" oninput="scaleYUp( event )"> <span class="range_value"
+                            id="scaleYSpan">1</span>
+                    </div>
+                    <div class="item">
+                        <div class="range_name">Z(전후)</div><input type="range" class="slider" id="rngScaleZ" min="1"
+                            max="6" step="0.5" value="1.0" oninput="scaleZUp( event )"> <span class="range_value"
+                            id="scaleZSpan">1</span>
+                    </div>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title">분해</div>
+                <div class="fn_content">
+                    <div class="item">
+                        <div class="range_name">X(좌우)</div><input type="range" class="slider" min="0" max="1"
+                            step="0.05" value="0" oninput="explodeXChange( event )"> <span class="range_value"></span>
+                    </div>
+                    <div class="item">
+                        <div class="range_name">Y(상하)</div><input type="range" class="slider" min="0" max="1"
+                            step="0.05" value="0" oninput="explodeYChange( event )"> <span class="range_value"></span>
+                    </div>
+                    <div class="item">
+                        <div class="range_name">Z(전후)</div><input type="range" class="slider" min="0" max="1"
+                            step="0.05" value="0" oninput="explodeZChange( event )"> <span class="range_value"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title"><input type="checkbox" id="onClipping" oninput="onClipping( event )"> <label
+                        for="onClipping">클리핑</label></div>
+                <div class="fn_content" id="clippingGroup" style="display:none;">
+                    <div class="item" id="clippingXGroup">
+                        <div class="range_name">X(좌우)</div><input type="range" class="slider" id="rngClippingX"
+                            oninput="clippingXSlide( event )"> <span class="range_value"><input type="checkbox"
+                                id="negateX" onclick="negateXSwitch( event )"> <label for="negateX">반전</label></span>
+                    </div>
+                    <div class="item" id="clippingYGroup">
+                        <div class="range_name">Y(상하)</div><input type="range" class="slider" id="clippingYId"
+                            oninput="clippingYSlide( event )"> <span class="range_value"><input type="checkbox"
+                                id="negateY" onclick="negateYSwitch( event )"> <label for="negateY">반전</label></span>
+                    </div>
+                    <div class="item" id="clippingZGroup">
+                        <div class="range_name">Z(전후)</div><input type="range" class="slider" id="clippingZId"
+                            oninput="clippingZSlide( event )"> <span class="range_value"><input type="checkbox"
+                                id="negateZ" onclick="negateZSwitch( event )"> <label for="negateZ">반전</label></span>
+                    </div>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title"><input type="checkbox" id="chk_clippingGizmo" oninput="onClippingGizmo( event )">
+                    <label for="chk_clippingGizmo"><span style="color: red">[테스트]</span>클리핑 기즈모</label></div>
+                <div class="fn_content" id="clippingMode" style="display:none;" onchange="selectTransformMode( event )">
+                    <div class="item"><input type="radio" name="rb_gizmoMode" id="rb_gizmoModeTrans" value="1"
+                            checked="checked"> <label for="rb_gizmoModeTrans">Translate</label></div>
+                    <div class="item"><input type="radio" name="rb_gizmoMode" id="rb_gizmoModeRot" value="2"> <label
+                            for="rb_gizmoModeRot">Rotate</label></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="side" id="tapSetting">
+        <div class="title">
+            <div><img src="./textures/setting.svg" alt="설정"
+                    style="width: 2.0rem; filter: invert(25%) sepia(12%) saturate(2009%) hue-rotate(122deg) brightness(60%) contrast(90%);">
+                설정</div>
+        </div>
+        <div class="pannel scrollbar">
+            <div class="fn_container">
+                <div class="fn_title">뷰설정</div>
+                <div class="fn_content">
+                    <div class="item"><input type="checkbox" id="chkWireframe" onclick="wireframeSwitch( event )">
+                        <label for="chkWireframe">와이어프레임 모드</label></div>
+                    <div class="item"><input type="checkbox" id="chkSolid" onclick="solidSwitch( event )"> <label
+                            for="chkSolid">솔리드 모드</label></div>
+                    <div class="item"><input type="checkbox" id="chkGridHelper" onclick="gridHelperSwith( event )">
+                        <label for="chkGridHelper">그리드</label></div>
+                    <div class="item"><input type="checkbox" id="chkAxeSwitch" onclick="axeSwitch( event )"> <label
+                            for="chkAxeSwitch">좌표축</label></div>
+                    <div class="item"><input type="checkbox" id="chkAutoRotate" onclick="autoRotateSwitch( event )">
+                        <label for="chkAutoRotate">자동회전</label></div>
+                    <div class="item"><input type="checkbox" id="chkCamera" onclick="cameraSwitch()"> <label
+                            for="chkCamera">카메라 직교투영</label></div>
+                    <div class="item"><input type="checkbox" id="chkShadow" onclick="shadowSwitch( event )"> <label
+                            for="chkShadow">바닥면 그림자</label></div>
+                    <div class="item"><input type="checkbox" id="chkMeshShadow" onclick="meshShadowSwitch( event )">
+                        <label for="chkMeshShadow">객체별 그림자</label></div>
+                    <div class="item"><input type="checkbox" id="chkMeshSide" onclick="meshSideSwitch( event )"> <label
+                            for="chkMeshSide">객체 양쪽면 표현</label></div>
+                    <div class="item"><input type="checkbox" id="chkEnvMap" onclick="envMapSwitch( event )"> <label
+                            for="chkEnvMap">환경맵핑</label></div>
+                    <div class="item"><input type="checkbox" id="chkNaviGizmo" onclick="navigationGizmoSwith( event )">
+                        <label for="chkNaviGizmo">Navigation Gizmo</label></div>
+                    <div class="item">노출 <input type="range" class="slider" id="exposureId" min="0.5" max="3.0"
+                            step="0.1" oninput="exposureChange( event )">&nbsp; <span id="exposureSpanId"></span></div>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title"><input type="checkbox" id="chkFirstPerson" onclick="firstPersonSwitch()"> <label
+                        for="chkFirstPerson"><span style="color: red">[테스트]</span>1인칭 시점</label></div>
+                <div class="fn_content" id="firstPersonGroup" style="display:none;">
+                    <div class="item"><input type="checkbox" id="chkCharacterVisible"
+                            onclick="characterVisibleSwitch( event )"> <label for="chkCharacterVisible">캐릭터</label>
+                    </div>
+                    <div class="item"><input type="checkbox" id="chkPlayerRun" onclick="playerRunSwitch( event )">
+                        <label for="chkPlayerRun">Run</label></div>
+                    <p>W/S : 앞/뒤 이동<br>A/D : 왼쪽/오른쪽 이동<br>SPACE : 점프</p>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title">객체선택시</div>
+                <div class="fn_content">
+                    <div class="item"><input type="checkbox" id="chkPickColor" onclick="pickColorSwith( event )"> <label
+                            for="chkPickColor">색상</label></div>
+                    <div class="item"><input type="checkbox" id="chkBoxHelper" onclick="boxHelperSwith( event )"> <label
+                            for="chkBoxHelper">보조박스</label></div>
+                    <div class="item"><input type="checkbox" id="chkLabel" onclick="labelSwith( event )"> <label
+                            for="chkLabel">라벨</label></div>
+                    <div class="item"><input type="checkbox" id="chkRaycastAcc" onclick="raycastAccSwitch( event )">
+                        <label for="chkRaycastAcc"><span style="color: red">[테스트]</span>Raycast 가속화</label></div>
+                </div>
+            </div>
+            <div class="fn_container">
+                <div class="fn_title">테스트</div>
+                <div class="fn_content"><button id="screenshot">📷 스크린샷</button> <img src="" alt="" id="screenshotImg">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="카메라 및 타켓 위치" style="position : absolute; right:1rem; bottom:1rem; z-index:100; user-select: none;">Camera X
+        : <span id="cameraPostionX"></span>, Y : <span id="cameraPostionY"></span>, Z : <span
+            id="cameraPostionZ"></span> / Target X : <span id="orbitControlX"></span>, Y : <span
+            id="orbitControlY"></span>, Z : <span id="orbitControlZ"></span> / Distance : <span
+            id="DistanceCamera"></span></div>
+</body>
+
+</html>
